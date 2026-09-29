@@ -65,6 +65,22 @@ class LvmQualityPluginTest {
     }
 
     @Test
+    fun `creates baselines with the same rules as the check`() {
+        val fixture = fixture("catalog = false\nquality { config.add(\"config/detekt/detekt.yml\") }")
+        fixture.file(
+            "config/detekt/detekt.yml",
+            """
+            style:
+              MaxLineLength:
+                maxLineLength: 100
+            """,
+        )
+
+        fixture.build(":lib:detektBaseline")
+        fixture.build(":lib:detekt")
+    }
+
+    @Test
     fun `adds Compose rules only when enabled`() {
         val fixture = fixture()
 

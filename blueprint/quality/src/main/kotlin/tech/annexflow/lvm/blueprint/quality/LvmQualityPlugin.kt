@@ -46,6 +46,7 @@ class LvmQualityPlugin : Plugin<Project> {
             this.jvmTarget = jvmTarget.get()
         }
         project.tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
+            this.buildUponDefaultConfig.set(buildUponDefaultConfig)
             this.jvmTarget = jvmTarget.get()
         }
 
