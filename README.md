@@ -164,12 +164,6 @@ Blueprint checks the Gradle, AGP and Kotlin versions: a version below the minimu
 
 One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`.
 
-## Not included
-
-- **A design system or UI components.** Theming is too app-specific to share.
-- **Log encryption and log sharing.** `lvm-logger` writes logs and exposes the log directory; encrypting and sending them is up to the app.
-- **Dependency injection.** LVM uses no DI annotations and works with any DI framework.
-
 ## Documentation
 
 - [Releasing](RELEASING.md) — how releases are published
