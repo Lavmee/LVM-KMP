@@ -1,4 +1,4 @@
-# lvm-kmp
+# LVM-KMP
 
 > **LVM — Lightweight Versatile Machinery.**
 > `lvm-blueprint` — machinery that builds your app. `lvm-*` — machinery that runs inside it.

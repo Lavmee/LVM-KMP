@@ -17,6 +17,6 @@ lvm {
     kotlin { warningsAsErrors = true }
 }
 
-rootProject.name = "lvm-kmp"
+rootProject.name = "LVM-KMP"
 
 include(":samples:smoke")
