@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "blueprint"
 
 include(":common")
+include(":settings")
