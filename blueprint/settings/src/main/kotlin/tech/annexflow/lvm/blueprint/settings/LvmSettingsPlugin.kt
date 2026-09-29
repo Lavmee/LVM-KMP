@@ -2,11 +2,16 @@ package tech.annexflow.lvm.blueprint.settings
 
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
+import org.gradle.api.logging.Logging
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
+import tech.annexflow.lvm.blueprint.common.requireSupportedGradle
 
 class LvmSettingsPlugin : Plugin<Settings> {
 
     override fun apply(settings: Settings) {
+        // The only place that warns about a Gradle newer than tested: once per build, not once per module.
+        requireSupportedGradle(Logging.getLogger(LvmSettingsPlugin::class.java))
+
         val extension = settings.extensions.create("lvm", LvmSettingsExtension::class.java)
         extension.catalog.convention(true)
         extension.catalogName.convention("lvmLibs")

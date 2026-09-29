@@ -12,10 +12,12 @@ import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmJvm
+import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 class LvmQualityPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
+        requireMinimumGradle()
         project.pluginManager.apply("io.gitlab.arturbosch.detekt")
 
         val values = LvmValues(project)

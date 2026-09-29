@@ -59,6 +59,7 @@ val generateLvmBuildInfo = tasks.register<GenerateLvmBuildInfo>("generateLvmBuil
     constants.put("VERSION", lvmVersion)
     constants.put("TESTED_KOTLIN", libs.versions.kotlin)
     constants.put("TESTED_AGP", libs.versions.agp)
+    constants.put("TESTED_GRADLE", gradle.gradleVersion)
     constants.put(
         "DETEKT_COMPOSE_RULES",
         libs.detekt.composeRules.map { "${it.module}:${it.versionConstraint.requiredVersion}" },
@@ -73,4 +74,5 @@ tasks.test {
     systemProperty("lvm.test.version", lvmVersion.get())
     systemProperty("lvm.test.kotlinVersion", libs.versions.kotlin.get())
     systemProperty("lvm.test.agpVersion", libs.versions.agp.get())
+    systemProperty("lvm.test.gradleVersion", gradle.gradleVersion)
 }

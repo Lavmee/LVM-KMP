@@ -11,11 +11,13 @@ import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmAndroid
 import tech.annexflow.lvm.blueprint.common.lvmJvm
 import tech.annexflow.lvm.blueprint.common.lvmKotlin
+import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 import tech.annexflow.lvm.blueprint.common.requireSupported
 
 class LvmMultiplatformPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
+        requireMinimumGradle()
         project.pluginManager.apply("org.jetbrains.kotlin.multiplatform")
         project.requireSupported(
             tool = "Kotlin Gradle plugin",
