@@ -43,7 +43,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-decompose-fetcher` | Cached, retrying network fetches inside components |
 | `lvm-main-context` | `@MainContext`: runs the annotated function on the main dispatcher |
 | `lvm-bom` | BOM for projects that don't use the version catalog |
-| `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin and Compose versions |
+| `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
 
 ## Getting started
 
@@ -68,7 +68,7 @@ plugins {
 
 ### 2. Declare plugins in the root project
 
-Declare every plugin in the root `build.gradle.kts` with `apply false`. Blueprint doesn't bundle AGP, Kotlin or Compose, so they must be on the build classpath, and all blueprint plugins must load in one classloader.
+Declare every plugin in the root `build.gradle.kts` with `apply false`. Blueprint doesn't bundle AGP, Kotlin, Compose or detekt, so they must be on the build classpath, and all blueprint plugins must load in one classloader.
 
 ```kotlin
 // build.gradle.kts
@@ -78,6 +78,7 @@ plugins {
     alias(lvmLibs.plugins.kotlin.multiplatform) apply false
     alias(lvmLibs.plugins.kotlin.compose) apply false
     alias(lvmLibs.plugins.compose.multiplatform) apply false
+    alias(lvmLibs.plugins.detekt) apply false
 
     alias(lvmLibs.plugins.blueprint.multiplatform) apply false
     alias(lvmLibs.plugins.blueprint.compose) apply false
@@ -157,7 +158,7 @@ Every automatic behavior can be switched off, including the dependencies bluepri
 
 ## Supported versions
 
-AGP, Kotlin and Compose versions are chosen by your project. The versions LVM is tested against are listed in `lvm-versions`. Blueprint fails with a clear error on versions below the minimum and warns on versions newer than tested.
+AGP, Kotlin, Compose and detekt versions are chosen by your project. The versions LVM is tested against are listed in `lvm-versions`. Blueprint fails with a clear error on versions below the minimum and warns on versions newer than tested.
 
 The exception is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`.
 
