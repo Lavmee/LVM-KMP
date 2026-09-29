@@ -56,6 +56,7 @@ abstract class GenerateLvmBuildInfo : DefaultTask() {
 }
 
 val generateLvmBuildInfo = tasks.register<GenerateLvmBuildInfo>("generateLvmBuildInfo") {
+    description = "Generates LvmBuildInfo with the LVM version and the tested Kotlin, AGP and Gradle versions."
     constants.put("VERSION", lvmVersion)
     constants.put("TESTED_KOTLIN", libs.versions.kotlin)
     constants.put("TESTED_AGP", libs.versions.agp)

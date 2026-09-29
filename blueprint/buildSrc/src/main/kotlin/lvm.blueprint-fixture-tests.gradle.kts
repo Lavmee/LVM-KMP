@@ -6,6 +6,7 @@ plugins {
 }
 
 val blueprintFixtureSources = tasks.register<Sync>("blueprintFixtureSources") {
+    description = "Copies the blueprint sources that TestKit fixture builds include, isolated from this build's outputs."
     from(rootDir.parentFile) {
         include("blueprint/**", "gradle/libs.versions.toml", "gradle.properties")
         exclude(*BlueprintFixtureDir.BUILD_OUTPUTS)
