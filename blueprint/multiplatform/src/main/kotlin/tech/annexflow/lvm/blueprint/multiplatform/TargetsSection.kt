@@ -55,9 +55,11 @@ abstract class IosTargetSpec @Inject constructor(private val objects: ObjectFact
     }
 }
 
-abstract class FrameworkSpec {
+abstract class FrameworkSpec @Inject constructor(objects: ObjectFactory) {
     abstract val baseName: Property<String>
-    abstract val isStatic: Property<Boolean>
+
+    // Not abstract: Kotlin names this getter isStatic(), and Gradle only generates `is` getters for boolean.
+    val isStatic: Property<Boolean> = objects.property(Boolean::class.java)
 
     /** Passed to Kotlin/Native as the `bundleId` binary option; without it the compiler infers one and may warn. */
     abstract val bundleId: Property<String>
