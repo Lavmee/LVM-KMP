@@ -160,6 +160,8 @@ Every automatic behavior can be switched off, including the dependencies bluepri
 
 LVM requires Gradle 9.6, AGP 9.4 and Kotlin 2.4 or newer. Your project chooses its Gradle, AGP, Kotlin, Compose and detekt versions. LVM is tested with the versions listed in `lvm-versions` and with the Gradle version of its own wrapper.
 
+The minimums are strict on purpose and will stay that way. They follow recent Gradle, AGP and Kotlin releases and move up whenever LVM moves to newer tools; older toolchains are not kept alive. If your project stays on older versions, stay on the LVM release that supports them.
+
 Blueprint checks the Gradle, AGP and Kotlin versions: a version below the minimum fails the build with a clear error, and a version newer than tested produces a warning. For Gradle, that warning comes only from `tech.annexflow.lvm.settings`, once per build; without the settings plugin, the project plugins still enforce the minimum. Compose and detekt versions are not checked.
 
 One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`.
