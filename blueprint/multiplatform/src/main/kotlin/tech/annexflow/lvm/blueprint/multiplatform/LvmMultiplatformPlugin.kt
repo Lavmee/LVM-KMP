@@ -5,7 +5,6 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
-import tech.annexflow.lvm.blueprint.common.LvmCompatibility
 import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmAndroid
@@ -22,7 +21,7 @@ class LvmMultiplatformPlugin : Plugin<Project> {
         project.requireSupported(
             tool = "Kotlin Gradle plugin",
             actual = project.getKotlinPluginVersion(),
-            minimum = LvmCompatibility.MIN_KOTLIN,
+            minimum = LvmBuildInfo.MIN_KOTLIN,
             tested = LvmBuildInfo.TESTED_KOTLIN,
         )
 

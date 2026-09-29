@@ -8,10 +8,6 @@ import org.gradle.util.GradleVersion
 enum class Support { TOO_OLD, SUPPORTED, NEWER_THAN_TESTED }
 
 object LvmCompatibility {
-    const val MIN_GRADLE: String = "9.6"
-    const val MIN_KOTLIN: String = "2.4.0"
-    const val MIN_AGP: String = "9.4.0"
-
     /** Compares dotted numeric versions; qualifiers such as `-RC1` are ignored. */
     fun compare(left: String, right: String): Int {
         val l = numbers(left)
@@ -47,16 +43,16 @@ fun Project.requireSupported(tool: String, actual: String, minimum: String, test
 }
 
 /**
- * The full Gradle check: fails below [LvmCompatibility.MIN_GRADLE] and warns above the tested version.
+ * The full Gradle check: fails below [LvmBuildInfo.MIN_GRADLE] and warns above the tested version.
  * Only the settings plugin runs it, so the warning appears once per build rather than once per module.
  */
 fun requireSupportedGradle(logger: Logger, actual: String = GradleVersion.current().version) {
-    requireSupported(logger, GRADLE, actual, LvmCompatibility.MIN_GRADLE, LvmBuildInfo.TESTED_GRADLE)
+    requireSupported(logger, GRADLE, actual, LvmBuildInfo.MIN_GRADLE, LvmBuildInfo.TESTED_GRADLE)
 }
 
-/** Fails below [LvmCompatibility.MIN_GRADLE] without warning, so builds without the settings plugin are protected too. */
+/** Fails below [LvmBuildInfo.MIN_GRADLE] without warning, so builds without the settings plugin are protected too. */
 fun requireMinimumGradle(actual: String = GradleVersion.current().version) {
-    val minimum = LvmCompatibility.MIN_GRADLE
+    val minimum = LvmBuildInfo.MIN_GRADLE
     if (LvmCompatibility.compare(actual, minimum) < 0) throw tooOld(GRADLE, minimum, actual)
 }
 

@@ -28,7 +28,7 @@ class LvmCompatibilityTest {
 
     @Test
     fun `classifies gradle versions against the gradle minimum`() {
-        val minimum = LvmCompatibility.MIN_GRADLE
+        val minimum = LvmBuildInfo.MIN_GRADLE
         assertEquals(Support.TOO_OLD, LvmCompatibility.support("9.5.1", minimum, tested = "9.7.1"))
         assertEquals(Support.SUPPORTED, LvmCompatibility.support("9.6", minimum, tested = "9.7.1"))
         assertEquals(Support.SUPPORTED, LvmCompatibility.support("9.6.0", minimum, tested = "9.7.1"))
@@ -37,8 +37,8 @@ class LvmCompatibilityTest {
 
     @Test
     fun `requires the agp version lvm is tested with`() {
-        assertEquals(Support.TOO_OLD, LvmCompatibility.support("9.3.1", LvmCompatibility.MIN_AGP, tested = "9.4.1"))
-        assertEquals(Support.SUPPORTED, LvmCompatibility.support("9.4.0", LvmCompatibility.MIN_AGP, tested = "9.4.1"))
+        assertEquals(Support.TOO_OLD, LvmCompatibility.support("9.3.1", LvmBuildInfo.MIN_AGP, tested = "9.4.1"))
+        assertEquals(Support.SUPPORTED, LvmCompatibility.support("9.4.0", LvmBuildInfo.MIN_AGP, tested = "9.4.1"))
     }
 
     @Test

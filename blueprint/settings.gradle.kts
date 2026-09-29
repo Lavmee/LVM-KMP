@@ -4,6 +4,10 @@ pluginManagement {
         google()
         mavenCentral()
     }
+    // Kept out of gradle/libs.versions.toml: that catalog is published as lvm-versions.
+    plugins {
+        id("com.github.gmazzo.buildconfig") version "6.1.2"
+    }
 }
 
 dependencyResolutionManagement {
