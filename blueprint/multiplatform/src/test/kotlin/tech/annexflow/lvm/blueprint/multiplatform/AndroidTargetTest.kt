@@ -30,6 +30,17 @@ class AndroidTargetTest {
         }
     """
 
+    /** Lists the AGP plugin too, which is what generates the native kotlin { android { } } and androidComponents { } accessors. */
+    private fun moduleWithAgpPlugin(body: String) = """
+        plugins {
+            id("tech.annexflow.lvm.multiplatform")
+            id("com.android.kotlin.multiplatform.library")
+        }
+        group = "com.example"
+        lvm { targets { android() } }
+        $body
+    """
+
     @Test
     fun `derives the namespace and uses default SDK levels`() {
         val fixture = kmpFixture(dir, module(""), modulePath = ":feature:user-profile", withAgp = true)
@@ -53,6 +64,49 @@ class AndroidTargetTest {
         val output = fixture.build(":lib:help").output
 
         assertContains(output, "lvm-android namespace=com.example.custom minSdk=26")
+    }
+
+    @Test
+    fun `native DSL values win when the module lists the AGP plugin`() {
+        val fixture = kmpFixture(
+            dir,
+            moduleWithAgpPlugin(
+                """
+                kotlin { android { minSdk = 30 } }
+                androidComponents.onVariants { variant ->
+                    println("lvm-android namespace=" + variant.namespace.get() + " minSdk=" + variant.minSdk.apiLevel)
+                }
+                """,
+            ),
+            withAgp = true,
+        )
+        fixture.writeLocalProperties()
+
+        val output = fixture.build(":lib:help").output
+
+        assertContains(output, "lvm-android namespace=com.example.lib minSdk=30")
+    }
+
+    @Test
+    fun `a native preview compile SDK is left alone`() {
+        val fixture = kmpFixture(
+            dir,
+            moduleWithAgpPlugin(
+                """
+                kotlin { android { compileSdkPreview = "LvmPreview" } }
+                // finalizeDsl callbacks run in registration order, so this one sees what lvm's callback left.
+                androidComponents.finalizeDsl { android ->
+                    println("lvm-android compileSdk=" + android.compileSdk + " compileSdkPreview=" + android.compileSdkPreview)
+                }
+                """,
+            ),
+            withAgp = true,
+        )
+        fixture.writeLocalProperties()
+
+        val output = fixture.build(":lib:help").output
+
+        assertContains(output, "lvm-android compileSdk=null compileSdkPreview=LvmPreview")
     }
 
     @Test

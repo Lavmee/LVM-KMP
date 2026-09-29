@@ -29,10 +29,12 @@ internal fun Project.configureAndroidTarget(kotlin: KotlinMultiplatformExtension
     }
 
     // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.
-    // Values set with native DSL (kotlin { android { minSdk = … } }) are left alone.
+    // Values set with native DSL, preview levels included, win: lvm fills in only what is still unset.
+    // The Kotlin DSL accessor kotlin { android { … } } exists only when the module also lists
+    // com.android.kotlin.multiplatform.library in plugins { }; the apply above then does nothing.
     androidComponents.finalizeDsl { android ->
-        if (android.compileSdk == null) android.compileSdk = section.compileSdk.get()
-        if (android.minSdk == null) android.minSdk = section.minSdk.get()
+        if (android.compileSdk == null && android.compileSdkPreview == null) android.compileSdk = section.compileSdk.get()
+        if (android.minSdk == null && android.minSdkPreview == null) android.minSdk = section.minSdk.get()
         if (android.namespace == null) android.namespace = section.namespace.get()
     }
 }

@@ -153,6 +153,7 @@ Every automatic behavior can be switched off, including the dependencies bluepri
 - **Applications** use `tech.annexflow.lvm.android.application`.
 - **Libraries** get their Android target from `lvm { targets { android() } }`, which applies `com.android.kotlin.multiplatform.library`. This requires AGP 9 or newer.
   The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "…" } }`.
+  Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
 
 ## Supported versions
 
