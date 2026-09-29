@@ -23,3 +23,4 @@ rootProject.name = "blueprint"
 
 include(":common")
 include(":settings")
+include(":multiplatform")
