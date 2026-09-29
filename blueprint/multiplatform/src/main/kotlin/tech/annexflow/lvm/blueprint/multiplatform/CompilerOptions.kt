@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
+import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.KotlinSection
@@ -40,10 +41,17 @@ internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension
 }
 
 /** Sets jvmTarget on every JVM and Android compilation; the KMP top-level options can't, because they are common options. */
-internal fun Project.configureJvmTarget(section: JvmSection) {
+internal fun Project.configureJvmTarget(kotlin: KotlinMultiplatformExtension, section: JvmSection) {
     val jvmTarget = section.target.map { JvmTarget.fromTarget(it.toString()) }
     tasks.withType(KotlinJvmCompile::class.java).configureEach {
         compilerOptions.jvmTarget.set(jvmTarget)
+    }
+
+    // Java sources of JVM targets would otherwise keep the JDK's target, which KGP rejects when it differs from Kotlin's.
+    kotlin.targets.withType(KotlinJvmTarget::class.java).configureEach {
+        compilations.configureEach {
+            compileJavaTaskProvider?.configure { options.release.set(section.target) }
+        }
     }
 }
 

@@ -38,6 +38,17 @@ class CompilerOptionsTest {
     }
 
     @Test
+    fun `java sources of the jvm target use the jvm target too`() {
+        val fixture = kmpFixture(dir, JVM_MODULE)
+        fixture.file("lib/src/jvmMain/java/J.java", "public class J {}")
+
+        // 17 differs from the JDK 21 that runs the fixtures, so the Java task can't just keep the JDK's target.
+        fixture.build(":lib:compileJvmMainJava", ":lib:compileKotlinJvm", "-Plvm.jvm.target=17")
+        assertEquals(61, classFileMajorVersion(dir.resolve("lib/build/classes/java/jvmMain/J.class")))
+        assertEquals(61, classFileMajorVersion(helloClass))
+    }
+
+    @Test
     fun `warningsAsErrors from a Gradle property fails the build on a warning`() {
         val fixture = kmpFixture(dir, JVM_MODULE)
         // An unused variable is no longer a compiler warning under K2; an unnecessary `!!` is.

@@ -38,7 +38,7 @@ class LvmMultiplatformPlugin : Plugin<Project> {
         )
 
         configureKotlinCompilerOptions(kotlin, kotlinSection, values)
-        project.configureJvmTarget(jvm)
+        project.configureJvmTarget(kotlin, jvm)
         project.configureTestDependencies(kotlinSection)
     }
 }
