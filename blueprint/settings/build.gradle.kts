@@ -32,14 +32,42 @@ gradlePlugin {
     }
 }
 
+// Fixtures build blueprint from a copy of its sources, so their nested builds never write into this build's outputs.
+abstract class BlueprintFixtureDir : CommandLineArgumentProvider {
+    /** Root of the copy. Its location is not an input. */
+    @get:Internal
+    abstract val root: DirectoryProperty
+
+    /** The copied sources. Nested fixture builds write their own outputs into the copy, so those are not inputs. */
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    val sources: FileTree
+        get() = root.asFileTree.matching { exclude(*BUILD_OUTPUTS) }
+
+    override fun asArguments(): Iterable<String> =
+        listOf("-Dlvm.blueprint.dir=" + root.get().dir("blueprint").asFile.absolutePath)
+
+    companion object {
+        val BUILD_OUTPUTS = arrayOf("**/build/**", "**/.gradle/**", "**/.kotlin/**")
+    }
+}
+
+val blueprintFixtureSources = tasks.register<Sync>("blueprintFixtureSources") {
+    from(rootDir.parentFile) {
+        include("blueprint/**", "gradle/libs.versions.toml", "gradle.properties")
+        exclude(*BlueprintFixtureDir.BUILD_OUTPUTS)
+    }
+    into(layout.buildDirectory.dir("fixture-src"))
+}
+
 tasks.test {
     useJUnitPlatform()
-    systemProperty("lvm.blueprint.dir", rootDir.absolutePath)
     systemProperty("lvm.test.kotlinVersion", libs.versions.kotlin.get())
     systemProperty("lvm.test.agpVersion", libs.versions.agp.get())
     systemProperty("lvm.test.detektVersion", libs.versions.detekt.get())
-    // Fixtures build blueprint from its sources, so any blueprint source change must rerun these tests.
-    inputs.files(fileTree(rootDir) { include("*/src/main/**", "*/build.gradle.kts", "settings.gradle.kts") })
-        .withPropertyName("blueprintSources")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+    jvmArgumentProviders.add(
+        objects.newInstance<BlueprintFixtureDir>().apply {
+            root.fileProvider(blueprintFixtureSources.map { it.destinationDir })
+        },
+    )
 }
