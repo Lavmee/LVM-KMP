@@ -49,6 +49,24 @@ class CompilerOptionsTest {
     }
 
     @Test
+    fun `a jvm target set natively on the jvm target wins`() {
+        val fixture = kmpFixture(
+            dir,
+            module = """
+                plugins { id("tech.annexflow.lvm.multiplatform") }
+                lvm { targets { jvm() } }
+                kotlin { jvm { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } } }
+            """,
+        )
+        fixture.file("lib/src/jvmMain/java/J.java", "public class J {}")
+
+        // lvm's default is 21. Java sources follow the target's value, so KGP's JVM target check still passes.
+        fixture.build(":lib:compileJvmMainJava", ":lib:compileKotlinJvm")
+        assertEquals(61, classFileMajorVersion(helloClass))
+        assertEquals(61, classFileMajorVersion(dir.resolve("lib/build/classes/java/jvmMain/J.class")))
+    }
+
+    @Test
     fun `warningsAsErrors from a Gradle property fails the build on a warning`() {
         val fixture = kmpFixture(dir, JVM_MODULE)
         // An unused variable is no longer a compiler warning under K2; an unnecessary `!!` is.

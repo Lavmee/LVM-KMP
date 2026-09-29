@@ -34,11 +34,11 @@ class LvmMultiplatformPlugin : Plugin<Project> {
             "targets",
             TargetsSection::class.java,
             project.objects,
-            KmpTargetWiring(project, kotlin, android, values),
+            KmpTargetWiring(project, kotlin, android, jvm, values),
         )
 
         configureKotlinCompilerOptions(kotlin, kotlinSection, values)
-        project.configureJvmTarget(kotlin, jvm)
+        configureJvmTarget(kotlin, jvm)
         project.configureTestDependencies(kotlinSection)
     }
 }

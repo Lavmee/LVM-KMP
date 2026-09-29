@@ -4,6 +4,7 @@ import java.io.File
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.io.TempDir
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
@@ -12,6 +13,8 @@ class AndroidTargetTest {
 
     @TempDir
     lateinit var dir: File
+
+    private val helloClass: File get() = dir.resolve("lib/build/classes/kotlin/android/main/Hello.class")
 
     @BeforeTest
     fun requireAndroidSdk() {
@@ -107,6 +110,34 @@ class AndroidTargetTest {
         val output = fixture.build(":lib:help").output
 
         assertContains(output, "lvm-android compileSdk=null compileSdkPreview=LvmPreview")
+    }
+
+    @Test
+    fun `compiles for the lvm jvm target`() {
+        val fixture = kmpFixture(dir, module(""), withAgp = true)
+        fixture.writeLocalProperties()
+
+        fixture.build(":lib:compileAndroidMain")
+        assertEquals(65, classFileMajorVersion(helloClass))
+
+        fixture.build(":lib:compileAndroidMain", "-Plvm.jvm.target=17")
+        assertEquals(61, classFileMajorVersion(helloClass))
+    }
+
+    @Test
+    fun `a native jvm target wins when the module lists the AGP plugin`() {
+        val fixture = kmpFixture(
+            dir,
+            moduleWithAgpPlugin(
+                "kotlin { android { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } } }",
+            ),
+            withAgp = true,
+        )
+        fixture.writeLocalProperties()
+
+        // lvm's default is 21.
+        fixture.build(":lib:compileAndroidMain")
+        assertEquals(61, classFileMajorVersion(helloClass))
     }
 
     @Test
