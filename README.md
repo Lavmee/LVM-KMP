@@ -147,7 +147,7 @@ lvm {
 }
 ```
 
-Every automatic behavior can be switched off, including the dependencies blueprint adds and the catalog and repositories added by the settings plugin. Anything `lvm { }` doesn't cover is configured with the regular `android { }` and `kotlin { }` blocks.
+Every automatic behavior can be switched off, including the dependencies blueprint adds and the catalog and repositories added by the settings plugin. Anything `lvm { }` doesn't cover is configured with the regular `android { }` and `kotlin { }` blocks. For the Android target of a library, `kotlin { android { } }` is available only when the module also lists the AGP plugin; see [Android](#android).
 
 ## Android
 
