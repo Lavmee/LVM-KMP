@@ -47,6 +47,15 @@ buildConfig {
     buildConfigField("MIN_GRADLE", "9.6")
     buildConfigField("MIN_KOTLIN", "2.4.0")
     buildConfigField("MIN_AGP", "9.4.0")
+
+    // Versions that only the TestKit fixtures need.
+    sourceSets.named("testFixtures") {
+        packageName("tech.annexflow.lvm.blueprint.testing")
+        className("LvmTestVersions")
+        useKotlinOutput { internalVisibility = false }
+
+        buildConfigField("DETEKT", libs.versions.detekt)
+    }
 }
 
 tasks.test {

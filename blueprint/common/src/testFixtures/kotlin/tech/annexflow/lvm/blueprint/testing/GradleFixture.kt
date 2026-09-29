@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.testing
 import java.io.File
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 
 /** A throwaway Gradle build that resolves blueprint plugins from the blueprint sources, like a real consumer would. */
 class GradleFixture(val rootDir: File) {
@@ -30,10 +31,12 @@ class GradleFixture(val rootDir: File) {
             .forwardOutput()
 
     companion object {
-        val blueprintDir: String = requireNotNull(System.getProperty("lvm.blueprint.dir")).replace('\\', '/')
-        val kotlinVersion: String = requireNotNull(System.getProperty("lvm.test.kotlinVersion"))
-        val agpVersion: String = requireNotNull(System.getProperty("lvm.test.agpVersion"))
-        val detektVersion: String = requireNotNull(System.getProperty("lvm.test.detektVersion"))
+        val blueprintDir: String = requireNotNull(System.getProperty("lvm.blueprint.dir")) {
+            "System property lvm.blueprint.dir is not set: apply lvm.blueprint-fixture-tests to the module."
+        }.replace('\\', '/')
+        val kotlinVersion: String = LvmBuildInfo.TESTED_KOTLIN
+        val agpVersion: String = LvmBuildInfo.TESTED_AGP
+        val detektVersion: String = LvmTestVersions.DETEKT
 
         /** Start of settings.gradle.kts: blueprint from sources, the settings plugin, and [lvmBlock] inside `lvm { }`. */
         fun settingsHeader(lvmBlock: String = "catalog = false"): String = """

@@ -14,16 +14,8 @@ val blueprintFixtureSources = tasks.register<Sync>("blueprintFixtureSources") {
     into(layout.buildDirectory.dir("fixture-src"))
 }
 
-// Precompiled script plugins have no `libs` accessor.
-val catalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
-fun catalogVersion(alias: String): String = catalog.findVersion(alias).get().requiredVersion
-
 tasks.test {
     useJUnitPlatform()
-    systemProperty("lvm.test.kotlinVersion", catalogVersion("kotlin"))
-    systemProperty("lvm.test.agpVersion", catalogVersion("agp"))
-    systemProperty("lvm.test.detektVersion", catalogVersion("detekt"))
     jvmArgumentProviders.add(
         objects.newInstance<BlueprintFixtureDir>().apply {
             root.fileProvider(blueprintFixtureSources.map { it.destinationDir })

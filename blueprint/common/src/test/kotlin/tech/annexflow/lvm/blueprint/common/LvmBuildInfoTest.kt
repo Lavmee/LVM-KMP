@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.common
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import tech.annexflow.lvm.blueprint.testing.LvmTestVersions
 
 class LvmBuildInfoTest {
 
@@ -33,6 +34,7 @@ class LvmBuildInfoTest {
             "MIN_GRADLE" to LvmBuildInfo.MIN_GRADLE,
             "MIN_KOTLIN" to LvmBuildInfo.MIN_KOTLIN,
             "MIN_AGP" to LvmBuildInfo.MIN_AGP,
+            "LvmTestVersions.DETEKT" to LvmTestVersions.DETEKT,
         )
         for ((name, version) in versions) {
             assertTrue(VERSION.matches(version), "$name is not a numeric dotted version: <$version>")
