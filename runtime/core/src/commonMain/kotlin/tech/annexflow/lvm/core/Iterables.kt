@@ -1,20 +1,49 @@
 package tech.annexflow.lvm.core
 
-/** The first element of type [T], or `null` if there is none. */
-public inline fun <reified T> Iterable<*>.firstOrNullIsInstance(): T? =
-    firstOrNull { item -> item is T } as? T
+/** The first element of type [T], or `null` if there is none. If [T] is nullable, a `null` element matches. */
+public inline fun <reified T> Iterable<*>.firstOrNullIsInstance(): T? {
+    for (element in this) if (element is T) return element
+    return null
+}
 
-/** The last element of type [T], or `null` if there is none. */
-public inline fun <reified T> Iterable<*>.lastOrNullIsInstance(): T? =
-    lastOrNull { item -> item is T } as? T
+/** The last element of type [T], or `null` if there is none. If [T] is nullable, a `null` element matches. */
+public inline fun <reified T> Iterable<*>.lastOrNullIsInstance(): T? {
+    var last: T? = null
+    var found = false
+    for (element in this) {
+        if (element is T) {
+            last = element
+            found = true
+        }
+    }
+    return if (found) last else null
+}
 
-/** The first element of type [T]. Throws [NoSuchElementException] if there is none. */
-public inline fun <reified T> Iterable<*>.firstIsInstance(): T =
-    firstOrNullIsInstance<T>() ?: throw NoSuchElementException("No element of type ${T::class.simpleName}")
+/**
+ * The first element of type [T]. Throws [NoSuchElementException] if there is none.
+ * If [T] is nullable, a `null` element matches.
+ */
+public inline fun <reified T> Iterable<*>.firstIsInstance(): T {
+    for (element in this) if (element is T) return element
+    throw NoSuchElementException("No element of type ${T::class.simpleName}")
+}
 
-/** The last element of type [T]. Throws [NoSuchElementException] if there is none. */
-public inline fun <reified T> Iterable<*>.lastIsInstance(): T =
-    lastOrNullIsInstance<T>() ?: throw NoSuchElementException("No element of type ${T::class.simpleName}")
+/**
+ * The last element of type [T]. Throws [NoSuchElementException] if there is none.
+ * If [T] is nullable, a `null` element matches.
+ */
+public inline fun <reified T> Iterable<*>.lastIsInstance(): T {
+    var last: T? = null
+    var found = false
+    for (element in this) {
+        if (element is T) {
+            last = element
+            found = true
+        }
+    }
+    if (!found) throw NoSuchElementException("No element of type ${T::class.simpleName}")
+    return last as T
+}
 
 /** The first element matching [predicate]; if none matches, the first element; `null` if this is empty. */
 public inline fun <T> Iterable<T>.findOrFirstOrNull(predicate: (T) -> Boolean): T? {

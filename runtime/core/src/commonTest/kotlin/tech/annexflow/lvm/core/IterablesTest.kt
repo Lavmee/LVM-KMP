@@ -26,6 +26,16 @@ class IterablesTest {
     }
 
     @Test
+    fun `firstIsInstance returns a matching null element for a nullable type`() {
+        assertNull(listOf<Any?>(null, "a").firstIsInstance<String?>())
+    }
+
+    @Test
+    fun `lastIsInstance returns a matching null element for a nullable type`() {
+        assertNull(listOf<Any?>("a", null).lastIsInstance<String?>())
+    }
+
+    @Test
     fun `findOrFirstOrNull falls back to the first element`() {
         assertEquals(3, listOf(1, 3, 5).findOrFirstOrNull { it > 2 })
         assertEquals(1, listOf(1, 3, 5).findOrFirstOrNull { it > 9 })
