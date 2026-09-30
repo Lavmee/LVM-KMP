@@ -45,7 +45,7 @@ internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension
  * compile tasks, and of the Java compile tasks of those targets. The Android target gets the same convention in
  * AndroidTarget.kt. The KMP top-level options can't carry jvmTarget, because they are common options.
  *
- * Being conventions, they lose to a value set with native DSL, such as `kotlin { jvm { compilerOptions { jvmTarget = … } } }`.
+ * Being conventions, they lose to a value set with native DSL, such as `kotlin { jvm { compilerOptions { jvmTarget = ... } } }`.
  */
 internal fun configureJvmTarget(kotlin: KotlinMultiplatformExtension, section: JvmSection) {
     val jvmTarget = section.kotlinJvmTarget()

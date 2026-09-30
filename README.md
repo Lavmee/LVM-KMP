@@ -1,7 +1,7 @@
 # LVM-KMP
 
-> **LVM — Lightweight Versatile Machinery.**
-> `lvm-blueprint` — machinery that builds your app. `lvm-*` — machinery that runs inside it.
+> **LVM: Lightweight Versatile Machinery.**
+> `lvm-blueprint` is the machinery that builds your app. `lvm-*` is the machinery that runs inside it.
 
 Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS and desktop apps.
 
@@ -153,7 +153,7 @@ Every automatic behavior can be switched off, including the dependencies bluepri
 
 - **Applications** use `tech.annexflow.lvm.android.application`.
 - **Libraries** get their Android target from `lvm { targets { android() } }`, which applies `com.android.kotlin.multiplatform.library`. This requires AGP 9.4 or newer.
-  The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "…" } }`.
+  The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "..." } }`.
   Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
 
 ## Supported versions
@@ -168,7 +168,7 @@ One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-co
 
 ## Documentation
 
-- [Releasing](RELEASING.md) — how releases are published
+- [Releasing](RELEASING.md): how releases are published
 
 ## License
 

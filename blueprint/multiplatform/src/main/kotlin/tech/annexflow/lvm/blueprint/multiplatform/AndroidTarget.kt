@@ -32,13 +32,13 @@ internal fun Project.configureAndroidTarget(
     val jvmTarget = jvm.kotlinJvmTarget()
     (kotlin as ExtensionAware).extensions.configure(KotlinMultiplatformAndroidLibraryTarget::class.java) {
         if (hostTests) withHostTest { }
-        // A convention, like the one of JVM targets, so kotlin { android { compilerOptions { jvmTarget = … } } } wins.
+        // A convention, like the one of JVM targets, so kotlin { android { compilerOptions { jvmTarget = ... } } } wins.
         compilerOptions.jvmTarget.convention(jvmTarget)
     }
 
     // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.
     // Values set with native DSL, preview levels included, win: lvm fills in only what is still unset.
-    // The Kotlin DSL accessor kotlin { android { … } } exists only when the module also lists
+    // The Kotlin DSL accessor kotlin { android { ... } } exists only when the module also lists
     // com.android.kotlin.multiplatform.library in plugins { }; the apply above then does nothing.
     androidComponents.finalizeDsl { android ->
         if (android.compileSdk == null && android.compileSdkPreview == null) android.compileSdk = section.compileSdk.get()

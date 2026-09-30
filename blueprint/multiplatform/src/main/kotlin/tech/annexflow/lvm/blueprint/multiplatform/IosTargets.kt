@@ -15,7 +15,7 @@ internal fun KotlinMultiplatformExtension.configureIosTargets(spec: IosTargetSpe
         }
         if (framework != null) {
             val baseName = framework.baseName.orNull
-                ?: throw InvalidUserDataException("Set lvm { targets { ios { framework { baseName = \"…\" } } } }.")
+                ?: throw InvalidUserDataException("Set lvm { targets { ios { framework { baseName = \"...\" } } } }.")
             val isStatic = framework.isStatic.get()
             val bundleId = framework.bundleId.orNull
             target.binaries.framework {

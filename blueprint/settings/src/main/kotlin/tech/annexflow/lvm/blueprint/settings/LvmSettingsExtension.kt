@@ -39,7 +39,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     fun ios(action: Action<IosDefaults>) = action.execute(ios)
     fun quality(action: Action<QualityDefaults>) = action.execute(quality)
 
-    /** Every value that was set, as `lvm.<key>` → string. Empty lists are not forwarded. */
+    /** Every value that was set, as `lvm.<key>` -> string. Empty lists are not forwarded. */
     internal fun forwardedValues(): Map<String, String> {
         val result = LinkedHashMap<String, String>()
         values.get().forEach { (key, value) -> result[LvmKeys.property(key)] = value }

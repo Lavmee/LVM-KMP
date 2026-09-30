@@ -3,7 +3,7 @@ plugins {
     id("tech.annexflow.lvm.quality")
 }
 
-// Namespace: tech.annexflow.lvm + :samples:smoke → tech.annexflow.lvm.samples.smoke
+// Namespace: tech.annexflow.lvm + :samples:smoke -> tech.annexflow.lvm.samples.smoke
 group = "tech.annexflow.lvm"
 
 lvm {
