@@ -24,7 +24,8 @@ class CombinedLoggerTest {
 
         (named("a") + named("b") + named("c")).log(Severity.INFO, "Tag", "message", null)
         (named("d") + (named("e") + named("f"))).log(Severity.INFO, "Tag", "message", null)
+        ((named("g") + named("h")) + (named("i") + named("j"))).log(Severity.INFO, "Tag", "message", null)
 
-        assertEquals(listOf("a", "b", "c", "d", "e", "f"), calls)
+        assertEquals(listOf("a", "b", "c", "d", "e", "f", "g", "h", "i", "j"), calls)
     }
 }

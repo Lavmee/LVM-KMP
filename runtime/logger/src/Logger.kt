@@ -1,5 +1,3 @@
-@file:Suppress("NOTHING_TO_INLINE")
-
 package tech.annexflow.lvm.logger
 
 /** Receives log messages and decides where they go. Combine several loggers with [plus]. */
@@ -8,42 +6,34 @@ public fun interface Logger {
     public fun log(severity: Severity, tag: String, message: String, throwable: Throwable?)
 }
 
-/** Logs [message] at [Severity.DEBUG]. */
-public inline fun Logger.d(tag: String, message: Any?) {
-    log(severity = Severity.DEBUG, tag = tag, message = message.toString(), throwable = null)
-}
-
-/** Logs [message] and [throwable] at [Severity.DEBUG]. */
-public inline fun Logger.d(tag: String, message: Any?, throwable: Throwable) {
+/**
+ * Logs [message] at [Severity.DEBUG]. Pass an exception as [throwable] to log its stack trace; as [message] it is
+ * logged as text only.
+ */
+public fun Logger.d(tag: String, message: Any?, throwable: Throwable? = null) {
     log(severity = Severity.DEBUG, tag = tag, message = message.toString(), throwable = throwable)
 }
 
-/** Logs [message] at [Severity.INFO]. */
-public inline fun Logger.i(tag: String, message: Any?) {
-    log(severity = Severity.INFO, tag = tag, message = message.toString(), throwable = null)
-}
-
-/** Logs [message] and [throwable] at [Severity.INFO]. */
-public inline fun Logger.i(tag: String, message: Any?, throwable: Throwable) {
+/**
+ * Logs [message] at [Severity.INFO]. Pass an exception as [throwable] to log its stack trace; as [message] it is logged
+ * as text only.
+ */
+public fun Logger.i(tag: String, message: Any?, throwable: Throwable? = null) {
     log(severity = Severity.INFO, tag = tag, message = message.toString(), throwable = throwable)
 }
 
-/** Logs [message] at [Severity.WARN]. */
-public inline fun Logger.w(tag: String, message: Any?) {
-    log(severity = Severity.WARN, tag = tag, message = message.toString(), throwable = null)
-}
-
-/** Logs [message] and [throwable] at [Severity.WARN]. */
-public inline fun Logger.w(tag: String, message: Any?, throwable: Throwable) {
+/**
+ * Logs [message] at [Severity.WARN]. Pass an exception as [throwable] to log its stack trace; as [message] it is logged
+ * as text only.
+ */
+public fun Logger.w(tag: String, message: Any?, throwable: Throwable? = null) {
     log(severity = Severity.WARN, tag = tag, message = message.toString(), throwable = throwable)
 }
 
-/** Logs [message] at [Severity.ERROR]. */
-public inline fun Logger.e(tag: String, message: Any?) {
-    log(severity = Severity.ERROR, tag = tag, message = message.toString(), throwable = null)
-}
-
-/** Logs [message] and [throwable] at [Severity.ERROR]. */
-public inline fun Logger.e(tag: String, message: Any?, throwable: Throwable) {
+/**
+ * Logs [message] at [Severity.ERROR]. Pass an exception as [throwable] to log its stack trace; as [message] it is
+ * logged as text only.
+ */
+public fun Logger.e(tag: String, message: Any?, throwable: Throwable? = null) {
     log(severity = Severity.ERROR, tag = tag, message = message.toString(), throwable = throwable)
 }

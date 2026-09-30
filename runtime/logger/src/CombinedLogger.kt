@@ -1,29 +1,14 @@
 package tech.annexflow.lvm.logger
 
-// One early return per shape of the operands: combined on the right, combined on the left, two plain loggers.
-// Folding them into one expression would hide three different answers in nested ifs.
 /**
  * A [Logger] that sends every message to this logger and then to [other].
  *
- * Adding to a combined logger keeps one flat list, so `a + b + c` calls each logger once, in that order.
+ * Combining combined loggers keeps one flat list, so each logger is called once, in order. A logger that throws stops
+ * the message from reaching the loggers after it.
  */
-@Suppress("ReturnCount")
-public operator fun Logger.plus(other: Logger): Logger {
-    if (other is CombinedLogger) {
-        return CombinedLogger(
-            loggers = buildList {
-                add(this@plus)
-                addAll(other.loggers)
-            },
-        )
-    }
+public operator fun Logger.plus(other: Logger): Logger = CombinedLogger(loggers = flatten(this) + flatten(other))
 
-    if (this is CombinedLogger) {
-        return CombinedLogger(loggers = this.loggers + other)
-    }
-
-    return CombinedLogger(loggers = listOf(this, other))
-}
+private fun flatten(logger: Logger): List<Logger> = if (logger is CombinedLogger) logger.loggers else listOf(logger)
 
 private class CombinedLogger(
     val loggers: List<Logger>,

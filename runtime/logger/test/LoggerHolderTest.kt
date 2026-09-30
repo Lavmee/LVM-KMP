@@ -27,7 +27,6 @@ class LoggerHolderTest {
         holder.i("i", failure)
         holder.w("w", failure)
         holder.e("e", failure)
-        holder.d { "lazy" }
 
         assertEquals(
             listOf(
@@ -35,9 +34,17 @@ class LoggerHolderTest {
                 Entry(Severity.INFO, "Checkout", "i", failure),
                 Entry(Severity.WARN, "Checkout", "w", failure),
                 Entry(Severity.ERROR, "Checkout", "e", failure),
-                Entry(Severity.DEBUG, "Checkout", "lazy", null),
             ),
             logger.entries,
         )
+    }
+
+    @Test
+    fun `log uses an explicit tag`() {
+        val logger = RecordingLogger()
+
+        Checkout(logger).log(Severity.INFO, "m", tag = "Custom")
+
+        assertEquals(listOf(Entry(Severity.INFO, "Custom", "m", null)), logger.entries)
     }
 }
