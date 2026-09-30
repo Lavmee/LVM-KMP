@@ -14,6 +14,8 @@ plugins {
 lvm {
     // lvm-versions is published from this repository; the build uses gradle/libs.versions.toml as `libs` instead.
     catalog = false
+    // Published libraries load on JDK 17 and newer.
+    jvm { target = 17 }
     kotlin { warningsAsErrors = true }
 }
 
