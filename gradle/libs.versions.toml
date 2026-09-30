@@ -7,6 +7,9 @@ junit = "5.13.4"
 kotlinxCoroutines = "1.11.0"
 turbine = "1.2.1"
 kermit = "2.2.0"
+kotlinxDatetime = "0.8.0"
+kotlinxIo = "0.9.1"
+filekit = "0.16.0"
 
 [libraries]
 android-gradlePluginApi = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
@@ -20,6 +23,9 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
 
 [plugins]
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
