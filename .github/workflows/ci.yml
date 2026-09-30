@@ -3,7 +3,19 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'docs/**'
+      - '.agents/**'
+      - '.claude'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'docs/**'
+      - '.agents/**'
+      - '.claude'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -14,14 +26,34 @@ jobs:
     # macOS: iOS klibs, frameworks and simulator tests need Xcode. The image also ships the Android SDK.
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Blueprint fixture builds resolve dependencies into their own TestKit Gradle home, which setup-gradle doesn't cache.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            blueprint/*/build/tmp/test/work/.gradle-test-kit/caches/modules-2
+            !blueprint/*/build/tmp/test/work/.gradle-test-kit/caches/modules-2/*.lock
+            !blueprint/*/build/tmp/test/work/.gradle-test-kit/caches/modules-2/gc.properties
+          key: testkit-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', 'blueprint/**/*.gradle.kts') }}
+          restore-keys: testkit-${{ runner.os }}-
+
+      - name: Read the Kotlin version
+        id: kotlin
+        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+
+      # The Kotlin/Native toolchain and its dependencies. No restore keys: a new Kotlin version needs a new toolchain anyway.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
 
       - name: Blueprint tests
         run: ./gradlew -p blueprint check
