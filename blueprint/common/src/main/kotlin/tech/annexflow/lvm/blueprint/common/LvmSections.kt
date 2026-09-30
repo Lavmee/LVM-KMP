@@ -26,6 +26,7 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     section.warningsAsErrors.convention(values.boolean(LvmKeys.KOTLIN_WARNINGS_AS_ERRORS, LvmDefaults.KOTLIN_WARNINGS_AS_ERRORS))
     section.explicitApi.convention(values.boolean(LvmKeys.KOTLIN_EXPLICIT_API, LvmDefaults.KOTLIN_EXPLICIT_API))
     section.testDependencies.convention(values.boolean(LvmKeys.KOTLIN_TEST_DEPENDENCIES, LvmDefaults.KOTLIN_TEST_DEPENDENCIES))
+    section.flatLayout.convention(values.boolean(LvmKeys.KOTLIN_FLAT_LAYOUT, LvmDefaults.KOTLIN_FLAT_LAYOUT))
 }
 
 /** `com.example` + `:feature:user-profile` -> `com.example.feature.user_profile`. */

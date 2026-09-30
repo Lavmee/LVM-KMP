@@ -13,6 +13,7 @@ object LvmKeys {
     const val KOTLIN_FREE_COMPILER_ARGS: String = "kotlin.freeCompilerArgs"
     const val KOTLIN_EXPLICIT_API: String = "kotlin.explicitApi"
     const val KOTLIN_TEST_DEPENDENCIES: String = "kotlin.testDependencies"
+    const val KOTLIN_FLAT_LAYOUT: String = "kotlin.flatLayout"
     const val IOS_ARCHITECTURES: String = "ios.architectures"
     const val QUALITY_CONFIG: String = "quality.config"
     const val QUALITY_SOURCE: String = "quality.source"

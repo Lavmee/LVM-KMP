@@ -11,7 +11,10 @@ abstract class QualitySection @Inject constructor(private val project: Project) 
     /** detekt config files, relative to the root project directory. Appended to the build-wide `lvm.quality.config`. */
     abstract val config: ListProperty<String>
 
-    /** Directories to analyze, relative to this module. Replaces the build-wide `lvm.quality.source`. */
+    /**
+     * Directories to analyze, relative to this module. `*` matches within one directory name, as in `src@*`.
+     * Replaces the build-wide `lvm.quality.source`.
+     */
     abstract val source: ListProperty<String>
 
     abstract val buildUponDefaultConfig: Property<Boolean>

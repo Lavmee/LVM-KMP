@@ -61,6 +61,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         list(LvmKeys.KOTLIN_FREE_COMPILER_ARGS, kotlin.freeCompilerArgs)
         scalar(LvmKeys.KOTLIN_EXPLICIT_API, kotlin.explicitApi)
         scalar(LvmKeys.KOTLIN_TEST_DEPENDENCIES, kotlin.testDependencies)
+        scalar(LvmKeys.KOTLIN_FLAT_LAYOUT, kotlin.flatLayout)
         list(LvmKeys.IOS_ARCHITECTURES, ios.architectures)
         list(LvmKeys.QUALITY_CONFIG, quality.config)
         list(LvmKeys.QUALITY_SOURCE, quality.source)
@@ -86,6 +87,7 @@ abstract class KotlinDefaults {
     abstract val freeCompilerArgs: ListProperty<String>
     abstract val explicitApi: Property<Boolean>
     abstract val testDependencies: Property<Boolean>
+    abstract val flatLayout: Property<Boolean>
 }
 
 abstract class IosDefaults {

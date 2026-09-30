@@ -33,4 +33,10 @@ abstract class KotlinSection {
 
     /** Adds `kotlin-test` to `commonTest`. */
     abstract val testDependencies: Property<Boolean>
+
+    /**
+     * Sources in `src`, `test`, `src@<name>` and `test@<name>` instead of `src/<sourceSet>/kotlin`, with the module's
+     * root package left out of the directories.
+     */
+    abstract val flatLayout: Property<Boolean>
 }

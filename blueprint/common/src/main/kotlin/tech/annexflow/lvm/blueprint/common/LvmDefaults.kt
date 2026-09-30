@@ -11,9 +11,11 @@ object LvmDefaults {
     val KOTLIN_FREE_COMPILER_ARGS: List<String> = emptyList()
     const val KOTLIN_EXPLICIT_API: Boolean = false
     const val KOTLIN_TEST_DEPENDENCIES: Boolean = true
+    const val KOTLIN_FLAT_LAYOUT: Boolean = false
     val IOS_ARCHITECTURES: List<String> = listOf("iosArm64", "iosSimulatorArm64")
     val QUALITY_CONFIG: List<String> = emptyList()
     val QUALITY_SOURCE: List<String> = listOf("src")
+    val QUALITY_SOURCE_FLAT: List<String> = listOf("src", "test", "src@*", "test@*")
     const val QUALITY_BUILD_UPON_DEFAULT_CONFIG: Boolean = true
     const val QUALITY_COMPOSE_RULES: Boolean = false
 }

@@ -12,6 +12,7 @@ import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmJvm
+import tech.annexflow.lvm.blueprint.common.lvmKotlin
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 class LvmQualityPlugin : Plugin<Project> {
@@ -23,7 +24,13 @@ class LvmQualityPlugin : Plugin<Project> {
         val values = LvmValues(project)
         val jvm = project.lvmJvm()
         val section = project.lvm.extensions.create("quality", QualitySection::class.java, project)
-        section.source.convention(values.list(LvmKeys.QUALITY_SOURCE, LvmDefaults.QUALITY_SOURCE))
+        val flatLayout = project.lvmKotlin().flatLayout
+        section.source.convention(
+            flatLayout.flatMap { flat ->
+                val default = if (flat) LvmDefaults.QUALITY_SOURCE_FLAT else LvmDefaults.QUALITY_SOURCE
+                values.list(LvmKeys.QUALITY_SOURCE, default)
+            },
+        )
         section.buildUponDefaultConfig.convention(
             values.boolean(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, LvmDefaults.QUALITY_BUILD_UPON_DEFAULT_CONFIG),
         )
@@ -35,19 +42,35 @@ class LvmQualityPlugin : Plugin<Project> {
         val configFiles = values.list(LvmKeys.QUALITY_CONFIG, LvmDefaults.QUALITY_CONFIG)
             .zip(section.config) { buildWide, module -> (buildWide + module).map(rootDirectory::file) }
 
+        val flatLayoutConfig = project.tasks.register("lvmDetektFlatLayoutConfig", WriteDetektConfig::class.java) {
+            description = "Writes the detekt config for the flat source layout."
+            text.set(flatLayoutDetektConfig())
+            destination.set(project.layout.buildDirectory.file("lvm/detekt-flat-layout.yml"))
+        }
+        val flatLayoutConfigFiles = flatLayout.zip(flatLayoutConfig.flatMap { it.destination }) { flat, file ->
+            if (flat) listOf(file) else emptyList()
+        }
+
         project.extensions.configure(DetektExtension::class.java) {
-            config.setFrom(configFiles)
-            // detekt's default source is src/main/kotlin, which a KMP module doesn't have.
-            source.setFrom(section.source.map { directories -> directories.map(projectDirectory::dir) })
+            // Later config files override earlier ones, so the build's own files override the flat layout's.
+            config.setFrom(flatLayoutConfigFiles, configFiles)
+            // detekt's default source, src/main/kotlin, doesn't exist in a KMP module. Entries are directory patterns.
+            source.setFrom(
+                section.source.map { directories ->
+                    projectDirectory.asFileTree.matching { directories.forEach { include("$it/**") } }
+                },
+            )
         }
 
         val buildUponDefaultConfig = section.buildUponDefaultConfig
         val jvmTarget = jvm.target.map(Int::toString)
         project.tasks.withType(Detekt::class.java).configureEach {
+            dependsOn(flatLayoutConfig)
             this.buildUponDefaultConfig = buildUponDefaultConfig.get()
             this.jvmTarget = jvmTarget.get()
         }
         project.tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
+            dependsOn(flatLayoutConfig)
             this.buildUponDefaultConfig.set(buildUponDefaultConfig)
             this.jvmTarget = jvmTarget.get()
         }

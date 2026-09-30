@@ -41,6 +41,13 @@ class LvmQualityPluginTest {
         file("lib/src/commonMain/kotlin/Answer.kt", "fun answer(): Int = 42 * 3")
     }
 
+    /** The fixture with the flat layout on and its source moved from src/commonMain to src. */
+    private fun flatFixture(settingsLvm: String = "catalog = false\nkotlin { flatLayout = true }"): GradleFixture =
+        fixture(settingsLvm).apply {
+            dir.resolve("lib/src/commonMain").deleteRecursively()
+            file("lib/src/Answer.kt", "package com.example.lib\n\nfun answer(input: Int): Int = input + 1")
+        }
+
     @Test
     fun `analyzes multiplatform sources`() {
         val result = fixture().buildAndFail(":lib:detekt")
@@ -115,5 +122,50 @@ class LvmQualityPluginTest {
 
         assertContains(output, "project ':rules'")
         assertFalse(output.contains("Using a Project object as a dependency notation"))
+    }
+
+    @Test
+    fun `the flat layout analyzes platform directories`() {
+        val fixture = flatFixture()
+        fixture.file("lib/src@jvm/Platform.kt", "package com.example.lib\n\nfun platform(): Int = 42 * 3")
+
+        val output = fixture.buildAndFail(":lib:detekt").output
+
+        assertContains(output, "src@jvm")
+        assertContains(output, "MagicNumber")
+    }
+
+    @Test
+    fun `the flat layout treats test directories as tests and ignores package paths`() {
+        val fixture = flatFixture()
+        fixture.file(
+            "lib/test@jvm/AnswerTest.kt",
+            """
+            package com.example.lib
+
+            fun `answer stays small`(): Boolean = answer(1) < 42 * 3
+            """,
+        )
+
+        fixture.build(":lib:detekt")
+    }
+
+    @Test
+    fun `build-wide detekt config overrides the flat layout defaults`() {
+        val settingsLvm = "catalog = false\nkotlin { flatLayout = true }\n" +
+            "quality { config.add(\"config/detekt/detekt.yml\") }"
+        val fixture = flatFixture(settingsLvm)
+        fixture.file(
+            "config/detekt/detekt.yml",
+            """
+            naming:
+              InvalidPackageDeclaration:
+                active: true
+            """,
+        )
+
+        val output = fixture.buildAndFail(":lib:detekt").output
+
+        assertContains(output, "InvalidPackageDeclaration")
     }
 }
