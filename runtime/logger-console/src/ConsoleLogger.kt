@@ -6,12 +6,12 @@ import tech.annexflow.lvm.logger.Logger
 import tech.annexflow.lvm.logger.console.internal.asExternal
 import co.touchlab.kermit.Logger as KermitLogger
 
-private val kermitLogger by lazy {
-    KermitLogger(loggerConfigInit(platformLogWriter()))
+private val sharedConsoleLogger: Logger by lazy {
+    KermitLogger(loggerConfigInit(platformLogWriter())).asExternal()
 }
 
 /**
  * A [Logger] that writes to the platform log: Logcat on Android, the system log on Apple platforms and the console
- * on JVM.
+ * on JVM. On Apple platforms, stack traces go to standard output instead.
  */
-public fun consoleLogger(): Logger = kermitLogger.asExternal()
+public fun consoleLogger(): Logger = sharedConsoleLogger
