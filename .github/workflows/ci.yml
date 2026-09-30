@@ -17,14 +17,18 @@ on:
       - '.agents/**'
       - '.claude'
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     # macOS: iOS klibs, frameworks and simulator tests need Xcode. The image also ships the Android SDK.
     runs-on: macos-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
 
