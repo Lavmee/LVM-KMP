@@ -16,7 +16,11 @@ lvm {
     catalog = false
     // Published libraries load on JDK 17 and newer.
     jvm { target = 17 }
-    kotlin { warningsAsErrors = true }
+    kotlin {
+        warningsAsErrors = true
+        // Sources in src, test, src@<name> and test@<name>, without the root package in the path.
+        flatLayout = true
+    }
 }
 
 rootProject.name = "LVM-KMP"
