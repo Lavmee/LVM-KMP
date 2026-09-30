@@ -26,4 +26,5 @@ lvm {
 rootProject.name = "LVM-KMP"
 
 include(":runtime:core")
+include(":runtime:coroutines")
 include(":samples:smoke")

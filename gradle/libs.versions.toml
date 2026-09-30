@@ -4,6 +4,8 @@ kotlin = "2.4.20"
 detekt = "1.23.8"
 detektComposeRules = "1.4.0"
 junit = "5.13.4"
+kotlinxCoroutines = "1.11.0"
+turbine = "1.2.1"
 
 [libraries]
 android-gradlePluginApi = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
@@ -13,6 +15,9 @@ detekt-composeRules = { module = "ru.kode:detekt-rules-compose", version.ref = "
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 [plugins]
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
