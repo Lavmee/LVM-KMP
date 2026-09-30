@@ -5,9 +5,9 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.util.GradleVersion
 
-enum class Support { TOO_OLD, SUPPORTED, NEWER_THAN_TESTED }
+internal enum class Support { TOO_OLD, SUPPORTED, NEWER_THAN_TESTED }
 
-object LvmCompatibility {
+internal object LvmCompatibility {
     /** Compares dotted numeric versions; qualifiers such as `-RC1` are ignored. */
     fun compare(left: String, right: String): Int {
         val l = numbers(left)

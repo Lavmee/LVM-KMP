@@ -30,7 +30,7 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
 }
 
 /** `com.example` + `:feature:user-profile` -> `com.example.feature.user_profile`. */
-fun defaultNamespace(group: String, projectPath: String): String {
+internal fun defaultNamespace(group: String, projectPath: String): String {
     if (group.isBlank()) {
         throw InvalidUserDataException(
             "Cannot derive the Android namespace of $projectPath: set group = \"...\" in the module, " +
@@ -45,7 +45,7 @@ fun defaultNamespace(group: String, projectPath: String): String {
  * The group Gradle assigns to a project that sets none: empty for the root project, the root project name for its
  * children, and the root project name followed by the parent path below that (`my-app` + `:feature:user-profile` -> `my-app.feature`).
  */
-fun gradleImplicitGroup(rootProjectName: String, projectPath: String): String {
+internal fun gradleImplicitGroup(rootProjectName: String, projectPath: String): String {
     val segments = projectPath.split(':').filter(String::isNotEmpty)
     if (segments.isEmpty()) return ""
     return (listOf(rootProjectName) + segments.dropLast(1)).joinToString(".")
