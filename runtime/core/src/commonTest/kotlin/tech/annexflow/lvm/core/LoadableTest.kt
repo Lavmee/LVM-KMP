@@ -31,12 +31,17 @@ class LoadableTest {
     @Test
     fun `getters return the data only for loaded states`() {
         val loaded: Loadable<List<Int>> = Loadable.Loaded(listOf(1))
+        val loading: Loadable<List<Int>> = Loadable.Loading
         val error: Loadable<List<Int>> = Loadable.Failed(failure)
 
         assertEquals(listOf(1), loaded.getOrNull())
+        assertNull(loading.getOrNull())
         assertNull(error.getOrNull())
         assertEquals(listOf(1), loaded.getOrElse { listOf(2) })
+        assertEquals(listOf(2), loading.getOrElse { listOf(2) })
         assertEquals(listOf(2), error.getOrElse { listOf(2) })
+        assertEquals(listOf(1), loaded.getOrEmpty())
+        assertEquals(emptyList<Int>(), loading.getOrEmpty())
         assertEquals(emptyList<Int>(), error.getOrEmpty())
     }
 }

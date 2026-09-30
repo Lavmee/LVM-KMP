@@ -21,8 +21,8 @@ class IterablesTest {
 
     @Test
     fun `strict instance lookups fail when no element has the type`() {
-        assertFailsWith<IllegalArgumentException> { items.firstIsInstance<Double>() }
-        assertFailsWith<IllegalArgumentException> { items.lastIsInstance<Double>() }
+        assertFailsWith<NoSuchElementException> { items.firstIsInstance<Double>() }
+        assertFailsWith<NoSuchElementException> { items.lastIsInstance<Double>() }
     }
 
     @Test
@@ -30,5 +30,17 @@ class IterablesTest {
         assertEquals(3, listOf(1, 3, 5).findOrFirstOrNull { it > 2 })
         assertEquals(1, listOf(1, 3, 5).findOrFirstOrNull { it > 9 })
         assertNull(emptyList<Int>().findOrFirstOrNull { it > 2 })
+    }
+
+    @Test
+    fun `findOrFirstOrNull returns a matching null element`() {
+        assertNull(listOf(1, null).findOrFirstOrNull { it == null })
+    }
+
+    @Test
+    fun `findOrFirstOrNull walks the elements only once`() {
+        val once = sequenceOf(1, 3).constrainOnce().asIterable()
+
+        assertEquals(1, once.findOrFirstOrNull { it > 9 })
     }
 }

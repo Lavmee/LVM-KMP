@@ -15,6 +15,7 @@ class StringsTest {
     fun `replaceLast ignores case only when asked to`() {
         assertEquals("abXa", "abXa".replaceLast('x', 'y'))
         assertEquals("abya", "abXa".replaceLast('x', 'y', ignoreCase = true))
+        assertEquals("aBC", "aBC".replaceLast("bc", "Y"))
         assertEquals("aY", "aBC".replaceLast("bc", "Y", ignoreCase = true))
     }
 

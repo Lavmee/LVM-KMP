@@ -15,7 +15,7 @@ public sealed interface Loadable<out T> {
     public data class Failed(val throwable: Throwable) : Done<Nothing>
 
     /** The load finished with [data]. */
-    public data class Loaded<T>(val data: T) : Done<T>
+    public data class Loaded<out T>(val data: T) : Done<T>
 }
 
 /** Applies [transform] to the data of a [Loadable.Loaded] state; other states are returned as they are. */
@@ -29,10 +29,10 @@ public inline fun <T, R> Loadable<T>.map(transform: (T) -> R): Loadable<R> = whe
 public inline fun <T, R> Loadable<List<T>>.mapList(transform: (T) -> R): Loadable<List<R>> =
     map { list -> list.map(transform) }
 
-/** The data of a [Loadable.Loaded] state, or the result of [value] otherwise. */
-public inline fun <T> Loadable<T>.getOrElse(value: () -> T): T {
+/** The data of a [Loadable.Loaded] state, or the result of [defaultValue] otherwise. */
+public inline fun <T> Loadable<T>.getOrElse(defaultValue: () -> T): T {
     if (this is Loadable.Loaded<T>) return this.data
-    return value()
+    return defaultValue()
 }
 
 /** The data of a [Loadable.Loaded] state, or `null` otherwise. */
