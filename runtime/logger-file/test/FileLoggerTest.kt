@@ -54,10 +54,13 @@ class FileLoggerTest {
                 logFilePath = lazy { root },
                 rollOnSize = 100,
                 maxLogFiles = 2,
+                prependTimestamp = false,
             ),
         )
         val logger = KermitLogger(loggerConfigInit(writer)).asExternal()
 
+        // Without a timestamp every line is 65 bytes: a log holds two lines and rolls when the third arrives. So the
+        // 20th line never rolls, and the checks below don't race the writer.
         repeat(20) { logger.i(tag = "Test", message = "a line long enough to fill a small log file quickly") }
 
         assertTrue(SystemFileSystem.exists(Path(root, "app.log")))

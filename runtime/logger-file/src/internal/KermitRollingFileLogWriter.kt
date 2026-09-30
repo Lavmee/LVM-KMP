@@ -11,7 +11,8 @@
  *
  * Modified in LVM: copied from `co.touchlab.kermit.io.RollingFileLogWriter` of kermit-io 2.1.0. The log directory is
  * resolved and created on the writer's thread, the channel is cancelled when the writer stops, and failures are
- * printed with `println`, which works on every target.
+ * printed with `println`, which works on every target, and a logging call neither throws on an interrupted thread nor
+ * clears its interrupt.
  */
 
 package tech.annexflow.lvm.logger.file.internal
@@ -30,7 +31,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -123,7 +123,7 @@ internal class KermitRollingFileLogWriter(
                 appendLine(throwable.stackTraceToString())
             }
         }
-        loggingChannel.trySendBlocking(Buffer().apply { writeString(log) })
+        loggingChannel.sendUninterruptibly(Buffer().apply { writeString(log) })
     }
 
     private fun formatMessage(severity: Severity, tag: Tag?, message: Message): String =

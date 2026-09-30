@@ -27,7 +27,10 @@ public val logsDirectoryPath: Path get() = FileKit.cacheDir.resolve(LOGS_DIRECTO
  *
  * Building the logger does not touch the disk: [directory] is called, and the directory created, on the writer's own
  * thread. [Logger.log] returns once the writer has taken the line. If writing fails, for example because [directory]
- * throws, the error is printed and the logger drops the lines it hasn't written.
+ * throws, the error is printed once and every later line is dropped.
+ *
+ * Each call starts a writer thread that runs until the process ends. Build one logger per file and share it: two
+ * loggers on the same file lose lines when they roll it.
  */
 public fun fileLogger(
     fileName: String,
