@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 
 class StateFlowsTest {
@@ -20,18 +21,23 @@ class StateFlowsTest {
     }
 
     @Test
-    fun `every arity passes its sources to the transform in order`() {
+    fun `every arity passes its sources to the transform in order`() = runTest {
         val a = MutableStateFlow("a")
         val b = MutableStateFlow("b")
         val c = MutableStateFlow("c")
         val d = MutableStateFlow("d")
         val e = MutableStateFlow("e")
+        val combined = listOf(
+            combineState(a) { x -> x },
+            combineState(a, b) { x, y -> x + y },
+            combineState(a, b, c) { x, y, z -> x + y + z },
+            combineState(a, b, c, d) { x, y, z, w -> x + y + z + w },
+            combineState(a, b, c, d, e) { x, y, z, w, v -> x + y + z + w + v },
+        )
+        val expected = listOf("a", "ab", "abc", "abcd", "abcde")
 
-        assertEquals("a", combineState(a) { x -> x }.value)
-        assertEquals("ab", combineState(a, b) { x, y -> x + y }.value)
-        assertEquals("abc", combineState(a, b, c) { x, y, z -> x + y + z }.value)
-        assertEquals("abcd", combineState(a, b, c, d) { x, y, z, w -> x + y + z + w }.value)
-        assertEquals("abcde", combineState(a, b, c, d, e) { x, y, z, w, v -> x + y + z + w + v }.value)
+        assertEquals(expected, combined.map { it.value })
+        assertEquals(expected, combined.map { it.first() })
     }
 
     @Test

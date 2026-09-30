@@ -20,7 +20,7 @@ class IterablesTest {
             seconds * 10
         }
 
-        assertEquals(listOf(30, 10, 20), results.map { it.await() })
+        assertEquals(listOf(30, 10, 20), results)
         assertEquals(3_000, currentTime)
     }
 

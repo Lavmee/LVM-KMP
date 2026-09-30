@@ -3,6 +3,7 @@ package tech.annexflow.lvm.coroutines
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlinx.coroutines.CancellationException
@@ -37,5 +38,18 @@ class RunSuspendCatchingTest {
         val result = runSuspendCatching { withTimeout(100) { delay(1_000) } }
 
         assertIs<TimeoutCancellationException>(result.exceptionOrNull())
+    }
+
+    @Test
+    fun `rethrows the timeout of an enclosing withTimeout`() = runTest {
+        var continued = false
+
+        assertFailsWith<TimeoutCancellationException> {
+            withTimeout(100) {
+                runSuspendCatching { delay(1_000) }
+                continued = true
+            }
+        }
+        assertFalse(continued)
     }
 }

@@ -1,7 +1,6 @@
 package tech.annexflow.lvm.coroutines
 
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -90,7 +89,6 @@ public fun <T1, R> StateFlow<T1>.mapState(transform: (a: T1) -> R): StateFlow<R>
 }
 
 /** Emits distinct values only, like every [StateFlow]. */
-@Suppress("UnnecessaryOptInAnnotation")
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class DerivedStateFlow<T>(
     val flow: Flow<T>,
@@ -103,8 +101,8 @@ private class DerivedStateFlow<T>(
     override val value: T
         get() = getValue()
 
-    @InternalCoroutinesApi
     override suspend fun collect(collector: FlowCollector<T>): Nothing {
-        coroutineScope { flow.distinctUntilChanged().stateIn(scope = this).collect(collector) }
+        // stateIn stores the values in a StateFlow, which drops equal values, so collectors get distinct values only.
+        coroutineScope { flow.stateIn(scope = this).collect(collector) }
     }
 }
