@@ -21,7 +21,6 @@ kotlin {
             api(project(":runtime:logger"))
             api(libs.kotlinx.io.core)
             implementation(libs.kermit)
-            implementation(libs.filekit.core)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
         }

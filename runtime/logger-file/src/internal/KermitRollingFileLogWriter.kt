@@ -10,8 +10,8 @@
  * See the License for the specific language governing permissions and limitations under the License.
  *
  * Modified in LVM: copied from `co.touchlab.kermit.io.RollingFileLogWriter` of kermit-io 2.1.0. The log directory is
- * resolved and created on the writer's thread, the channel is cancelled when the writer stops, and failures are
- * printed with `println`, which works on every target, and a logging call neither throws on an interrupted thread nor
+ * resolved and created on the writer's thread, and the channel is cancelled when the writer stops. Failures are
+ * printed with `println`, which works on every target. A logging call neither throws on an interrupted thread nor
  * clears its interrupt.
  */
 
