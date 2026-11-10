@@ -12,7 +12,7 @@ Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS an
 | Layer | What it is | Artifacts |
 |---|---|---|
 | **blueprint** | Build machinery: Gradle convention plugins | `lvm-blueprint-*` |
-| **runtime** | App machinery: KMP libraries | `lvm-core`, `lvm-logger`, `lvm-storage`, `lvm-decompose*`, `lvm-main-context` |
+| **runtime** | App machinery: KMP libraries | `lvm-core`, `lvm-coroutines`, `lvm-io`, `lvm-logger*`, `lvm-storage`, `lvm-decompose*`, `lvm-main-context` |
 | **versions** | Version catalog and BOM | `lvm-versions`, `lvm-bom` |
 
 All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version.
@@ -35,8 +35,12 @@ Each plugin does one thing. Apply only the ones you need.
 
 | Artifact | Contents |
 |---|---|
-| `lvm-core` | Flow and coroutine utilities, `NetworkResult`, collection helpers |
-| `lvm-logger` | Logger API, console logger, rotating file logger |
+| `lvm-core` | `Loadable`, `EvictingMap`, collection, string and function helpers |
+| `lvm-coroutines` | `StateFlow` without a scope (`mapState`, `combineState`), Flow helpers, `runSuspendCatching`, `StateFlow` helpers for `Loadable` |
+| `lvm-io` | `AppDirectories`: the app's cache and data directories on Android, iOS and JVM |
+| `lvm-logger` | Logger API: `Logger`, `Severity`, `LoggerHolder`, combining loggers with `+` |
+| `lvm-logger-console` | Console logger: Logcat on Android, the system log on Apple platforms, the console on JVM |
+| `lvm-logger-file` | Rolling file logger |
 | `lvm-storage` | Multiplatform `DataStore` factory and serializers |
 | `lvm-decompose` | Component infrastructure on top of [Decompose](https://github.com/arkivanov/Decompose): component context, component locals, scoped data, event bus, permissions, paging, state keeping |
 | `lvm-decompose-compose` | Back handling, stack animations and a slot bottom sheet for Compose |
@@ -44,6 +48,8 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-main-context` | `@MainContext`: runs the annotated function on the main dispatcher |
 | `lvm-bom` | BOM for projects that don't use the version catalog |
 | `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
+
+`fileLogger` from `lvm-logger-file` takes its directory as a lambda that runs on the writer's thread, for example `fileLogger("app") { Path(appDirectories.cache, "logs") }` with `AppDirectories` from `lvm-io`.
 
 ## Getting started
 
@@ -122,6 +128,8 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs` and `quality.config` set in a module are appended to the build-wide list, while `ios.architectures` and `quality.source` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
+
 ```kotlin
 // settings.gradle.kts
 lvm {
@@ -148,6 +156,37 @@ lvm {
 ```
 
 Every automatic behavior can be switched off, including the dependencies blueprint adds and the catalog and repositories added by the settings plugin. Anything `lvm { }` doesn't cover is configured with the regular `android { }` and `kotlin { }` blocks. For the Android target of a library, `kotlin { android { } }` is available only when the module also lists the AGP plugin; see [Android](#android).
+
+### Source layout
+
+Modules use the standard Kotlin Multiplatform layout, `src/commonMain/kotlin/...`, unless `lvm { kotlin { flatLayout = true } }` or `lvm.kotlin.flatLayout=true` turns on the flat layout. It uses shorter directories and leaves the module's root package out of them:
+
+| Directory | Source set |
+|---|---|
+| `src/` | `commonMain` |
+| `test/` | `commonTest` |
+| `src@<name>/` | `<name>Main`, for example `src@jvm/`, `src@ios/` or `src@android/` |
+| `test@<name>/` | `<name>Test`, for example `test@jvm/` or `test@androidHost/` |
+
+With the flat layout, the quality plugin analyzes all of these directories, turns off detekt's `InvalidPackageDeclaration` and treats `test@<name>/` as test code; the build's own detekt config files can override both. A module can't mix the two layouts: blueprint fails if it still has `src/<sourceSet>/kotlin`. Resources, Android `res` and the manifest keep their conventional directories, and a build-wide `lvm.quality.source` replaces the flat default entirely.
+
+### Settings plugin options
+
+| Setting | Default | Effect |
+|---|---|---|
+| `catalog` | `true` | Creates a version catalog from `lvm-versions` |
+| `catalogName` | `lvmLibs` | Name of that catalog. It can't be `lvm`: every catalog is also a project extension, and `lvm` is the `lvm { }` block |
+| `catalogVersion` | the plugin's own version | Version of `lvm-versions` to import |
+| `repositories` | `true` | Adds `google()` and `mavenCentral()` to `dependencyResolutionManagement` |
+| `values` | empty | Raw build-wide values by key, such as `values.put("android.minSdk", "26")`. The typed sections win over these |
+
+```kotlin
+// settings.gradle.kts
+lvm {
+    catalogName = "lvmCatalog"
+    repositories = false
+}
+```
 
 ## Android
 

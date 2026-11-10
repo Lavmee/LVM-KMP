@@ -39,4 +39,4 @@ Blueprint is an included build, so the root `build` does not run its tests. Run 
 ## New modules
 
 - A new blueprint plugin needs its module in `blueprint/settings.gradle.kts`, a `gradlePlugin { }` registration, an `apply false` entry in the root `build.gradle.kts` and a row in the README plugin table.
-- A new library or sample module needs an `include` in the root `settings.gradle.kts`.
+- A new library goes in `runtime/<name>` (Gradle path `:runtime:<name>`, flat, with hyphens: `runtime/logger-console`) and needs an `include` in the root `settings.gradle.kts`, as does a new sample module.

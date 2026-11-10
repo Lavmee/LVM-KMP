@@ -9,6 +9,7 @@ description: Always use this skill before writing or editing Kotlin code, Gradle
 
 * Follow the official Kotlin code style. Modules apply `tech.annexflow.lvm.quality`, so `./gradlew build` runs detekt on them.
 * Keep related code together: a class is followed by the extensions and helpers that belong to it, before the next class in the file.
+* Name a file after what it contains: a type together with its extensions (`Logger.kt`), or, for a file of extensions only, the plural of the receiver type (`Strings.kt`, `Flows.kt`). No `Ext` or `Util` suffixes. A file name becomes the JVM facade class (`StringsKt`) that compiled callers link against, so renaming a file with public declarations breaks binary compatibility.
 * Make declarations `internal` unless consumers need them. Public API is hard to take back once released, so add it deliberately.
 * Use only ASCII characters in code, comments and strings: `->` instead of an arrow, `...` instead of an ellipsis character, no em dash.
 
