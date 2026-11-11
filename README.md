@@ -42,7 +42,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-logger` | Logger API: `Logger`, `Severity`, `LoggerHolder`, combining loggers with `+` |
 | `lvm-logger-console` | Console logger: Logcat on Android, the system log on Apple platforms, the console on JVM |
 | `lvm-logger-file` | Rolling file logger |
-| `lvm-storage` | Multiplatform `DataStore` factory and serializers |
+| `lvm-storage` | `createDataStore`: a `DataStore` in the app's data directory or at any path, with serializers for JSON and kotlinx-serialization's binary formats |
 | `lvm-decompose` | Component infrastructure on top of [Decompose](https://github.com/arkivanov/Decompose): component context, component locals, scoped data, event bus, permissions, paging, state keeping |
 | `lvm-decompose-compose` | Back handling, stack animations and a slot bottom sheet for Compose |
 | `lvm-decompose-fetcher` | Cached, retrying network fetches inside components |
@@ -51,6 +51,8 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
 
 `fileLogger` from `lvm-logger-file` takes its directory as a lambda that runs on the writer's thread, for example `fileLogger("app") { Path(appDirectories.cache, "logs") }` with `AppDirectories` from `lvm-io`.
+
+`createDataStore` from `lvm-storage` returns androidx's `DataStore` with its file in the data directory of `AppDirectories`, for example `createDataStore(appDirectories, "settings.json", jsonSerializer { Settings() })`. `jsonSerializer` and `binarySerializer` store `@Serializable` values, so the module that declares them applies the Kotlin serialization plugin. A file that can't be decoded is replaced with the default value, unless the store gets another `corruptionHandler`.
 
 ## Getting started
 
