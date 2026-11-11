@@ -12,6 +12,8 @@ kotlinxIo = "0.9.1"
 androidxDataStore = "1.3.0"
 kotlinxSerialization = "1.12.0"
 okio = "3.18.2"
+decompose = "3.6.2"
+essenty = "2.7.1"
 kotlinCompileTesting = "0.14.0"
 
 [libraries]
@@ -37,6 +39,8 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-serialization-json-okio = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-okio", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerialization" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
+essenty-lifecycle-coroutines = { module = "com.arkivanov.essenty:lifecycle-coroutines", version.ref = "essenty" }
 
 [plugins]
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
