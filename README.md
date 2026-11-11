@@ -13,6 +13,7 @@ Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS an
 |---|---|---|
 | **blueprint** | Build machinery: Gradle convention plugins | `lvm-blueprint-*` |
 | **runtime** | App machinery: KMP libraries | `lvm-core`, `lvm-coroutines`, `lvm-io`, `lvm-logger*`, `lvm-storage`, `lvm-decompose*`, `lvm-main-context` |
+| **compiler** | Kotlin compiler plugins | `lvm-main-context-compiler` |
 | **versions** | Version catalog and BOM | `lvm-versions`, `lvm-bom` |
 
 All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version.
@@ -27,7 +28,7 @@ All artifacts are published to Maven Central under the `tech.annexflow.lvm` grou
 | `tech.annexflow.lvm.android.application` | Android application |
 | `tech.annexflow.lvm.publish` | Maven Central publishing and ABI validation |
 | `tech.annexflow.lvm.quality` | detekt |
-| `tech.annexflow.lvm.main-context` | The `@MainContext` compiler plugin |
+| `tech.annexflow.lvm.main-context` | The `@MainContext` compiler plugin; see [Main context](#main-context) |
 
 Each plugin does one thing. Apply only the ones you need.
 
@@ -45,7 +46,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-decompose` | Component infrastructure on top of [Decompose](https://github.com/arkivanov/Decompose): component context, component locals, scoped data, event bus, permissions, paging, state keeping |
 | `lvm-decompose-compose` | Back handling, stack animations and a slot bottom sheet for Compose |
 | `lvm-decompose-fetcher` | Cached, retrying network fetches inside components |
-| `lvm-main-context` | `@MainContext`: runs the annotated function on the main dispatcher |
+| `lvm-main-context` | `@MainContext`: calls to the annotated function from coroutines run on the main thread |
 | `lvm-bom` | BOM for projects that don't use the version catalog |
 | `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
 
@@ -128,7 +129,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs` and `quality.config` set in a module are appended to the build-wide list, while `ios.architectures` and `quality.source` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs` and `quality.config` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
 
 ```kotlin
 // settings.gradle.kts
@@ -195,6 +196,53 @@ lvm {
   The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "..." } }`.
   Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
 
+## Main context
+
+`tech.annexflow.lvm.main-context` lets code mark functions that must run on the main thread, such as navigation. In a module that applies it, every call to such a function from a coroutine runs on `Dispatchers.Main.immediate`.
+
+```kotlin
+// shared/build.gradle.kts
+plugins {
+    alias(lvmLibs.plugins.blueprint.multiplatform)
+    alias(lvmLibs.plugins.blueprint.main.context)
+}
+```
+
+```kotlin
+class Navigator {
+    @MainContext
+    fun push(screen: Screen) { ... }
+}
+
+suspend fun open(id: Id) {
+    val screen = repository.load(id)
+    navigator.push(screen) // runs on the main thread
+}
+```
+
+The plugin adds `lvm-main-context`, which holds the annotation, and runs the compiler plugin `lvm-main-context-compiler` of the same version. The compiler plugin moves each call, together with its receiver and arguments, into `withContext(Dispatchers.Main.immediate)`. A call made on the main thread runs at once.
+
+- Calls move from suspend functions, suspend lambdas and lambdas passed to inline functions there, unless the parameter is `crossinline` or `noinline`. Calls from other code, calls through function references and calls in default parameter values run where they are made.
+- Receivers and arguments are computed on the main thread too, so compute expensive ones before the call, as `open` does.
+- Overrides of an annotated function inherit the annotation, also from other modules.
+- A call whose receiver or arguments `return`, `break` or `continue` out of it, as in `push(screen ?: return)`, is a compile error. Compute the value in a variable first.
+
+`Dispatchers.Main` comes from `kotlinx-coroutines-android` on Android, which `lvm-main-context` depends on, and from `kotlinx-coroutines-core` on Apple platforms. On JVM it needs `kotlinx-coroutines-swing` or `kotlinx-coroutines-javafx`; Compose Desktop adds the first. Without a main dispatcher, a moved call fails with an `IllegalStateException`. Tests set one with `Dispatchers.setMain` from `kotlinx-coroutines-test`.
+
+| Setting | Default | Effect |
+|---|---|---|
+| `platforms` | `android`, `ios`, `jvm` | Platforms whose main and test compilations run the compiler plugin. An empty list turns it off |
+| `dependency` | `true` | Adds `lvm-main-context` to `commonMain` |
+
+```kotlin
+// feature/build.gradle.kts
+lvm {
+    mainContext { platforms.set(listOf("android", "ios")) }
+}
+```
+
+The compiler plugin works only with the Kotlin version it was built for; see [Supported versions](#supported-versions).
+
 ## Supported versions
 
 LVM requires Gradle 9.6, AGP 9.4 and Kotlin 2.4 or newer. Your project chooses its Gradle, AGP, Kotlin, Compose and detekt versions. LVM is tested with the versions listed in `lvm-versions` and with the Gradle version of its own wrapper.
@@ -203,7 +251,7 @@ The minimums are strict on purpose and will stay that way. They follow recent Gr
 
 Blueprint checks the Gradle, AGP and Kotlin versions: a version below the minimum fails the build with a clear error, and a version newer than tested produces a warning. For Gradle, that warning comes only from `tech.annexflow.lvm.settings`, once per build; without the settings plugin, the project plugins still enforce the minimum. Compose and detekt versions are not checked.
 
-One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`.
+One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`. Any other version, a patch release included, fails the build.
 
 ## Documentation
 

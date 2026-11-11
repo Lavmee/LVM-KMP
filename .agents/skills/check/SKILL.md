@@ -40,3 +40,5 @@ Blueprint is an included build, so the root `build` does not run its tests. Run 
 
 - A new blueprint plugin needs its module in `blueprint/settings.gradle.kts`, a `gradlePlugin { }` registration, an `apply false` entry in the root `build.gradle.kts` and a row in the README plugin table.
 - A new library goes in `runtime/<name>` (Gradle path `:runtime:<name>`, flat, with hyphens: `runtime/logger-console`) and needs an `include` in the root `settings.gradle.kts`, as does a new sample module.
+- A new compiler plugin goes in `compiler/<name>` (Gradle path `:compiler:<name>`) and needs an `include` in the root `settings.gradle.kts`.
+- A module of this build that applies `tech.annexflow.lvm.main-context` needs the dependency substitution of `samples/main-context-sample/build.gradle.kts`.

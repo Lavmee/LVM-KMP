@@ -33,6 +33,12 @@ description: Always use this skill before writing or editing Kotlin code, Gradle
 * Code that uses Android APIs goes to `androidMain`; everything else goes to `commonMain`. Every library builds for Android, iOS and JVM.
 * No dependency injection annotations. LVM works with any DI framework or none.
 
+## Compiler plugins
+
+* A compiler plugin compiles against `kotlin-compiler-embeddable` as `compileOnly`, at the Kotlin version of `gradle/libs.versions.toml`. Moving to a new Kotlin version moves kotlin-compile-testing with it.
+* Report errors at the source position through `IrPluginContext.diagnosticReporter`, never by throwing.
+* Generate only code that Kotlin accepts in source: for example, no suspend call where Kotlin rejects one, such as a default parameter value.
+
 ## Documentation
 
 * Write in plain English with simple sentences.
@@ -46,6 +52,7 @@ description: Always use this skill before writing or editing Kotlin code, Gradle
 
 * Blueprint plugins are tested through TestKit fixture builds (`GradleFixture` in `blueprint/common/src/testFixtures`), which apply the plugins from source the way a consumer would. Assert on the build's outcome, such as compiled class files, task output or the fact that a build fails.
 * Fixture builds are slow. Test pure logic, such as value parsing or version comparison, with plain unit tests.
+* Compiler plugins are tested with kotlin-compile-testing: compile a snippet with the plugin, run it on the JVM, and assert on its result or its errors. A sample module that applies the plugin through blueprint covers the other platforms.
 * Every test protects a specific behavior or catches a plausible bug. Before writing one, name the wrong behavior that would make it fail.
 * Do not write tests that only restate hardcoded values, and do not depend on the exact wording of messages.
 * Derive expected results from the intended behavior, not by repeating the implementation.
