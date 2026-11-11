@@ -43,7 +43,8 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-logger-console` | Console logger: Logcat on Android, the system log on Apple platforms, the console on JVM |
 | `lvm-logger-file` | Rolling file logger |
 | `lvm-storage` | `createDataStore`: a `DataStore` in the app's data directory or at any path, with serializers for JSON and kotlinx-serialization's binary formats |
-| `lvm-decompose` | Component infrastructure on top of [Decompose](https://github.com/arkivanov/Decompose): component context, component locals, scoped data, event bus, permissions, paging, state keeping |
+| `lvm-decompose` | `AppComponentContext` on top of [Decompose](https://github.com/arkivanov/Decompose): component locals, a coroutine scope per component, instances shared by the component tree, `EventBus`, a context for previews and tests, state keeping and paging |
+| `lvm-decompose-permissions` | moko-permissions' `PermissionsController` for components, kept across activity recreation on Android. Android and iOS only |
 | `lvm-decompose-compose` | Back handling, stack animations and a slot bottom sheet for Compose |
 | `lvm-decompose-fetcher` | Cached, retrying network fetches inside components |
 | `lvm-main-context` | `@MainContext`: calls to the annotated function from coroutines run on the main thread |
@@ -53,6 +54,8 @@ Each plugin does one thing. Apply only the ones you need.
 `fileLogger` from `lvm-logger-file` takes its directory as a lambda that runs on the writer's thread, for example `fileLogger("app") { Path(appDirectories.cache, "logs") }` with `AppDirectories` from `lvm-io`.
 
 `createDataStore` from `lvm-storage` returns androidx's `DataStore` with its file in the data directory of `AppDirectories`, for example `createDataStore(appDirectories, "settings.json", jsonSerializer { Settings() })`. `jsonSerializer` and `binarySerializer` store `@Serializable` values, so the module that declares them applies the Kotlin serialization plugin. A file that can't be decoded is replaced with the default value, unless the store gets another `corruptionHandler`.
+
+`AppComponentContext` from `lvm-decompose` is the component context of an app. A component delegates to it, as in `class ProfileComponent(context: AppComponentContext) : AppComponentContext by context`, and gets component locals, values that a parent passes down to its subtree like Compose's `CompositionLocal` (`provide(AnalyticsLocal, analytics)` in the parent, `val analytics by AnalyticsLocal` in a child); `componentScope`, which runs on the main thread and is cancelled with the component; instances that the whole tree shares, such as an `EventBus`; and a logger. `PreviewAppComponentContext` runs a component in previews and tests, without a UI.
 
 ## Getting started
 
