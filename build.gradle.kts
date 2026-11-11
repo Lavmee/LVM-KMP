@@ -4,4 +4,5 @@ plugins {
     alias(libs.plugins.detekt) apply false
     id("tech.annexflow.lvm.multiplatform") apply false
     id("tech.annexflow.lvm.quality") apply false
+    id("tech.annexflow.lvm.main-context") apply false
 }

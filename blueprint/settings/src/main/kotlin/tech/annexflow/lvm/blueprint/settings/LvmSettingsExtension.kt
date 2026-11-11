@@ -32,12 +32,14 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     val kotlin: KotlinDefaults = objects.newInstance(KotlinDefaults::class.java)
     val ios: IosDefaults = objects.newInstance(IosDefaults::class.java)
     val quality: QualityDefaults = objects.newInstance(QualityDefaults::class.java)
+    val mainContext: MainContextDefaults = objects.newInstance(MainContextDefaults::class.java)
 
     fun android(action: Action<AndroidDefaults>) = action.execute(android)
     fun jvm(action: Action<JvmDefaults>) = action.execute(jvm)
     fun kotlin(action: Action<KotlinDefaults>) = action.execute(kotlin)
     fun ios(action: Action<IosDefaults>) = action.execute(ios)
     fun quality(action: Action<QualityDefaults>) = action.execute(quality)
+    fun mainContext(action: Action<MainContextDefaults>) = action.execute(mainContext)
 
     /** Every value that was set, as `lvm.<key>` -> string. Empty lists are not forwarded. */
     internal fun forwardedValues(): Map<String, String> {
@@ -67,6 +69,8 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         list(LvmKeys.QUALITY_SOURCE, quality.source)
         scalar(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, quality.buildUponDefaultConfig)
         scalar(LvmKeys.QUALITY_COMPOSE_RULES, quality.composeRules)
+        list(LvmKeys.MAIN_CONTEXT_PLATFORMS, mainContext.platforms)
+        scalar(LvmKeys.MAIN_CONTEXT_DEPENDENCY, mainContext.dependency)
         return result
     }
 }
@@ -103,4 +107,10 @@ abstract class QualityDefaults {
     abstract val source: ListProperty<String>
     abstract val buildUponDefaultConfig: Property<Boolean>
     abstract val composeRules: Property<Boolean>
+}
+
+abstract class MainContextDefaults {
+    /** `android`, `ios`, `jvm`. */
+    abstract val platforms: ListProperty<String>
+    abstract val dependency: Property<Boolean>
 }

@@ -18,4 +18,6 @@ object LvmDefaults {
     val QUALITY_SOURCE_FLAT: List<String> = listOf("src", "test", "src@*", "test@*")
     const val QUALITY_BUILD_UPON_DEFAULT_CONFIG: Boolean = true
     const val QUALITY_COMPOSE_RULES: Boolean = false
+    val MAIN_CONTEXT_PLATFORMS: List<String> = listOf("android", "ios", "jvm")
+    const val MAIN_CONTEXT_DEPENDENCY: Boolean = true
 }

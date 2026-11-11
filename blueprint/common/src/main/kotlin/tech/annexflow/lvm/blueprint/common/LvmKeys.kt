@@ -19,6 +19,8 @@ object LvmKeys {
     const val QUALITY_SOURCE: String = "quality.source"
     const val QUALITY_BUILD_UPON_DEFAULT_CONFIG: String = "quality.buildUponDefaultConfig"
     const val QUALITY_COMPOSE_RULES: String = "quality.composeRules"
+    const val MAIN_CONTEXT_PLATFORMS: String = "mainContext.platforms"
+    const val MAIN_CONTEXT_DEPENDENCY: String = "mainContext.dependency"
 
     fun property(key: String): String = PREFIX + key
 }

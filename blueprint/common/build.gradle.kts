@@ -29,18 +29,19 @@ dependencies {
     testFixturesApi(gradleTestKit())
 }
 
-val lvmVersion: Provider<String> = providers
+val lvmProperties: Provider<Properties> = providers
     .fileContents(layout.projectDirectory.file("../../gradle.properties"))
     .asText
-    .map { text -> Properties().apply { load(text.reader()) }.getProperty("VERSION_NAME") }
+    .map { text -> Properties().apply { load(text.reader()) } }
 
-// The LVM version, the versions LVM is tested with and the minimum versions it supports.
+// The LVM group and version, the versions LVM is tested with, the minimum versions it supports and LVM's own artifacts.
 buildConfig {
     packageName("tech.annexflow.lvm.blueprint.common")
     className("LvmBuildInfo")
     useKotlinOutput { internalVisibility = false }
 
-    buildConfigField("VERSION", lvmVersion)
+    buildConfigField("VERSION", lvmProperties.map { it.getProperty("VERSION_NAME") })
+    buildConfigField("GROUP", lvmProperties.map { it.getProperty("GROUP") })
     buildConfigField("TESTED_GRADLE", gradle.gradleVersion)
     buildConfigField("TESTED_KOTLIN", libs.versions.kotlin)
     buildConfigField("TESTED_AGP", libs.versions.agp)
@@ -51,6 +52,9 @@ buildConfig {
     buildConfigField("MIN_GRADLE", "9.6")
     buildConfigField("MIN_KOTLIN", "2.4.0")
     buildConfigField("MIN_AGP", "9.4.0")
+    // LVM artifacts that blueprint adds to projects, with GROUP and VERSION.
+    buildConfigField("MAIN_CONTEXT_ARTIFACT", "lvm-main-context")
+    buildConfigField("MAIN_CONTEXT_COMPILER_ARTIFACT", "lvm-main-context-compiler")
 
     // Versions that only the TestKit fixtures need.
     sourceSets.named("testFixtures") {
