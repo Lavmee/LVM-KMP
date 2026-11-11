@@ -9,10 +9,13 @@ turbine = "1.2.1"
 kermit = "2.2.0"
 kotlinxDatetime = "0.8.0"
 kotlinxIo = "0.9.1"
+kotlinCompileTesting = "0.14.0"
 
 [libraries]
 android-gradlePluginApi = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-compilerEmbeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlin-compileTesting = { module = "dev.zacsweers.kctfork:core", version.ref = "kotlinCompileTesting" }
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 detekt-composeRules = { module = "ru.kode:detekt-rules-compose", version.ref = "detektComposeRules" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
