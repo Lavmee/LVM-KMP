@@ -14,7 +14,9 @@ kotlinxSerialization = "1.12.0"
 okio = "3.18.2"
 decompose = "3.6.2"
 essenty = "2.7.1"
+androidxActivity = "1.13.0"
 androidxPaging = "3.5.3"
+mokoPermissions = "0.20.1"
 kotlinCompileTesting = "0.14.0"
 
 [libraries]
@@ -43,7 +45,9 @@ kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-seria
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 essenty-lifecycle-coroutines = { module = "com.arkivanov.essenty:lifecycle-coroutines", version.ref = "essenty" }
+androidx-activity = { module = "androidx.activity:activity", version.ref = "androidxActivity" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "androidxPaging" }
+moko-permissions = { module = "dev.icerock.moko:permissions", version.ref = "mokoPermissions" }
 
 [plugins]
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
