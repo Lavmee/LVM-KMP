@@ -7,6 +7,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.io.TempDir
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
+import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.detektVersion
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.kotlinVersion
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.settingsHeader
 import tech.annexflow.lvm.blueprint.testing.LvmTestVersions
@@ -58,6 +59,20 @@ class LvmComposePluginTest {
         assertFalse(classes.readText().contains("unstable class Holder"))
     }
 
+    @Test
+    fun `a module with compose and quality gets the Compose rules and composables named like types`() {
+        val fixture = fixture()
+        fixture.file("lib/build.gradle.kts", module(quality = true))
+
+        val rules = fixture.build(":lib:dependencies", "--configuration", "detektPlugins").output
+        assertContains(rules, "ru.kode:detekt-rules-compose")
+        fixture.build(":lib:detekt")
+
+        fixture.file("lib/build.gradle.kts", module("lvm { quality { composeRules = false } }", quality = true))
+        val off = fixture.build(":lib:dependencies", "--configuration", "detektPlugins").output
+        assertFalse(off.contains("ru.kode:detekt-rules-compose"))
+    }
+
     private fun fixture(settingsLvm: String = "catalog = false"): GradleFixture = GradleFixture(dir).apply {
         file("settings.gradle.kts", settingsHeader(settingsLvm) + "\nrootProject.name = \"fixture\"\ninclude(\":lib\")")
         file(
@@ -67,8 +82,10 @@ class LvmComposePluginTest {
                 id("org.jetbrains.kotlin.multiplatform") version "$kotlinVersion" apply false
                 id("org.jetbrains.kotlin.plugin.compose") version "$kotlinVersion" apply false
                 id("org.jetbrains.compose") version "${LvmTestVersions.COMPOSE_MULTIPLATFORM}" apply false
+                id("io.gitlab.arturbosch.detekt") version "$detektVersion" apply false
                 id("tech.annexflow.lvm.multiplatform") apply false
                 id("tech.annexflow.lvm.compose") apply false
+                id("tech.annexflow.lvm.quality") apply false
             }
             """,
         )
@@ -94,11 +111,12 @@ class LvmComposePluginTest {
         )
     }
 
-    /** A JVM module with the compose plugin, the Compose runtime and [extra] lines. */
-    private fun module(extra: String = ""): String = """
+    /** A JVM module with the compose plugin, the Compose runtime and [extra] lines; with [quality], also detekt. */
+    private fun module(extra: String = "", quality: Boolean = false): String = """
         plugins {
             id("tech.annexflow.lvm.compose")
             id("tech.annexflow.lvm.multiplatform")
+            ${if (quality) "id(\"tech.annexflow.lvm.quality\")" else ""}
         }
         lvm { targets { jvm() } }
         kotlin {

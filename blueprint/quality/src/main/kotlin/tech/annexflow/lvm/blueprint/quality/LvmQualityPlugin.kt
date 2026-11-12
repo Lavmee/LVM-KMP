@@ -35,6 +35,12 @@ class LvmQualityPlugin : Plugin<Project> {
             values.boolean(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, LvmDefaults.QUALITY_BUILD_UPON_DEFAULT_CONFIG),
         )
         section.composeRules.convention(values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, LvmDefaults.QUALITY_COMPOSE_RULES))
+        // A Compose module gets the Compose rules and config by default; withPlugin also fires when compose comes later.
+        val compose = project.objects.property(Boolean::class.java).convention(false)
+        project.pluginManager.withPlugin(COMPOSE_PLUGIN_ID) {
+            compose.set(true)
+            section.composeRules.convention(values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, true))
+        }
 
         @Suppress("UnstableApiUsage")
         val rootDirectory = project.isolated.rootProject.projectDirectory
@@ -51,9 +57,18 @@ class LvmQualityPlugin : Plugin<Project> {
             if (flat) listOf(file) else emptyList()
         }
 
+        val composeConfig = project.tasks.register("lvmDetektComposeConfig", WriteDetektConfig::class.java) {
+            description = "Writes the detekt config for Compose code."
+            text.set(composeDetektConfig())
+            destination.set(project.layout.buildDirectory.file("lvm/detekt-compose.yml"))
+        }
+        val composeConfigFiles = compose.zip(composeConfig.flatMap { it.destination }) { on, file ->
+            if (on) listOf(file) else emptyList()
+        }
+
         project.extensions.configure(DetektExtension::class.java) {
-            // Later config files override earlier ones, so the build's own files override the flat layout's.
-            config.setFrom(flatLayoutConfigFiles, configFiles)
+            // Later config files override earlier ones, so the build's own files override the generated ones.
+            config.setFrom(flatLayoutConfigFiles, composeConfigFiles, configFiles)
             // detekt's default source, src/main/kotlin, doesn't exist in a KMP module. Entries are directory patterns.
             source.setFrom(
                 section.source.map { directories ->
@@ -65,12 +80,12 @@ class LvmQualityPlugin : Plugin<Project> {
         val buildUponDefaultConfig = section.buildUponDefaultConfig
         val jvmTarget = jvm.target.map(Int::toString)
         project.tasks.withType(Detekt::class.java).configureEach {
-            dependsOn(flatLayoutConfig)
+            dependsOn(flatLayoutConfig, composeConfig)
             this.buildUponDefaultConfig = buildUponDefaultConfig.get()
             this.jvmTarget = jvmTarget.get()
         }
         project.tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
-            dependsOn(flatLayoutConfig)
+            dependsOn(flatLayoutConfig, composeConfig)
             this.buildUponDefaultConfig.set(buildUponDefaultConfig)
             this.jvmTarget = jvmTarget.get()
         }
@@ -89,3 +104,5 @@ class LvmQualityPlugin : Plugin<Project> {
         }
     }
 }
+
+private const val COMPOSE_PLUGIN_ID = "tech.annexflow.lvm.compose"

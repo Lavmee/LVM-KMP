@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-/** Writes [text] to [destination]; used for the detekt config of the flat source layout. */
+/** Writes [text] to [destination]; used for the detekt configs that the quality plugin generates. */
 internal abstract class WriteDetektConfig : DefaultTask() {
     @get:Input
     abstract val text: Property<String>
