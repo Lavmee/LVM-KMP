@@ -46,7 +46,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-decompose` | `AppComponentContext` on top of [Decompose](https://github.com/arkivanov/Decompose): component locals, a coroutine scope per component, instances shared by the component tree, `EventBus`, a context for previews and tests, state keeping and paging |
 | `lvm-decompose-permissions` | moko-permissions' `PermissionsController` for components, kept across activity recreation on Android. Android and iOS only |
 | `lvm-decompose-compose` | Back handling, stack animations and a slot bottom sheet for Compose |
-| `lvm-decompose-fetcher` | Cached, retrying network fetches inside components |
+| `lvm-decompose-fetcher` | `Fetcher`: network reads for components through the app's Ktor `HttpClient`, with a file cache that serves the last responses offline and states that retry a read |
 | `lvm-main-context` | `@MainContext`: calls to the annotated function from coroutines run on the main thread |
 | `lvm-bom` | BOM for projects that don't use the version catalog |
 | `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
@@ -60,6 +60,8 @@ Each plugin does one thing. Apply only the ones you need.
 `lvm-decompose` also keeps a component's state across process death with `mutableState { ... }`, gives lists a `paging(flow)` that shows the last page when a screen comes back, and gives previews `stubPaging(items)` and `loadedPagingFlow(items)`. Its `DecomposeNavigationHandler` and `replaceAll` are `@MainContext` functions, so in a module that applies `tech.annexflow.lvm.main-context` their calls from coroutines run on the main thread; import `tech.annexflow.lvm.decompose.replaceAll`, not Decompose's function of the same name. `lvm-decompose-permissions` passes moko-permissions' `PermissionsController` to components through the component local `LocalPermissionsController`, and on Android `retainedPermissionsController()` keeps it across activity recreation.
 
 Every component tree starts from a root context: `retainedAppComponent(logger) { context -> ... }` or `defaultAppComponent(logger)` in an Android activity, `AppComponentRoot` on iOS, and `rootAppComponentContext(componentContext, logger)` on JVM, for example on a `DefaultComponentContext` with a `LifecycleRegistry`. [iOS](docs/ios.md) shows how an iOS app builds its root, saves its state and forwards back gestures.
+
+`lvm-decompose-fetcher` reads data for components through the app's Ktor `HttpClient`. `installFetcherCache(directory, isOffline)` in the client's configuration keeps responses in a directory, for example `Path(appDirectories.cache, "fetcher")`, and serves them while `isOffline()` returns `true`. The root provides `Fetcher(httpClient)` with `provideLocals(LocalFetcher provides ...)`, and a component reads it as `fetcher`: `fetcherResultState { fetcher.get(url).body<Rows>() }` retries the read and holds its result as a `Loadable`.
 
 ## Getting started
 
