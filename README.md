@@ -138,7 +138,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs` and `quality.config` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config` and `compose.stabilityConfigurationFiles` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
 
 ```kotlin
 // settings.gradle.kts
@@ -204,6 +204,37 @@ lvm {
 - **Libraries** get their Android target from `lvm { targets { android() } }`, which applies `com.android.kotlin.multiplatform.library`. This requires AGP 9.4 or newer.
   The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "..." } }`.
   Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
+
+## Compose
+
+`tech.annexflow.lvm.compose` sets up a Kotlin Multiplatform module for Compose: it applies Compose Multiplatform (`org.jetbrains.compose`) and the Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`), and configures the compiler's metrics, reports and stability configuration files. It adds no dependencies; a module declares the Compose libraries it uses, which `lvm-versions` lists at the tested version.
+
+```kotlin
+// feature/build.gradle.kts
+plugins {
+    alias(lvmLibs.plugins.blueprint.multiplatform)
+    alias(lvmLibs.plugins.blueprint.compose)
+}
+
+kotlin {
+    sourceSets.commonMain.dependencies {
+        implementation(lvmLibs.compose.foundation)
+    }
+}
+```
+
+| Setting | Default | Effect |
+|---|---|---|
+| `metrics` | `false` | Writes the compiler's metrics into `metricsDirectory`, by default `build/compose-metrics` of the module |
+| `reports` | `false` | Writes the compiler's reports, such as the stability of each class, into `reportsDirectory`, by default `build/compose-reports` of the module |
+| `stabilityConfigurationFiles` | empty | Stability configuration files of the compiler, relative to the root project directory |
+
+```properties
+# gradle.properties
+lvm.compose.reports=true
+```
+
+In a module that also applies `tech.annexflow.lvm.quality`, the detekt Compose rules are on by default, and detekt accepts composable functions named like types. `lvm { quality { composeRules = false } }` turns the rules off.
 
 ## Main context
 
