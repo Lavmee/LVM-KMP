@@ -59,6 +59,8 @@ Each plugin does one thing. Apply only the ones you need.
 
 `lvm-decompose` also keeps a component's state across process death with `mutableState { ... }`, gives lists a `paging(flow)` that shows the last page when a screen comes back, and gives previews `stubPaging(items)` and `loadedPagingFlow(items)`. Its `DecomposeNavigationHandler` and `replaceAll` are `@MainContext` functions, so in a module that applies `tech.annexflow.lvm.main-context` their calls from coroutines run on the main thread; import `tech.annexflow.lvm.decompose.replaceAll`, not Decompose's function of the same name. `lvm-decompose-permissions` passes moko-permissions' `PermissionsController` to components through the component local `LocalPermissionsController`, and on Android `retainedPermissionsController()` keeps it across activity recreation.
 
+Every component tree starts from a root context: `retainedAppComponent(logger) { context -> ... }` or `defaultAppComponent(logger)` in an Android activity, `AppComponentRoot` on iOS, and `rootAppComponentContext(componentContext, logger)` on JVM, for example on a `DefaultComponentContext` with a `LifecycleRegistry`. [iOS](docs/ios.md) shows how an iOS app builds its root, saves its state and forwards back gestures.
+
 ## Getting started
 
 ### 1. Apply the settings plugin
@@ -263,6 +265,7 @@ One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-co
 ## Documentation
 
 - [Releasing](RELEASING.md): how releases are published
+- [iOS](docs/ios.md): how an iOS app runs a component tree of `lvm-decompose`
 
 ## License
 
