@@ -20,4 +20,7 @@ object LvmDefaults {
     const val QUALITY_COMPOSE_RULES: Boolean = false
     val MAIN_CONTEXT_PLATFORMS: List<String> = listOf("android", "ios", "jvm")
     const val MAIN_CONTEXT_DEPENDENCY: Boolean = true
+    const val COMPOSE_METRICS: Boolean = false
+    const val COMPOSE_REPORTS: Boolean = false
+    val COMPOSE_STABILITY_CONFIGURATION_FILES: List<String> = emptyList()
 }

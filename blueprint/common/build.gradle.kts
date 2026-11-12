@@ -63,6 +63,7 @@ buildConfig {
         useKotlinOutput { internalVisibility = false }
 
         buildConfigField("DETEKT", libs.versions.detekt)
+        buildConfigField("COMPOSE_MULTIPLATFORM", libs.versions.composeMultiplatform)
     }
 }
 

@@ -21,6 +21,9 @@ object LvmKeys {
     const val QUALITY_COMPOSE_RULES: String = "quality.composeRules"
     const val MAIN_CONTEXT_PLATFORMS: String = "mainContext.platforms"
     const val MAIN_CONTEXT_DEPENDENCY: String = "mainContext.dependency"
+    const val COMPOSE_METRICS: String = "compose.metrics"
+    const val COMPOSE_REPORTS: String = "compose.reports"
+    const val COMPOSE_STABILITY_CONFIGURATION_FILES: String = "compose.stabilityConfigurationFiles"
 
     fun property(key: String): String = PREFIX + key
 }

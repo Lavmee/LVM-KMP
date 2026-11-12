@@ -33,6 +33,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     val ios: IosDefaults = objects.newInstance(IosDefaults::class.java)
     val quality: QualityDefaults = objects.newInstance(QualityDefaults::class.java)
     val mainContext: MainContextDefaults = objects.newInstance(MainContextDefaults::class.java)
+    val compose: ComposeDefaults = objects.newInstance(ComposeDefaults::class.java)
 
     fun android(action: Action<AndroidDefaults>) = action.execute(android)
     fun jvm(action: Action<JvmDefaults>) = action.execute(jvm)
@@ -40,6 +41,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     fun ios(action: Action<IosDefaults>) = action.execute(ios)
     fun quality(action: Action<QualityDefaults>) = action.execute(quality)
     fun mainContext(action: Action<MainContextDefaults>) = action.execute(mainContext)
+    fun compose(action: Action<ComposeDefaults>) = action.execute(compose)
 
     /** Every value that was set, as `lvm.<key>` -> string. Empty lists are not forwarded. */
     internal fun forwardedValues(): Map<String, String> {
@@ -71,6 +73,9 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.QUALITY_COMPOSE_RULES, quality.composeRules)
         list(LvmKeys.MAIN_CONTEXT_PLATFORMS, mainContext.platforms)
         scalar(LvmKeys.MAIN_CONTEXT_DEPENDENCY, mainContext.dependency)
+        scalar(LvmKeys.COMPOSE_METRICS, compose.metrics)
+        scalar(LvmKeys.COMPOSE_REPORTS, compose.reports)
+        list(LvmKeys.COMPOSE_STABILITY_CONFIGURATION_FILES, compose.stabilityConfigurationFiles)
         return result
     }
 }
@@ -113,4 +118,12 @@ abstract class MainContextDefaults {
     /** `android`, `ios`, `jvm`. */
     abstract val platforms: ListProperty<String>
     abstract val dependency: Property<Boolean>
+}
+
+abstract class ComposeDefaults {
+    abstract val metrics: Property<Boolean>
+    abstract val reports: Property<Boolean>
+
+    /** Stability configuration files of the Compose compiler, relative to the root project directory. */
+    abstract val stabilityConfigurationFiles: ListProperty<String>
 }
