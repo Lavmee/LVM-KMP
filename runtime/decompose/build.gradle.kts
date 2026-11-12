@@ -23,8 +23,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":runtime:logger"))
+            api(project(":runtime:main-context"))
             api(libs.decompose)
             api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.serialization.core)
             implementation(libs.essenty.lifecycle.coroutines)
         }
         androidMain.dependencies {

@@ -18,6 +18,8 @@ lvm {
 kotlin {
     sourceSets {
         commonTest.dependencies {
+            // Navigation handlers and navigator extensions of lvm-decompose, called the way an app calls them.
+            implementation(project(":runtime:decompose"))
             implementation(libs.kotlinx.coroutines.test)
         }
     }
