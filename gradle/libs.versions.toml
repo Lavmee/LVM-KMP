@@ -18,6 +18,8 @@ androidxActivity = "1.13.0"
 androidxPaging = "3.5.3"
 mokoPermissions = "0.20.1"
 composeMultiplatform = "1.12.2"
+ktor = "3.6.1"
+kotlinRetry = "2.0.2"
 kotlinCompileTesting = "0.14.0"
 
 [libraries]
@@ -53,6 +55,9 @@ essenty-state-keeper = { module = "com.arkivanov.essenty:state-keeper", version.
 androidx-activity = { module = "androidx.activity:activity", version.ref = "androidxActivity" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "androidxPaging" }
 moko-permissions = { module = "dev.icerock.moko:permissions", version.ref = "mokoPermissions" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+kotlin-retry = { module = "com.michael-bull.kotlin-retry:kotlin-retry", version.ref = "kotlinRetry" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
