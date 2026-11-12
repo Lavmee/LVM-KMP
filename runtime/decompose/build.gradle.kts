@@ -24,6 +24,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":runtime:logger"))
             api(project(":runtime:main-context"))
+            api(libs.androidx.paging.common)
             api(libs.decompose)
             api(libs.kotlinx.coroutines.core)
             api(libs.kotlinx.serialization.core)
