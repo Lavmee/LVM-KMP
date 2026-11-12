@@ -31,6 +31,8 @@ kotlin {
             implementation(libs.essenty.lifecycle.coroutines)
         }
         androidMain.dependencies {
+            // ComponentActivity is in the API of the Android roots.
+            api(libs.androidx.activity)
             // Dispatchers.Main on Android, for componentScope.
             implementation(libs.kotlinx.coroutines.android)
         }
