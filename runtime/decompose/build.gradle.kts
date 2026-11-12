@@ -36,6 +36,10 @@ kotlin {
             // Dispatchers.Main on Android, for componentScope.
             implementation(libs.kotlinx.coroutines.android)
         }
+        iosMain.dependencies {
+            // Saved state as JSON in an NSCoder.
+            implementation(libs.kotlinx.serialization.json)
+        }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
         }
