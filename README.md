@@ -57,6 +57,8 @@ Each plugin does one thing. Apply only the ones you need.
 
 `AppComponentContext` from `lvm-decompose` is the component context of an app. A component delegates to it, as in `class ProfileComponent(context: AppComponentContext) : AppComponentContext by context`, and gets component locals, values that a parent passes down to its subtree like Compose's `CompositionLocal` (`provide(AnalyticsLocal, analytics)` in the parent, `val analytics by AnalyticsLocal` in a child); `componentScope`, which runs on the main thread and is cancelled with the component; instances that the whole tree shares, such as an `EventBus`; and a logger. `PreviewAppComponentContext` runs a component in previews and tests, without a UI.
 
+`lvm-decompose` also keeps a component's state across process death with `mutableState { ... }`, gives lists a `paging(flow)` that shows the last page when a screen comes back, and gives previews `stubPaging(items)` and `loadedPagingFlow(items)`. Its `DecomposeNavigationHandler` and `replaceAll` are `@MainContext` functions, so in a module that applies `tech.annexflow.lvm.main-context` their calls from coroutines run on the main thread; import `tech.annexflow.lvm.decompose.replaceAll`, not Decompose's function of the same name. `lvm-decompose-permissions` passes moko-permissions' `PermissionsController` to components through the component local `LocalPermissionsController`, and on Android `retainedPermissionsController()` keeps it across activity recreation.
+
 ## Getting started
 
 ### 1. Apply the settings plugin
