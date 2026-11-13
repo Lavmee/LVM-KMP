@@ -23,4 +23,6 @@ object LvmDefaults {
     const val COMPOSE_METRICS: Boolean = false
     const val COMPOSE_REPORTS: Boolean = false
     val COMPOSE_STABILITY_CONFIGURATION_FILES: List<String> = emptyList()
+    const val PUBLISH_ARTIFACT_ID_PREFIX: String = ""
+    const val PUBLISH_SIGNING: Boolean = true
 }

@@ -64,6 +64,7 @@ buildConfig {
 
         buildConfigField("DETEKT", libs.versions.detekt)
         buildConfigField("COMPOSE_MULTIPLATFORM", libs.versions.composeMultiplatform)
+        buildConfigField("VANNIKTECH", libs.versions.vanniktech)
     }
 }
 

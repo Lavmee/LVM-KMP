@@ -34,6 +34,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     val quality: QualityDefaults = objects.newInstance(QualityDefaults::class.java)
     val mainContext: MainContextDefaults = objects.newInstance(MainContextDefaults::class.java)
     val compose: ComposeDefaults = objects.newInstance(ComposeDefaults::class.java)
+    val publish: PublishDefaults = objects.newInstance(PublishDefaults::class.java)
 
     fun android(action: Action<AndroidDefaults>) = action.execute(android)
     fun jvm(action: Action<JvmDefaults>) = action.execute(jvm)
@@ -42,6 +43,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     fun quality(action: Action<QualityDefaults>) = action.execute(quality)
     fun mainContext(action: Action<MainContextDefaults>) = action.execute(mainContext)
     fun compose(action: Action<ComposeDefaults>) = action.execute(compose)
+    fun publish(action: Action<PublishDefaults>) = action.execute(publish)
 
     /** Every value that was set, as `lvm.<key>` -> string. Empty lists are not forwarded. */
     internal fun forwardedValues(): Map<String, String> {
@@ -76,6 +78,18 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.COMPOSE_METRICS, compose.metrics)
         scalar(LvmKeys.COMPOSE_REPORTS, compose.reports)
         list(LvmKeys.COMPOSE_STABILITY_CONFIGURATION_FILES, compose.stabilityConfigurationFiles)
+        scalar(LvmKeys.PUBLISH_ARTIFACT_ID_PREFIX, publish.artifactIdPrefix)
+        scalar(LvmKeys.PUBLISH_DESCRIPTION, publish.description)
+        scalar(LvmKeys.PUBLISH_URL, publish.url)
+        scalar(LvmKeys.PUBLISH_LICENSE_NAME, publish.license.name)
+        scalar(LvmKeys.PUBLISH_LICENSE_URL, publish.license.url)
+        scalar(LvmKeys.PUBLISH_DEVELOPER_ID, publish.developer.id)
+        scalar(LvmKeys.PUBLISH_DEVELOPER_NAME, publish.developer.name)
+        scalar(LvmKeys.PUBLISH_DEVELOPER_URL, publish.developer.url)
+        scalar(LvmKeys.PUBLISH_SCM_URL, publish.scm.url)
+        scalar(LvmKeys.PUBLISH_SCM_CONNECTION, publish.scm.connection)
+        scalar(LvmKeys.PUBLISH_SCM_DEVELOPER_CONNECTION, publish.scm.developerConnection)
+        scalar(LvmKeys.PUBLISH_SIGNING, publish.signing)
         return result
     }
 }
@@ -126,4 +140,37 @@ abstract class ComposeDefaults {
 
     /** Stability configuration files of the Compose compiler, relative to the root project directory. */
     abstract val stabilityConfigurationFiles: ListProperty<String>
+}
+
+abstract class PublishDefaults @Inject constructor(objects: ObjectFactory) {
+    /** Put before the project name to make the artifact ID, such as `lvm-` for `lvm-core`. */
+    abstract val artifactIdPrefix: Property<String>
+    abstract val description: Property<String>
+    abstract val url: Property<String>
+    abstract val signing: Property<Boolean>
+
+    val license: PomLicenseDefaults = objects.newInstance(PomLicenseDefaults::class.java)
+    val developer: PomDeveloperDefaults = objects.newInstance(PomDeveloperDefaults::class.java)
+    val scm: PomScmDefaults = objects.newInstance(PomScmDefaults::class.java)
+
+    fun license(action: Action<PomLicenseDefaults>) = action.execute(license)
+    fun developer(action: Action<PomDeveloperDefaults>) = action.execute(developer)
+    fun scm(action: Action<PomScmDefaults>) = action.execute(scm)
+}
+
+abstract class PomLicenseDefaults {
+    abstract val name: Property<String>
+    abstract val url: Property<String>
+}
+
+abstract class PomDeveloperDefaults {
+    abstract val id: Property<String>
+    abstract val name: Property<String>
+    abstract val url: Property<String>
+}
+
+abstract class PomScmDefaults {
+    abstract val url: Property<String>
+    abstract val connection: Property<String>
+    abstract val developerConnection: Property<String>
 }

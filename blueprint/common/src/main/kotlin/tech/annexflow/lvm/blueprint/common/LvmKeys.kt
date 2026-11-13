@@ -24,6 +24,18 @@ object LvmKeys {
     const val COMPOSE_METRICS: String = "compose.metrics"
     const val COMPOSE_REPORTS: String = "compose.reports"
     const val COMPOSE_STABILITY_CONFIGURATION_FILES: String = "compose.stabilityConfigurationFiles"
+    const val PUBLISH_ARTIFACT_ID_PREFIX: String = "publish.artifactIdPrefix"
+    const val PUBLISH_DESCRIPTION: String = "publish.description"
+    const val PUBLISH_URL: String = "publish.url"
+    const val PUBLISH_LICENSE_NAME: String = "publish.license.name"
+    const val PUBLISH_LICENSE_URL: String = "publish.license.url"
+    const val PUBLISH_DEVELOPER_ID: String = "publish.developer.id"
+    const val PUBLISH_DEVELOPER_NAME: String = "publish.developer.name"
+    const val PUBLISH_DEVELOPER_URL: String = "publish.developer.url"
+    const val PUBLISH_SCM_URL: String = "publish.scm.url"
+    const val PUBLISH_SCM_CONNECTION: String = "publish.scm.connection"
+    const val PUBLISH_SCM_DEVELOPER_CONNECTION: String = "publish.scm.developerConnection"
+    const val PUBLISH_SIGNING: String = "publish.signing"
 
     fun property(key: String): String = PREFIX + key
 }
