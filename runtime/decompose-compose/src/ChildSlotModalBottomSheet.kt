@@ -122,6 +122,7 @@ public fun <C : Any, T : Any> ChildSlotModalBottomSheet(
 ) {
     var shownInstance: T? by remember { mutableStateOf(slot.child?.instance) }
     val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val gate = remember { SheetDragGate() }
     val hostLocal = hostWindowLocal()
     val coroutineScope = rememberCoroutineScope()
 
@@ -160,7 +161,17 @@ public fun <C : Any, T : Any> ChildSlotModalBottomSheet(
             windowContent()
             Box {
                 Sheet(modifier = modifier) {
-                    shownInstance?.let { instance -> scope.content(instance) }
+                    // The gate wraps the content instead of going into Sheet's modifier: since compose-unstyled 2.10,
+                    // Sheet puts its drag after the modifier, and a gate there would see a gesture after the sheet's
+                    // drag. Pointer events go from children to parents in the main pass, so inside the drag the gate
+                    // sees an event after the content and before the sheet.
+                    Box(modifier = Modifier.sheetDragGate(gate = gate, drag = drag)) {
+                        shownInstance?.let { instance ->
+                            CompositionLocalProvider(LocalSheetDragGate provides gate) {
+                                scope.content(instance)
+                            }
+                        }
+                    }
                 }
                 if (disableInputDuringAnimation && !state.isIdle) {
                     InputBlocker(modifier = Modifier.matchParentSize())
