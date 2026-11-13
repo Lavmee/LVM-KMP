@@ -1,6 +1,5 @@
 package tech.annexflow.lvm.decompose.compose
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,8 +9,6 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.window.Dialog
 import androidx.navigationevent.DirectNavigationEventInput
 import androidx.navigationevent.NavigationEvent
-import androidx.navigationevent.NavigationEventInput
-import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.arkivanov.essenty.backhandler.BackCallback
 import com.arkivanov.essenty.backhandler.BackEvent
 import kotlin.test.Test
@@ -134,14 +131,5 @@ class WindowBackHandlerTest {
 
         assertEquals(0, backCount)
         assertEquals(1, dismissCount)
-    }
-
-    @Composable
-    private fun ConnectInput(input: NavigationEventInput) {
-        val dispatcher = checkNotNull(LocalNavigationEventDispatcherOwner.current).navigationEventDispatcher
-        DisposableEffect(dispatcher, input) {
-            dispatcher.addInput(input)
-            onDispose { dispatcher.removeInput(input) }
-        }
     }
 }
