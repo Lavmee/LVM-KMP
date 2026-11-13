@@ -83,6 +83,39 @@ class LvmPublishPluginTest {
     }
 
     @Test
+    fun `check fails until updateKotlinAbi writes the dump`() {
+        val fixture = fixture()
+
+        fixture.buildAndFail(":lib:check")
+        fixture.build(":lib:updateKotlinAbi")
+        fixture.build(":lib:check")
+
+        assertContains(dir.resolve("lib/api").walk().single { it.isFile }.readText(), "Visible")
+    }
+
+    @Test
+    fun `excluded names and annotations stay out of the dump`() {
+        val fixture = fixture(abi = "abi { excludedNames.add(\"com.example.Hidden\") }")
+        fixture.file("lib/build.gradle.kts", library("lvm { publish { abi { excludedAnnotations.add(\"com.example.Internal\") } } }"))
+
+        fixture.build(":lib:updateKotlinAbi")
+
+        val dump = dir.resolve("lib/api").walk().single { it.isFile }.readText()
+        assertContains(dump, "Visible")
+        assertFalse(dump.contains("Hidden"))
+        assertFalse(dump.contains("Annotated"))
+    }
+
+    @Test
+    fun `ABI validation stays off when the build turns it off`() {
+        val fixture = fixture()
+
+        fixture.build(":lib:check", "-Plvm.publish.abi.enabled=false")
+
+        assertFalse(dir.resolve("lib/api").exists())
+    }
+
+    @Test
     fun `a Kotlin JVM module publishes with the artifact ID`() {
         val fixture = fixture()
         fixture.file(
@@ -110,6 +143,7 @@ class LvmPublishPluginTest {
 
     private fun fixture(
         developer: String = "developer { id = \"dev\"; name = \"Developer\" }",
+        abi: String = "",
     ): GradleFixture = GradleFixture(dir).apply {
         file(
             "settings.gradle.kts",
@@ -122,6 +156,7 @@ class LvmPublishPluginTest {
                     url = "https://example.org/fixture"
                     license { name = "The Apache License, Version 2.0"; url = "https://www.apache.org/licenses/LICENSE-2.0.txt" }
                     $developer
+                    $abi
                 }
                 """.trimIndent(),
             ) + "\nrootProject.name = \"fixture\"\ninclude(\":lib\", \":tool\")",

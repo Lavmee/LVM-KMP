@@ -90,6 +90,9 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.PUBLISH_SCM_CONNECTION, publish.scm.connection)
         scalar(LvmKeys.PUBLISH_SCM_DEVELOPER_CONNECTION, publish.scm.developerConnection)
         scalar(LvmKeys.PUBLISH_SIGNING, publish.signing)
+        scalar(LvmKeys.PUBLISH_ABI_ENABLED, publish.abi.enabled)
+        list(LvmKeys.PUBLISH_ABI_EXCLUDED_NAMES, publish.abi.excludedNames)
+        list(LvmKeys.PUBLISH_ABI_EXCLUDED_ANNOTATIONS, publish.abi.excludedAnnotations)
         return result
     }
 }
@@ -152,10 +155,12 @@ abstract class PublishDefaults @Inject constructor(objects: ObjectFactory) {
     val license: PomLicenseDefaults = objects.newInstance(PomLicenseDefaults::class.java)
     val developer: PomDeveloperDefaults = objects.newInstance(PomDeveloperDefaults::class.java)
     val scm: PomScmDefaults = objects.newInstance(PomScmDefaults::class.java)
+    val abi: AbiDefaults = objects.newInstance(AbiDefaults::class.java)
 
     fun license(action: Action<PomLicenseDefaults>) = action.execute(license)
     fun developer(action: Action<PomDeveloperDefaults>) = action.execute(developer)
     fun scm(action: Action<PomScmDefaults>) = action.execute(scm)
+    fun abi(action: Action<AbiDefaults>) = action.execute(abi)
 }
 
 abstract class PomLicenseDefaults {
@@ -173,4 +178,14 @@ abstract class PomScmDefaults {
     abstract val url: Property<String>
     abstract val connection: Property<String>
     abstract val developerConnection: Property<String>
+}
+
+abstract class AbiDefaults {
+    abstract val enabled: Property<Boolean>
+
+    /** Classes and members to leave out of the ABI dump, by name. */
+    abstract val excludedNames: ListProperty<String>
+
+    /** Annotations whose declarations stay out of the ABI dump. */
+    abstract val excludedAnnotations: ListProperty<String>
 }

@@ -36,6 +36,9 @@ object LvmKeys {
     const val PUBLISH_SCM_CONNECTION: String = "publish.scm.connection"
     const val PUBLISH_SCM_DEVELOPER_CONNECTION: String = "publish.scm.developerConnection"
     const val PUBLISH_SIGNING: String = "publish.signing"
+    const val PUBLISH_ABI_ENABLED: String = "publish.abi.enabled"
+    const val PUBLISH_ABI_EXCLUDED_NAMES: String = "publish.abi.excludedNames"
+    const val PUBLISH_ABI_EXCLUDED_ANNOTATIONS: String = "publish.abi.excludedAnnotations"
 
     fun property(key: String): String = PREFIX + key
 }

@@ -25,4 +25,7 @@ object LvmDefaults {
     val COMPOSE_STABILITY_CONFIGURATION_FILES: List<String> = emptyList()
     const val PUBLISH_ARTIFACT_ID_PREFIX: String = ""
     const val PUBLISH_SIGNING: Boolean = true
+    const val PUBLISH_ABI_ENABLED: Boolean = true
+    val PUBLISH_ABI_EXCLUDED_NAMES: List<String> = emptyList()
+    val PUBLISH_ABI_EXCLUDED_ANNOTATIONS: List<String> = emptyList()
 }

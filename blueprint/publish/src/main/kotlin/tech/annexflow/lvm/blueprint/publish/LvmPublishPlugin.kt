@@ -8,6 +8,8 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.tasks.GenerateMavenPom
 import org.gradle.plugins.signing.Sign
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import tech.annexflow.lvm.blueprint.common.LvmDefaults
 import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
@@ -15,8 +17,8 @@ import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 /**
- * Publishing to Maven Central with vanniktech's plugin: the artifact ID, the POM from `lvm { publish { } }` and
- * signing.
+ * Publishing to Maven Central with vanniktech's plugin: the artifact ID, the POM from `lvm { publish { } }`, signing
+ * and Kotlin's ABI validation.
  */
 class LvmPublishPlugin : Plugin<Project> {
 
@@ -45,6 +47,11 @@ class LvmPublishPlugin : Plugin<Project> {
         // The klib of common code is named after archivesName, so it gets the artifact ID too.
         project.pluginManager.withPlugin("base") {
             project.extensions.getByType(BasePluginExtension::class.java).archivesName.set(artifactId)
+        }
+        // Kotlin turns ABI validation on when abiValidation is first configured, so the switch is read here.
+        if (values.boolean(LvmKeys.PUBLISH_ABI_ENABLED, LvmDefaults.PUBLISH_ABI_ENABLED).get()) {
+            project.pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") { configureAbi(project, values, section.abi) }
+            project.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") { configureAbi(project, values, section.abi) }
         }
     }
 
@@ -110,4 +117,21 @@ class LvmPublishPlugin : Plugin<Project> {
         }
     }
 
+    @OptIn(ExperimentalAbiValidation::class)
+    private fun configureAbi(project: Project, values: LvmValues, abi: AbiValidation) {
+        val names = values.list(LvmKeys.PUBLISH_ABI_EXCLUDED_NAMES, LvmDefaults.PUBLISH_ABI_EXCLUDED_NAMES)
+            .zip(abi.excludedNames) { buildWide, module -> buildWide + module }
+        val annotations = values.list(LvmKeys.PUBLISH_ABI_EXCLUDED_ANNOTATIONS, LvmDefaults.PUBLISH_ABI_EXCLUDED_ANNOTATIONS)
+            .zip(abi.excludedAnnotations) { buildWide, module -> buildWide + module }
+        project.extensions.configure(KotlinProjectExtension::class.java) {
+            abiValidation {
+                filters {
+                    exclude {
+                        byNames.addAll(names)
+                        annotatedWith.addAll(annotations)
+                    }
+                }
+            }
+        }
+    }
 }
