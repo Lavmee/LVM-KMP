@@ -10,6 +10,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -78,9 +79,15 @@ class CoroutineScopeOwnersTest {
 
     @Test
     fun `fetcherResultState is Loading and then Loaded`() = runTest {
-        val state = PreviewAppComponentContext().fetcherResultState(retryPolicy = threeAttempts) { "rows" }
+        // The block runs on Dispatchers.IO, so it waits for the first check instead of racing it.
+        val checkedLoading = CompletableDeferred<Unit>()
+        val state = PreviewAppComponentContext().fetcherResultState(retryPolicy = threeAttempts) {
+            checkedLoading.await()
+            "rows"
+        }
 
         assertEquals(Loadable.Loading, state.value)
+        checkedLoading.complete(Unit)
         assertEquals(Loadable.Loaded("rows"), state.first { it != Loadable.Loading })
     }
 
