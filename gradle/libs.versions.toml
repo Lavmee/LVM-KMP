@@ -18,6 +18,7 @@ androidxActivity = "1.13.0"
 androidxPaging = "3.5.3"
 mokoPermissions = "0.20.1"
 composeMultiplatform = "1.12.2"
+navigationevent = "1.1.0"
 ktor = "3.6.1"
 kotlinRetry = "2.0.2"
 kotlinCompileTesting = "0.14.0"
@@ -63,6 +64,7 @@ compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", v
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
 compose-ui-toolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
+navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigationevent" }
 
 [plugins]
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
