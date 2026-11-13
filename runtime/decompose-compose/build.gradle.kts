@@ -24,12 +24,17 @@ lvm {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            api(libs.compose.animation.core)
             api(libs.compose.runtime)
             api(libs.compose.ui)
+            api(libs.decompose)
+            api(libs.decompose.extensionsCompose)
+            api(libs.decompose.extensionsComposeExperimental)
             api(libs.essenty.back.handler)
             implementation(libs.navigationevent.compose)
         }
         commonTest.dependencies {
+            implementation(libs.compose.foundation)
             implementation(libs.compose.ui.test)
         }
         jvmTest.dependencies {
