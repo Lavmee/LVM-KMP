@@ -101,6 +101,7 @@ plugins {
     alias(lvmLibs.plugins.kotlin.compose) apply false
     alias(lvmLibs.plugins.compose.multiplatform) apply false
     alias(lvmLibs.plugins.detekt) apply false
+    alias(lvmLibs.plugins.vanniktech.mavenPublish) apply false
 
     alias(lvmLibs.plugins.blueprint.multiplatform) apply false
     alias(lvmLibs.plugins.blueprint.compose) apply false
@@ -241,6 +242,47 @@ lvm.compose.reports=true
 ```
 
 In a module that also applies `tech.annexflow.lvm.quality`, the detekt Compose rules are on by default, and detekt accepts composable functions named like types. `lvm { quality { composeRules = false } }` turns the rules off.
+
+## Publishing
+
+`tech.annexflow.lvm.publish` publishes a module to Maven Central with [vanniktech's plugin](https://github.com/vanniktech/gradle-maven-publish-plugin): it sets the artifact ID, fills the POM from `lvm { publish { } }`, signs the publications and turns on Kotlin's ABI validation. It works for Kotlin Multiplatform and Kotlin/JVM modules and for the other kinds of modules that vanniktech's plugin knows, such as Gradle plugins. vanniktech's plugin must be on the build classpath, so the root project declares it next to the others, as in [Getting started](#2-declare-plugins-in-the-root-project).
+
+The POM values are usually the same for every module, so they go into the settings:
+
+```kotlin
+// settings.gradle.kts
+lvm {
+    publish {
+        artifactIdPrefix = "acme-"
+        description = "Acme's libraries"
+        url = "https://github.com/acme/libraries"
+        license {
+            name = "The Apache License, Version 2.0"
+            url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+        developer {
+            id = "acme"
+            name = "Acme"
+        }
+    }
+}
+```
+
+| Setting | Default | Effect |
+|---|---|---|
+| `artifactIdPrefix` | empty | Put before the project name to make the artifact ID, and the module's `archivesName`: `acme-` publishes `:core` as `acme-core`. Build-wide only |
+| `name` | the artifact ID | Name in the POM |
+| `description`, `url` | none | Description and web page in the POM. Required |
+| `license { name; url }` | none | License in the POM. Required |
+| `developer { id; name; url }` | none | Developer in the POM. `id` and `name` are required |
+| `scm { url; connection; developerConnection }` | `url`, and `scm:git:<url>.git` for both connections | Source repository in the POM |
+| `signing` | `true` | Signs the publications. Versions that don't end in `-SNAPSHOT` need a key |
+| `abi { enabled }` | `true` | Kotlin's ABI validation. Build-wide only |
+| `abi { excludedNames; excludedAnnotations }` | empty | Classes and members by name, and annotations, whose declarations stay out of the ABI dump |
+
+A POM without a required value fails to generate and names the `lvm.publish.*` keys to set. `publishToMavenCentral` uploads a deployment, and `publishAndReleaseToMavenCentral` also releases it. Both read vanniktech's Gradle properties for the Central Portal token (`mavenCentralUsername`, `mavenCentralPassword`) and the signing key (`signingInMemoryKey`, `signingInMemoryKeyId`, `signingInMemoryKeyPassword`), for example as `ORG_GRADLE_PROJECT_*` environment variables in CI. To try a release version in Maven local without a key, turn signing off with `-Plvm.publish.signing=false`.
+
+With ABI validation on, `check` runs `checkKotlinAbi`, which compares the module's public API with the dump in its `api/` folder. `updateKotlinAbi` writes the dump; commit it, and update it when an API change is intended.
 
 ## Main context
 
