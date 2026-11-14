@@ -1,0 +1,48 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-decompose-fetcher>
+abstract interface tech.annexflow.lvm.decompose.fetcher/Fetcher { // tech.annexflow.lvm.decompose.fetcher/Fetcher|null[0]
+    abstract suspend fun clearCacheStorage() // tech.annexflow.lvm.decompose.fetcher/Fetcher.clearCacheStorage|clearCacheStorage(){}[0]
+    abstract suspend fun get(kotlin/String): tech.annexflow.lvm.decompose.fetcher/ResponseBody // tech.annexflow.lvm.decompose.fetcher/Fetcher.get|get(kotlin.String){}[0]
+
+    final object Companion // tech.annexflow.lvm.decompose.fetcher/Fetcher.Companion|null[0]
+}
+
+final class tech.annexflow.lvm.decompose.fetcher/ResponseBody { // tech.annexflow.lvm.decompose.fetcher/ResponseBody|null[0]
+    constructor <init>(io.ktor.client.statement/HttpResponse) // tech.annexflow.lvm.decompose.fetcher/ResponseBody.<init>|<init>(io.ktor.client.statement.HttpResponse){}[0]
+
+    final suspend fun <#A1: kotlin/Any?> body(tech.annexflow.lvm.decompose.fetcher/TypeInfo): #A1 // tech.annexflow.lvm.decompose.fetcher/ResponseBody.body|body(tech.annexflow.lvm.decompose.fetcher.TypeInfo){0§<kotlin.Any?>}[0]
+}
+
+final class tech.annexflow.lvm.decompose.fetcher/TypeInfo { // tech.annexflow.lvm.decompose.fetcher/TypeInfo|null[0]
+    constructor <init>(kotlin.reflect/KClass<*>, kotlin.reflect/KType? = ...) // tech.annexflow.lvm.decompose.fetcher/TypeInfo.<init>|<init>(kotlin.reflect.KClass<*>;kotlin.reflect.KType?){}[0]
+
+    final val kotlinType // tech.annexflow.lvm.decompose.fetcher/TypeInfo.kotlinType|{}kotlinType[0]
+        final fun <get-kotlinType>(): kotlin.reflect/KType? // tech.annexflow.lvm.decompose.fetcher/TypeInfo.kotlinType.<get-kotlinType>|<get-kotlinType>(){}[0]
+    final val type // tech.annexflow.lvm.decompose.fetcher/TypeInfo.type|{}type[0]
+        final fun <get-type>(): kotlin.reflect/KClass<*> // tech.annexflow.lvm.decompose.fetcher/TypeInfo.type.<get-type>|<get-type>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // tech.annexflow.lvm.decompose.fetcher/TypeInfo.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // tech.annexflow.lvm.decompose.fetcher/TypeInfo.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // tech.annexflow.lvm.decompose.fetcher/TypeInfo.toString|toString(){}[0]
+}
+
+final val tech.annexflow.lvm.decompose.fetcher/LocalFetcher // tech.annexflow.lvm.decompose.fetcher/LocalFetcher|{}LocalFetcher[0]
+    final fun <get-LocalFetcher>(): tech.annexflow.lvm.decompose/ComponentLocal<tech.annexflow.lvm.decompose.fetcher/Fetcher> // tech.annexflow.lvm.decompose.fetcher/LocalFetcher.<get-LocalFetcher>|<get-LocalFetcher>(){}[0]
+final val tech.annexflow.lvm.decompose.fetcher/fetcher // tech.annexflow.lvm.decompose.fetcher/fetcher|@tech.annexflow.lvm.decompose.AppComponentContext{}fetcher[0]
+    final fun (tech.annexflow.lvm.decompose/AppComponentContext).<get-fetcher>(): tech.annexflow.lvm.decompose.fetcher/Fetcher // tech.annexflow.lvm.decompose.fetcher/fetcher.<get-fetcher>|<get-fetcher>@tech.annexflow.lvm.decompose.AppComponentContext(){}[0]
+final val tech.annexflow.lvm.decompose.fetcher/retryPolicy // tech.annexflow.lvm.decompose.fetcher/retryPolicy|@tech.annexflow.lvm.decompose.fetcher.Fetcher.Companion{}retryPolicy[0]
+    final fun (tech.annexflow.lvm.decompose.fetcher/Fetcher.Companion).<get-retryPolicy>(): com.github.michaelbull.retry.policy/RetryPolicy<kotlin/Throwable> // tech.annexflow.lvm.decompose.fetcher/retryPolicy.<get-retryPolicy>|<get-retryPolicy>@tech.annexflow.lvm.decompose.fetcher.Fetcher.Companion(){}[0]
+
+final fun (io.ktor.client/HttpClientConfig<*>).tech.annexflow.lvm.decompose.fetcher/installFetcherCache(kotlinx.io.files/Path, kotlin/Function0<kotlin/Boolean>, kotlin/Int = ...) // tech.annexflow.lvm.decompose.fetcher/installFetcherCache|installFetcherCache@io.ktor.client.HttpClientConfig<*>(kotlinx.io.files.Path;kotlin.Function0<kotlin.Boolean>;kotlin.Int){}[0]
+final fun tech.annexflow.lvm.decompose.fetcher/Fetcher(io.ktor.client/HttpClient): tech.annexflow.lvm.decompose.fetcher/Fetcher // tech.annexflow.lvm.decompose.fetcher/Fetcher|Fetcher(io.ktor.client.HttpClient){}[0]
+final inline fun <#A: kotlin/Any?> (tech.annexflow.lvm.decompose/CoroutineScopeOwner).tech.annexflow.lvm.decompose.fetcher/fetcherResultState(com.github.michaelbull.retry.policy/RetryPolicy<kotlin/Throwable> = ..., crossinline kotlin.coroutines/SuspendFunction0<#A>): kotlinx.coroutines.flow/StateFlow<tech.annexflow.lvm.core/Loadable<#A>> // tech.annexflow.lvm.decompose.fetcher/fetcherResultState|fetcherResultState@tech.annexflow.lvm.decompose.CoroutineScopeOwner(com.github.michaelbull.retry.policy.RetryPolicy<kotlin.Throwable>;kotlin.coroutines.SuspendFunction0<0:0>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (tech.annexflow.lvm.decompose/CoroutineScopeOwner).tech.annexflow.lvm.decompose.fetcher/fetcherState(#A, com.github.michaelbull.retry.policy/RetryPolicy<kotlin/Throwable> = ..., crossinline kotlin/Function1<kotlin/Throwable, #A> = ..., crossinline kotlin.coroutines/SuspendFunction0<#A>): kotlinx.coroutines.flow/StateFlow<#A> // tech.annexflow.lvm.decompose.fetcher/fetcherState|fetcherState@tech.annexflow.lvm.decompose.CoroutineScopeOwner(0:0;com.github.michaelbull.retry.policy.RetryPolicy<kotlin.Throwable>;kotlin.Function1<kotlin.Throwable,0:0>;kotlin.coroutines.SuspendFunction0<0:0>){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> tech.annexflow.lvm.decompose.fetcher/typeInfo(): tech.annexflow.lvm.decompose.fetcher/TypeInfo // tech.annexflow.lvm.decompose.fetcher/typeInfo|typeInfo(){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> tech.annexflow.lvm.decompose.fetcher/typeOfOrNull(): kotlin.reflect/KType? // tech.annexflow.lvm.decompose.fetcher/typeOfOrNull|typeOfOrNull(){0§<kotlin.Any?>}[0]
+final suspend inline fun <#A: reified kotlin/Any> (tech.annexflow.lvm.decompose.fetcher/ResponseBody).tech.annexflow.lvm.decompose.fetcher/body(): #A // tech.annexflow.lvm.decompose.fetcher/body|body@tech.annexflow.lvm.decompose.fetcher.ResponseBody(){0§<kotlin.Any>}[0]

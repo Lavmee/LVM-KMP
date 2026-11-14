@@ -1,0 +1,107 @@
+public final class tech/annexflow/lvm/decompose/compose/BackHandlerKt {
+	public static final fun BackHandler (Lcom/arkivanov/essenty/backhandler/BackHandler;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class tech/annexflow/lvm/decompose/compose/ChildSlotModalBottomSheetKt {
+	public static final fun ChildSlotModalBottomSheet (Lcom/arkivanov/decompose/router/slot/ChildSlot;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/composeunstyled/SheetDetent;Lcom/composeunstyled/ModalBottomSheetState;Ltech/annexflow/lvm/decompose/compose/SheetDrag;Lcom/composeunstyled/ModalBottomSheetProperties;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ChildSlotModalBottomSheet (Lcom/arkivanov/decompose/value/Value;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/composeunstyled/SheetDetent;Lcom/composeunstyled/ModalBottomSheetState;Ltech/annexflow/lvm/decompose/compose/SheetDrag;Lcom/composeunstyled/ModalBottomSheetProperties;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;III)V
+	public static final fun Scrim-T042LqI (Ltech/annexflow/lvm/decompose/compose/DecomposeModalBottomSheetOverlayScope;Landroidx/compose/ui/Modifier;JLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class tech/annexflow/lvm/decompose/compose/ComposableSingletons$ChildSlotModalBottomSheetKt {
+	public static final field INSTANCE Ltech/annexflow/lvm/decompose/compose/ComposableSingletons$ChildSlotModalBottomSheetKt;
+	public fun <init> ()V
+	public final fun getLambda$-1115188053$tech_annexflow_lvm_lvm_decompose_compose ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-2037575116$tech_annexflow_lvm_lvm_decompose_compose ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-2107535809$tech_annexflow_lvm_lvm_decompose_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-679883210$tech_annexflow_lvm_lvm_decompose_compose ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/DecomposeModalBottomSheetOverlayScope {
+	public static final field $stable I
+}
+
+public final class tech/annexflow/lvm/decompose/compose/DecomposeModalBottomSheetScope {
+	public static final field $stable I
+}
+
+public final class tech/annexflow/lvm/decompose/compose/ModifiersKt {
+	public static final fun offsetYFactor (Landroidx/compose/ui/Modifier;F)Landroidx/compose/ui/Modifier;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/SelectorContext {
+	public static final field $stable I
+	public fun <init> (Lcom/arkivanov/decompose/Child$Created;Lcom/arkivanov/decompose/Child$Created;Lcom/arkivanov/decompose/extensions/compose/stack/animation/Direction;Z)V
+	public final fun component1 ()Lcom/arkivanov/decompose/Child$Created;
+	public final fun component2 ()Lcom/arkivanov/decompose/Child$Created;
+	public final fun component3 ()Lcom/arkivanov/decompose/extensions/compose/stack/animation/Direction;
+	public final fun component4 ()Z
+	public final fun copy (Lcom/arkivanov/decompose/Child$Created;Lcom/arkivanov/decompose/Child$Created;Lcom/arkivanov/decompose/extensions/compose/stack/animation/Direction;Z)Ltech/annexflow/lvm/decompose/compose/SelectorContext;
+	public static synthetic fun copy$default (Ltech/annexflow/lvm/decompose/compose/SelectorContext;Lcom/arkivanov/decompose/Child$Created;Lcom/arkivanov/decompose/Child$Created;Lcom/arkivanov/decompose/extensions/compose/stack/animation/Direction;ZILjava/lang/Object;)Ltech/annexflow/lvm/decompose/compose/SelectorContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChild ()Lcom/arkivanov/decompose/Child$Created;
+	public final fun getDirection ()Lcom/arkivanov/decompose/extensions/compose/stack/animation/Direction;
+	public final fun getOtherChild ()Lcom/arkivanov/decompose/Child$Created;
+	public fun hashCode ()I
+	public final fun isPredictiveBack ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class tech/annexflow/lvm/decompose/compose/SheetDrag {
+}
+
+public final class tech/annexflow/lvm/decompose/compose/SheetDrag$Anywhere : tech/annexflow/lvm/decompose/compose/SheetDrag {
+	public static final field $stable I
+	public static final field INSTANCE Ltech/annexflow/lvm/decompose/compose/SheetDrag$Anywhere;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/SheetDrag$Handle : tech/annexflow/lvm/decompose/compose/SheetDrag {
+	public static final field $stable I
+	public static final field INSTANCE Ltech/annexflow/lvm/decompose/compose/SheetDrag$Handle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/SheetDrag$HandleOnly : tech/annexflow/lvm/decompose/compose/SheetDrag {
+	public static final field $stable I
+	public static final field INSTANCE Ltech/annexflow/lvm/decompose/compose/SheetDrag$HandleOnly;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/SheetDrag$Nowhere : tech/annexflow/lvm/decompose/compose/SheetDrag {
+	public static final field $stable I
+	public static final field INSTANCE Ltech/annexflow/lvm/decompose/compose/SheetDrag$Nowhere;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/SheetDragHandleKt {
+	public static final fun sheetDragHandle (Landroidx/compose/ui/Modifier;Z)Landroidx/compose/ui/Modifier;
+	public static synthetic fun sheetDragHandle$default (Landroidx/compose/ui/Modifier;ZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/StackAnimationsKt {
+	public static final fun stackAnimation (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimation;
+	public static synthetic fun stackAnimation$default (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimation;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/StackAnimatorsKt {
+	public static final fun none ()Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimator;
+	public static final fun slide (ZLandroidx/compose/animation/core/FiniteAnimationSpec;)Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimator;
+	public static synthetic fun slide$default (ZLandroidx/compose/animation/core/FiniteAnimationSpec;ILjava/lang/Object;)Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimator;
+	public static final fun slowFade ()Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimator;
+	public static final fun verticalSlide (Landroidx/compose/animation/core/FiniteAnimationSpec;)Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimator;
+	public static synthetic fun verticalSlide$default (Landroidx/compose/animation/core/FiniteAnimationSpec;ILjava/lang/Object;)Lcom/arkivanov/decompose/extensions/compose/experimental/stack/animation/StackAnimator;
+}
+
+public final class tech/annexflow/lvm/decompose/compose/WindowBackHandlerKt {
+	public static final fun rememberWindowBackHandler (Landroidx/compose/runtime/Composer;I)Lcom/arkivanov/essenty/backhandler/BackHandler;
+}
+

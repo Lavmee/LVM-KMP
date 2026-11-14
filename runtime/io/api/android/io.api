@@ -1,0 +1,9 @@
+public abstract interface class tech/annexflow/lvm/io/AppDirectories {
+	public abstract fun getCache ()Lkotlinx/io/files/Path;
+	public abstract fun getData ()Lkotlinx/io/files/Path;
+}
+
+public final class tech/annexflow/lvm/io/AppDirectories_androidKt {
+	public static final fun AppDirectories (Landroid/content/Context;)Ltech/annexflow/lvm/io/AppDirectories;
+}
+

@@ -1,0 +1,9 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-logger-file>
+final fun tech.annexflow.lvm.logger.file/fileLogger(kotlin/String, kotlin/Function0<kotlinx.io.files/Path>): tech.annexflow.lvm.logger/Logger // tech.annexflow.lvm.logger.file/fileLogger|fileLogger(kotlin.String;kotlin.Function0<kotlinx.io.files.Path>){}[0]

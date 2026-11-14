@@ -1,0 +1,48 @@
+public final class tech/annexflow/lvm/logger/CombinedLoggerKt {
+	public static final fun plus (Ltech/annexflow/lvm/logger/Logger;Ltech/annexflow/lvm/logger/Logger;)Ltech/annexflow/lvm/logger/Logger;
+}
+
+public abstract interface class tech/annexflow/lvm/logger/Logger {
+	public abstract fun log (Ltech/annexflow/lvm/logger/Severity;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public abstract interface class tech/annexflow/lvm/logger/LoggerHolder {
+	public abstract fun getLogger ()Ltech/annexflow/lvm/logger/Logger;
+}
+
+public final class tech/annexflow/lvm/logger/LoggerHolderKt {
+	public static final fun d (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun d$default (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static final fun e (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun e$default (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static final fun i (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun i$default (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static final fun log (Ltech/annexflow/lvm/logger/LoggerHolder;Ltech/annexflow/lvm/logger/Severity;Ljava/lang/Object;Ljava/lang/Throwable;Ljava/lang/String;)V
+	public static synthetic fun log$default (Ltech/annexflow/lvm/logger/LoggerHolder;Ltech/annexflow/lvm/logger/Severity;Ljava/lang/Object;Ljava/lang/Throwable;Ljava/lang/String;ILjava/lang/Object;)V
+	public static final fun w (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun w$default (Ltech/annexflow/lvm/logger/LoggerHolder;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public final class tech/annexflow/lvm/logger/LoggerKt {
+	public static final fun d (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun d$default (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static final fun e (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun e$default (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static final fun i (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun i$default (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static final fun w (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;)V
+	public static synthetic fun w$default (Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public final class tech/annexflow/lvm/logger/Severity : java/lang/Enum {
+	public static final field ASSERT Ltech/annexflow/lvm/logger/Severity;
+	public static final field DEBUG Ltech/annexflow/lvm/logger/Severity;
+	public static final field ERROR Ltech/annexflow/lvm/logger/Severity;
+	public static final field INFO Ltech/annexflow/lvm/logger/Severity;
+	public static final field VERBOSE Ltech/annexflow/lvm/logger/Severity;
+	public static final field WARN Ltech/annexflow/lvm/logger/Severity;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ltech/annexflow/lvm/logger/Severity;
+	public static fun values ()[Ltech/annexflow/lvm/logger/Severity;
+}
+

@@ -1,13 +1,10 @@
 plugins {
     id("tech.annexflow.lvm.multiplatform")
     id("tech.annexflow.lvm.quality")
+    id("tech.annexflow.lvm.publish")
 }
 
 group = "tech.annexflow.lvm"
-
-// The klib of common code is named after archivesName, without the group. Named after the project, it would be
-// "decompose_commonMain" like Decompose's own, and a module that sees both would keep only one of them.
-base { archivesName = "lvm-decompose" }
 
 lvm {
     targets {

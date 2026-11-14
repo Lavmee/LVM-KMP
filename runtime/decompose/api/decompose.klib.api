@@ -1,0 +1,176 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-decompose>
+abstract fun interface <#A: kotlin/Any> tech.annexflow.lvm.decompose/DecomposeActionHandler { // tech.annexflow.lvm.decompose/DecomposeActionHandler|null[0]
+    abstract fun invoke(#A) // tech.annexflow.lvm.decompose/DecomposeActionHandler.invoke|invoke(1:0){}[0]
+}
+
+abstract fun interface <#A: kotlin/Any> tech.annexflow.lvm.decompose/DecomposeNavigationHandler { // tech.annexflow.lvm.decompose/DecomposeNavigationHandler|null[0]
+    abstract fun invoke(#A) // tech.annexflow.lvm.decompose/DecomposeNavigationHandler.invoke|invoke(1:0){}[0]
+}
+
+abstract interface <#A: kotlin/Any> tech.annexflow.lvm.decompose/Paging { // tech.annexflow.lvm.decompose/Paging|null[0]
+    abstract val flow // tech.annexflow.lvm.decompose/Paging.flow|{}flow[0]
+        abstract fun <get-flow>(): kotlinx.coroutines.flow/Flow<androidx.paging/PagingData<#A>> // tech.annexflow.lvm.decompose/Paging.flow.<get-flow>|<get-flow>(){}[0]
+    abstract val snapshotList // tech.annexflow.lvm.decompose/Paging.snapshotList|{}snapshotList[0]
+        abstract fun <get-snapshotList>(): kotlinx.coroutines.flow/StateFlow<androidx.paging/ItemSnapshotList<#A>> // tech.annexflow.lvm.decompose/Paging.snapshotList.<get-snapshotList>|<get-snapshotList>(){}[0]
+
+    abstract fun getElement(kotlin/Int): #A? // tech.annexflow.lvm.decompose/Paging.getElement|getElement(kotlin.Int){}[0]
+}
+
+abstract interface tech.annexflow.lvm.decompose/AppComponentContext : com.arkivanov.decompose/GenericComponentContext<tech.annexflow.lvm.decompose/AppComponentContext>, tech.annexflow.lvm.decompose/ComponentLocalsOwner, tech.annexflow.lvm.decompose/CoroutineScopeOwner, tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner, tech.annexflow.lvm.logger/LoggerHolder { // tech.annexflow.lvm.decompose/AppComponentContext|null[0]
+    abstract fun <#A1: kotlin/Any?> provide(tech.annexflow.lvm.decompose/ComponentLocal<#A1>, #A1): #A1 // tech.annexflow.lvm.decompose/AppComponentContext.provide|provide(tech.annexflow.lvm.decompose.ComponentLocal<0:0>;0:0){0§<kotlin.Any?>}[0]
+
+    final object Companion // tech.annexflow.lvm.decompose/AppComponentContext.Companion|null[0]
+}
+
+abstract interface tech.annexflow.lvm.decompose/ComponentLocalsOwner { // tech.annexflow.lvm.decompose/ComponentLocalsOwner|null[0]
+    abstract val locals // tech.annexflow.lvm.decompose/ComponentLocalsOwner.locals|{}locals[0]
+        abstract fun <get-locals>(): tech.annexflow.lvm.decompose/ComponentLocals // tech.annexflow.lvm.decompose/ComponentLocalsOwner.locals.<get-locals>|<get-locals>(){}[0]
+}
+
+abstract interface tech.annexflow.lvm.decompose/CoroutineScopeOwner { // tech.annexflow.lvm.decompose/CoroutineScopeOwner|null[0]
+    abstract val componentScope // tech.annexflow.lvm.decompose/CoroutineScopeOwner.componentScope|{}componentScope[0]
+        abstract fun <get-componentScope>(): kotlinx.coroutines/CoroutineScope // tech.annexflow.lvm.decompose/CoroutineScopeOwner.componentScope.<get-componentScope>|<get-componentScope>(){}[0]
+
+    open fun <#A1: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A1>).launch(): kotlinx.coroutines/Job // tech.annexflow.lvm.decompose/CoroutineScopeOwner.launch|launch@kotlinx.coroutines.flow.Flow<0:0>(){0§<kotlin.Any?>}[0]
+    open fun <#A1: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A1>).stateIn(#A1, kotlinx.coroutines.flow/SharingStarted = ...): kotlinx.coroutines.flow/StateFlow<#A1> // tech.annexflow.lvm.decompose/CoroutineScopeOwner.stateIn|stateIn@kotlinx.coroutines.flow.Flow<0:0>(0:0;kotlinx.coroutines.flow.SharingStarted){0§<kotlin.Any?>}[0]
+    open fun launchCalculation(kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>): kotlinx.coroutines/Job // tech.annexflow.lvm.decompose/CoroutineScopeOwner.launchCalculation|launchCalculation(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]
+    open fun launchIO(kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>): kotlinx.coroutines/Job // tech.annexflow.lvm.decompose/CoroutineScopeOwner.launchIO|launchIO(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]
+    open suspend fun <#A1: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A1>).stateFlow(kotlinx.coroutines.flow/SharingStarted = ...): kotlinx.coroutines.flow/StateFlow<#A1> // tech.annexflow.lvm.decompose/CoroutineScopeOwner.stateFlow|stateFlow@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.flow.SharingStarted){0§<kotlin.Any?>}[0]
+}
+
+abstract interface tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner { // tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner|null[0]
+    abstract val scopedInstanceKeeper // tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner.scopedInstanceKeeper|{}scopedInstanceKeeper[0]
+        abstract fun <get-scopedInstanceKeeper>(): com.arkivanov.essenty.instancekeeper/InstanceKeeper // tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner.scopedInstanceKeeper.<get-scopedInstanceKeeper>|<get-scopedInstanceKeeper>(){}[0]
+}
+
+final class <#A: com.arkivanov.decompose/GenericComponentContext<#A>> tech.annexflow.lvm.decompose/DefaultAppComponentContext : com.arkivanov.essenty.backhandler/BackHandlerOwner, com.arkivanov.essenty.instancekeeper/InstanceKeeperOwner, com.arkivanov.essenty.lifecycle/LifecycleOwner, com.arkivanov.essenty.statekeeper/StateKeeperOwner, tech.annexflow.lvm.decompose/AppComponentContext { // tech.annexflow.lvm.decompose/DefaultAppComponentContext|null[0]
+    constructor <init>(#A, tech.annexflow.lvm.logger/Logger, com.arkivanov.essenty.instancekeeper/InstanceKeeper, tech.annexflow.lvm.decompose/ComponentLocals = ...) // tech.annexflow.lvm.decompose/DefaultAppComponentContext.<init>|<init>(1:0;tech.annexflow.lvm.logger.Logger;com.arkivanov.essenty.instancekeeper.InstanceKeeper;tech.annexflow.lvm.decompose.ComponentLocals){}[0]
+
+    final val backHandler // tech.annexflow.lvm.decompose/DefaultAppComponentContext.backHandler|{}backHandler[0]
+        final fun <get-backHandler>(): com.arkivanov.essenty.backhandler/BackHandler // tech.annexflow.lvm.decompose/DefaultAppComponentContext.backHandler.<get-backHandler>|<get-backHandler>(){}[0]
+    final val componentContextFactory // tech.annexflow.lvm.decompose/DefaultAppComponentContext.componentContextFactory|{}componentContextFactory[0]
+        final fun <get-componentContextFactory>(): com.arkivanov.decompose/ComponentContextFactory<tech.annexflow.lvm.decompose/AppComponentContext> // tech.annexflow.lvm.decompose/DefaultAppComponentContext.componentContextFactory.<get-componentContextFactory>|<get-componentContextFactory>(){}[0]
+    final val componentScope // tech.annexflow.lvm.decompose/DefaultAppComponentContext.componentScope|{}componentScope[0]
+        final fun <get-componentScope>(): kotlinx.coroutines/CoroutineScope // tech.annexflow.lvm.decompose/DefaultAppComponentContext.componentScope.<get-componentScope>|<get-componentScope>(){}[0]
+    final val instanceKeeper // tech.annexflow.lvm.decompose/DefaultAppComponentContext.instanceKeeper|{}instanceKeeper[0]
+        final fun <get-instanceKeeper>(): com.arkivanov.essenty.instancekeeper/InstanceKeeper // tech.annexflow.lvm.decompose/DefaultAppComponentContext.instanceKeeper.<get-instanceKeeper>|<get-instanceKeeper>(){}[0]
+    final val lifecycle // tech.annexflow.lvm.decompose/DefaultAppComponentContext.lifecycle|{}lifecycle[0]
+        final fun <get-lifecycle>(): com.arkivanov.essenty.lifecycle/Lifecycle // tech.annexflow.lvm.decompose/DefaultAppComponentContext.lifecycle.<get-lifecycle>|<get-lifecycle>(){}[0]
+    final val locals // tech.annexflow.lvm.decompose/DefaultAppComponentContext.locals|{}locals[0]
+        final fun <get-locals>(): tech.annexflow.lvm.decompose/ComponentLocals // tech.annexflow.lvm.decompose/DefaultAppComponentContext.locals.<get-locals>|<get-locals>(){}[0]
+    final val logger // tech.annexflow.lvm.decompose/DefaultAppComponentContext.logger|{}logger[0]
+        final fun <get-logger>(): tech.annexflow.lvm.logger/Logger // tech.annexflow.lvm.decompose/DefaultAppComponentContext.logger.<get-logger>|<get-logger>(){}[0]
+    final val scopedInstanceKeeper // tech.annexflow.lvm.decompose/DefaultAppComponentContext.scopedInstanceKeeper|{}scopedInstanceKeeper[0]
+        final fun <get-scopedInstanceKeeper>(): com.arkivanov.essenty.instancekeeper/InstanceKeeper // tech.annexflow.lvm.decompose/DefaultAppComponentContext.scopedInstanceKeeper.<get-scopedInstanceKeeper>|<get-scopedInstanceKeeper>(){}[0]
+    final val stateKeeper // tech.annexflow.lvm.decompose/DefaultAppComponentContext.stateKeeper|{}stateKeeper[0]
+        final fun <get-stateKeeper>(): com.arkivanov.essenty.statekeeper/StateKeeper // tech.annexflow.lvm.decompose/DefaultAppComponentContext.stateKeeper.<get-stateKeeper>|<get-stateKeeper>(){}[0]
+
+    final fun <#A1: kotlin/Any?> provide(tech.annexflow.lvm.decompose/ComponentLocal<#A1>, #A1): #A1 // tech.annexflow.lvm.decompose/DefaultAppComponentContext.provide|provide(tech.annexflow.lvm.decompose.ComponentLocal<0:0>;0:0){0§<kotlin.Any?>}[0]
+}
+
+final class <#A: kotlin/Any?> tech.annexflow.lvm.decompose/ComponentLocal { // tech.annexflow.lvm.decompose/ComponentLocal|null[0]
+    final fun toString(): kotlin/String // tech.annexflow.lvm.decompose/ComponentLocal.toString|toString(){}[0]
+}
+
+final class <#A: kotlin/Any?> tech.annexflow.lvm.decompose/EventBus { // tech.annexflow.lvm.decompose/EventBus|null[0]
+    constructor <init>() // tech.annexflow.lvm.decompose/EventBus.<init>|<init>(){}[0]
+
+    final val events // tech.annexflow.lvm.decompose/EventBus.events|{}events[0]
+        final fun <get-events>(): kotlinx.coroutines.flow/SharedFlow<#A> // tech.annexflow.lvm.decompose/EventBus.events.<get-events>|<get-events>(){}[0]
+
+    final suspend fun emit(#A) // tech.annexflow.lvm.decompose/EventBus.emit|emit(1:0){}[0]
+}
+
+final class <#A: kotlin/Any?> tech.annexflow.lvm.decompose/ProvidedValue // tech.annexflow.lvm.decompose/ProvidedValue|null[0]
+
+final class tech.annexflow.lvm.decompose/AppComponentRoot { // tech.annexflow.lvm.decompose/AppComponentRoot|null[0]
+    constructor <init>(tech.annexflow.lvm.logger/Logger, com.arkivanov.essenty.statekeeper/SerializableContainer?) // tech.annexflow.lvm.decompose/AppComponentRoot.<init>|<init>(tech.annexflow.lvm.logger.Logger;com.arkivanov.essenty.statekeeper.SerializableContainer?){}[0]
+    constructor <init>(tech.annexflow.lvm.logger/Logger, com.arkivanov.essenty.statekeeper/SerializableContainer?, com.arkivanov.essenty.lifecycle/Lifecycle) // tech.annexflow.lvm.decompose/AppComponentRoot.<init>|<init>(tech.annexflow.lvm.logger.Logger;com.arkivanov.essenty.statekeeper.SerializableContainer?;com.arkivanov.essenty.lifecycle.Lifecycle){}[0]
+
+    final val backDispatcher // tech.annexflow.lvm.decompose/AppComponentRoot.backDispatcher|{}backDispatcher[0]
+        final fun <get-backDispatcher>(): com.arkivanov.essenty.backhandler/BackDispatcher // tech.annexflow.lvm.decompose/AppComponentRoot.backDispatcher.<get-backDispatcher>|<get-backDispatcher>(){}[0]
+    final val context // tech.annexflow.lvm.decompose/AppComponentRoot.context|{}context[0]
+        final fun <get-context>(): tech.annexflow.lvm.decompose/AppComponentContext // tech.annexflow.lvm.decompose/AppComponentRoot.context.<get-context>|<get-context>(){}[0]
+
+    final fun saveState(): com.arkivanov.essenty.statekeeper/SerializableContainer // tech.annexflow.lvm.decompose/AppComponentRoot.saveState|saveState(){}[0]
+}
+
+final class tech.annexflow.lvm.decompose/ComponentLocals { // tech.annexflow.lvm.decompose/ComponentLocals|null[0]
+    final fun <#A1: kotlin/Any?> get(tech.annexflow.lvm.decompose/ComponentLocal<#A1>): #A1 // tech.annexflow.lvm.decompose/ComponentLocals.get|get(tech.annexflow.lvm.decompose.ComponentLocal<0:0>){0§<kotlin.Any?>}[0]
+    final fun contains(tech.annexflow.lvm.decompose/ComponentLocal<*>): kotlin/Boolean // tech.annexflow.lvm.decompose/ComponentLocals.contains|contains(tech.annexflow.lvm.decompose.ComponentLocal<*>){}[0]
+
+    final object Companion { // tech.annexflow.lvm.decompose/ComponentLocals.Companion|null[0]
+        final val Empty // tech.annexflow.lvm.decompose/ComponentLocals.Companion.Empty|{}Empty[0]
+            final fun <get-Empty>(): tech.annexflow.lvm.decompose/ComponentLocals // tech.annexflow.lvm.decompose/ComponentLocals.Companion.Empty.<get-Empty>|<get-Empty>(){}[0]
+    }
+}
+
+final class tech.annexflow.lvm.decompose/PreviewAppComponentContext : tech.annexflow.lvm.decompose/AppComponentContext { // tech.annexflow.lvm.decompose/PreviewAppComponentContext|null[0]
+    constructor <init>(com.arkivanov.essenty.lifecycle/Lifecycle = ..., com.arkivanov.essenty.statekeeper/StateKeeper? = ..., tech.annexflow.lvm.logger/Logger = ...) // tech.annexflow.lvm.decompose/PreviewAppComponentContext.<init>|<init>(com.arkivanov.essenty.lifecycle.Lifecycle;com.arkivanov.essenty.statekeeper.StateKeeper?;tech.annexflow.lvm.logger.Logger){}[0]
+
+    final val backHandler // tech.annexflow.lvm.decompose/PreviewAppComponentContext.backHandler|{}backHandler[0]
+        final fun <get-backHandler>(): com.arkivanov.essenty.backhandler/BackHandler // tech.annexflow.lvm.decompose/PreviewAppComponentContext.backHandler.<get-backHandler>|<get-backHandler>(){}[0]
+    final val componentContextFactory // tech.annexflow.lvm.decompose/PreviewAppComponentContext.componentContextFactory|{}componentContextFactory[0]
+        final fun <get-componentContextFactory>(): com.arkivanov.decompose/ComponentContextFactory<tech.annexflow.lvm.decompose/AppComponentContext> // tech.annexflow.lvm.decompose/PreviewAppComponentContext.componentContextFactory.<get-componentContextFactory>|<get-componentContextFactory>(){}[0]
+    final val componentScope // tech.annexflow.lvm.decompose/PreviewAppComponentContext.componentScope|{}componentScope[0]
+        final fun <get-componentScope>(): kotlinx.coroutines/CoroutineScope // tech.annexflow.lvm.decompose/PreviewAppComponentContext.componentScope.<get-componentScope>|<get-componentScope>(){}[0]
+    final val instanceKeeper // tech.annexflow.lvm.decompose/PreviewAppComponentContext.instanceKeeper|{}instanceKeeper[0]
+        final fun <get-instanceKeeper>(): com.arkivanov.essenty.instancekeeper/InstanceKeeper // tech.annexflow.lvm.decompose/PreviewAppComponentContext.instanceKeeper.<get-instanceKeeper>|<get-instanceKeeper>(){}[0]
+    final val lifecycle // tech.annexflow.lvm.decompose/PreviewAppComponentContext.lifecycle|{}lifecycle[0]
+        final fun <get-lifecycle>(): com.arkivanov.essenty.lifecycle/Lifecycle // tech.annexflow.lvm.decompose/PreviewAppComponentContext.lifecycle.<get-lifecycle>|<get-lifecycle>(){}[0]
+    final val locals // tech.annexflow.lvm.decompose/PreviewAppComponentContext.locals|{}locals[0]
+        final fun <get-locals>(): tech.annexflow.lvm.decompose/ComponentLocals // tech.annexflow.lvm.decompose/PreviewAppComponentContext.locals.<get-locals>|<get-locals>(){}[0]
+    final val logger // tech.annexflow.lvm.decompose/PreviewAppComponentContext.logger|{}logger[0]
+        final fun <get-logger>(): tech.annexflow.lvm.logger/Logger // tech.annexflow.lvm.decompose/PreviewAppComponentContext.logger.<get-logger>|<get-logger>(){}[0]
+    final val scopedInstanceKeeper // tech.annexflow.lvm.decompose/PreviewAppComponentContext.scopedInstanceKeeper|{}scopedInstanceKeeper[0]
+        final fun <get-scopedInstanceKeeper>(): com.arkivanov.essenty.instancekeeper/InstanceKeeper // tech.annexflow.lvm.decompose/PreviewAppComponentContext.scopedInstanceKeeper.<get-scopedInstanceKeeper>|<get-scopedInstanceKeeper>(){}[0]
+    final val stateKeeper // tech.annexflow.lvm.decompose/PreviewAppComponentContext.stateKeeper|{}stateKeeper[0]
+        final fun <get-stateKeeper>(): com.arkivanov.essenty.statekeeper/StateKeeper // tech.annexflow.lvm.decompose/PreviewAppComponentContext.stateKeeper.<get-stateKeeper>|<get-stateKeeper>(){}[0]
+
+    final fun <#A1: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A1>).launch(): kotlinx.coroutines/Job // tech.annexflow.lvm.decompose/PreviewAppComponentContext.launch|launch@kotlinx.coroutines.flow.Flow<0:0>(){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A1>).stateIn(#A1, kotlinx.coroutines.flow/SharingStarted): kotlinx.coroutines.flow/StateFlow<#A1> // tech.annexflow.lvm.decompose/PreviewAppComponentContext.stateIn|stateIn@kotlinx.coroutines.flow.Flow<0:0>(0:0;kotlinx.coroutines.flow.SharingStarted){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> provide(tech.annexflow.lvm.decompose/ComponentLocal<#A1>, #A1): #A1 // tech.annexflow.lvm.decompose/PreviewAppComponentContext.provide|provide(tech.annexflow.lvm.decompose.ComponentLocal<0:0>;0:0){0§<kotlin.Any?>}[0]
+    final fun launchCalculation(kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>): kotlinx.coroutines/Job // tech.annexflow.lvm.decompose/PreviewAppComponentContext.launchCalculation|launchCalculation(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]
+    final fun launchIO(kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>): kotlinx.coroutines/Job // tech.annexflow.lvm.decompose/PreviewAppComponentContext.launchIO|launchIO(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]
+    final suspend fun <#A1: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A1>).stateFlow(kotlinx.coroutines.flow/SharingStarted): kotlinx.coroutines.flow/StateFlow<#A1> // tech.annexflow.lvm.decompose/PreviewAppComponentContext.stateFlow|stateFlow@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.flow.SharingStarted){0§<kotlin.Any?>}[0]
+}
+
+final const val tech.annexflow.lvm.decompose/COMPONENT_STATE_KEY // tech.annexflow.lvm.decompose/COMPONENT_STATE_KEY|{}COMPONENT_STATE_KEY[0]
+    final fun <get-COMPONENT_STATE_KEY>(): kotlin/String // tech.annexflow.lvm.decompose/COMPONENT_STATE_KEY.<get-COMPONENT_STATE_KEY>|<get-COMPONENT_STATE_KEY>(){}[0]
+
+final fun (platform.Foundation/NSCoder).tech.annexflow.lvm.decompose/decodeSavedState(): com.arkivanov.essenty.statekeeper/SerializableContainer? // tech.annexflow.lvm.decompose/decodeSavedState|decodeSavedState@platform.Foundation.NSCoder(){}[0]
+final fun (platform.Foundation/NSCoder).tech.annexflow.lvm.decompose/encodeSavedState(com.arkivanov.essenty.statekeeper/SerializableContainer) // tech.annexflow.lvm.decompose/encodeSavedState|encodeSavedState@platform.Foundation.NSCoder(com.arkivanov.essenty.statekeeper.SerializableContainer){}[0]
+final fun (tech.annexflow.lvm.decompose/AppComponentContext).tech.annexflow.lvm.decompose/provideLocals(kotlin/Array<out tech.annexflow.lvm.decompose/ProvidedValue<*>>...): tech.annexflow.lvm.decompose/AppComponentContext // tech.annexflow.lvm.decompose/provideLocals|provideLocals@tech.annexflow.lvm.decompose.AppComponentContext(kotlin.Array<out|tech.annexflow.lvm.decompose.ProvidedValue<*>>...){}[0]
+final fun <#A: kotlin/Any> (com.arkivanov.decompose.router.children/NavigationSource<#A>).tech.annexflow.lvm.decompose/asFlow(): kotlinx.coroutines.flow/Flow<#A> // tech.annexflow.lvm.decompose/asFlow|asFlow@com.arkivanov.decompose.router.children.NavigationSource<0:0>(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> (com.arkivanov.decompose.value/Value<#A>).tech.annexflow.lvm.decompose/asFlow(): kotlinx.coroutines.flow/Flow<#A> // tech.annexflow.lvm.decompose/asFlow|asFlow@com.arkivanov.decompose.value.Value<0:0>(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> (com.arkivanov.decompose.value/Value<#A>).tech.annexflow.lvm.decompose/asStateFlow(): kotlinx.coroutines.flow/StateFlow<#A> // tech.annexflow.lvm.decompose/asStateFlow|asStateFlow@com.arkivanov.decompose.value.Value<0:0>(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> (tech.annexflow.lvm.decompose/CoroutineScopeOwner).tech.annexflow.lvm.decompose/paging(kotlinx.coroutines.flow/Flow<androidx.paging/PagingData<#A>>): tech.annexflow.lvm.decompose/Paging<#A> // tech.annexflow.lvm.decompose/paging|paging@tech.annexflow.lvm.decompose.CoroutineScopeOwner(kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<0:0>>){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/emptyPagingData(): androidx.paging/PagingData<#A> // tech.annexflow.lvm.decompose/emptyPagingData|emptyPagingData(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/emptyPagingFlow(): kotlinx.coroutines.flow/Flow<androidx.paging/PagingData<#A>> // tech.annexflow.lvm.decompose/emptyPagingFlow|emptyPagingFlow(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/loadedPagingData(kotlin.collections/List<#A>): androidx.paging/PagingData<#A> // tech.annexflow.lvm.decompose/loadedPagingData|loadedPagingData(kotlin.collections.List<0:0>){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/loadedPagingFlow(kotlin.collections/List<#A>): kotlinx.coroutines.flow/Flow<androidx.paging/PagingData<#A>> // tech.annexflow.lvm.decompose/loadedPagingFlow|loadedPagingFlow(kotlin.collections.List<0:0>){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/paging(kotlinx.coroutines.flow/Flow<androidx.paging/PagingData<#A>>, kotlinx.coroutines/CoroutineScope): tech.annexflow.lvm.decompose/Paging<#A> // tech.annexflow.lvm.decompose/paging|paging(kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<0:0>>;kotlinx.coroutines.CoroutineScope){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/pagingFlowOf(androidx.paging/PagingData<#A>): kotlinx.coroutines.flow/Flow<androidx.paging/PagingData<#A>> // tech.annexflow.lvm.decompose/pagingFlowOf|pagingFlowOf(androidx.paging.PagingData<0:0>){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> tech.annexflow.lvm.decompose/stubPaging(kotlin.collections/List<#A> = ...): tech.annexflow.lvm.decompose/Paging<#A> // tech.annexflow.lvm.decompose/stubPaging|stubPaging(kotlin.collections.List<0:0>){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any?> (tech.annexflow.lvm.decompose/ComponentLocal<#A>).tech.annexflow.lvm.decompose/getValue(tech.annexflow.lvm.decompose/ComponentLocalsOwner, kotlin.reflect/KProperty<*>): #A // tech.annexflow.lvm.decompose/getValue|getValue@tech.annexflow.lvm.decompose.ComponentLocal<0:0>(tech.annexflow.lvm.decompose.ComponentLocalsOwner;kotlin.reflect.KProperty<*>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (tech.annexflow.lvm.decompose/ComponentLocal<#A>).tech.annexflow.lvm.decompose/provides(#A): tech.annexflow.lvm.decompose/ProvidedValue<#A> // tech.annexflow.lvm.decompose/provides|provides@tech.annexflow.lvm.decompose.ComponentLocal<0:0>(0:0){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> tech.annexflow.lvm.decompose/componentLocalOf(kotlin/String? = ..., kotlin/Function0<#A>? = ...): tech.annexflow.lvm.decompose/ComponentLocal<#A> // tech.annexflow.lvm.decompose/componentLocalOf|componentLocalOf(kotlin.String?;kotlin.Function0<0:0>?){0§<kotlin.Any?>}[0]
+final fun tech.annexflow.lvm.decompose/rootAppComponentContext(com.arkivanov.decompose/ComponentContext, tech.annexflow.lvm.logger/Logger): tech.annexflow.lvm.decompose/AppComponentContext // tech.annexflow.lvm.decompose/rootAppComponentContext|rootAppComponentContext(com.arkivanov.decompose.ComponentContext;tech.annexflow.lvm.logger.Logger){}[0]
+final inline fun (com.arkivanov.decompose.router.slot/SlotNavigator<kotlin/Unit>).tech.annexflow.lvm.decompose/activate(crossinline kotlin/Function0<kotlin/Unit> = ...) // tech.annexflow.lvm.decompose/activate|activate@com.arkivanov.decompose.router.slot.SlotNavigator<kotlin.Unit>(kotlin.Function0<kotlin.Unit>){}[0]
+final inline fun <#A: kotlin/Any> (com.arkivanov.decompose.router.stack/StackNavigator<#A>).tech.annexflow.lvm.decompose/replaceAll(kotlin/Array<out #A>..., crossinline kotlin/Function0<kotlin/Unit> = ...) // tech.annexflow.lvm.decompose/replaceAll|replaceAll@com.arkivanov.decompose.router.stack.StackNavigator<0:0>(kotlin.Array<out|0:0>...;kotlin.Function0<kotlin.Unit>){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any> (com.arkivanov.essenty.statekeeper/StateKeeper).tech.annexflow.lvm.decompose/mutableStateFlow(kotlin/String, kotlin/Function0<#A>): kotlinx.coroutines.flow/MutableStateFlow<#A> // tech.annexflow.lvm.decompose/mutableStateFlow|mutableStateFlow@com.arkivanov.essenty.statekeeper.StateKeeper(kotlin.String;kotlin.Function0<0:0>){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any> (com.arkivanov.essenty.statekeeper/StateKeeperOwner).tech.annexflow.lvm.decompose/mutableState(kotlin/Function0<#A>): kotlinx.coroutines.flow/MutableStateFlow<#A> // tech.annexflow.lvm.decompose/mutableState|mutableState@com.arkivanov.essenty.statekeeper.StateKeeperOwner(kotlin.Function0<0:0>){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any> (com.arkivanov.essenty.statekeeper/StateKeeperOwner).tech.annexflow.lvm.decompose/mutableStateFlow(kotlin/String, kotlin/Function0<#A>): kotlinx.coroutines.flow/MutableStateFlow<#A> // tech.annexflow.lvm.decompose/mutableStateFlow|mutableStateFlow@com.arkivanov.essenty.statekeeper.StateKeeperOwner(kotlin.String;kotlin.Function0<0:0>){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any> (tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner).tech.annexflow.lvm.decompose/getOrCreateScoped(kotlin/Any = ..., kotlin/Function0<#A>): #A // tech.annexflow.lvm.decompose/getOrCreateScoped|getOrCreateScoped@tech.annexflow.lvm.decompose.ScopedInstanceKeeperOwner(kotlin.Any;kotlin.Function0<0:0>){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any> (tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner).tech.annexflow.lvm.decompose/getScoped(kotlin/Any = ...): #A // tech.annexflow.lvm.decompose/getScoped|getScoped@tech.annexflow.lvm.decompose.ScopedInstanceKeeperOwner(kotlin.Any){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any> (tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner).tech.annexflow.lvm.decompose/getScopedOrNull(kotlin/Any = ...): #A? // tech.annexflow.lvm.decompose/getScopedOrNull|getScopedOrNull@tech.annexflow.lvm.decompose.ScopedInstanceKeeperOwner(kotlin.Any){0§<kotlin.Any>}[0]
+final inline fun <#A: reified kotlin/Any?> (tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner).tech.annexflow.lvm.decompose/eventBus(): tech.annexflow.lvm.decompose/EventBus<#A> // tech.annexflow.lvm.decompose/eventBus|eventBus@tech.annexflow.lvm.decompose.ScopedInstanceKeeperOwner(){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> (tech.annexflow.lvm.decompose/ScopedInstanceKeeperOwner).tech.annexflow.lvm.decompose/getOrCreateEventBus(): tech.annexflow.lvm.decompose/EventBus<#A> // tech.annexflow.lvm.decompose/getOrCreateEventBus|getOrCreateEventBus@tech.annexflow.lvm.decompose.ScopedInstanceKeeperOwner(){0§<kotlin.Any?>}[0]
+final suspend fun (com.arkivanov.essenty.lifecycle/Lifecycle).tech.annexflow.lvm.decompose/awaitStarted() // tech.annexflow.lvm.decompose/awaitStarted|awaitStarted@com.arkivanov.essenty.lifecycle.Lifecycle(){}[0]

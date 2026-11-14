@@ -1,0 +1,17 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-main-context>
+open annotation class tech.annexflow.lvm.maincontext/MainContext : kotlin/Annotation { // tech.annexflow.lvm.maincontext/MainContext|null[0]
+    constructor <init>() // tech.annexflow.lvm.maincontext/MainContext.<init>|<init>(){}[0]
+}
+
+open annotation class tech.annexflow.lvm.maincontext/MainContextCompilerApi : kotlin/Annotation { // tech.annexflow.lvm.maincontext/MainContextCompilerApi|null[0]
+    constructor <init>() // tech.annexflow.lvm.maincontext/MainContextCompilerApi.<init>|<init>(){}[0]
+}
+
+final suspend fun <#A: kotlin/Any?> tech.annexflow.lvm.maincontext/onMainContext(kotlin.coroutines/SuspendFunction0<#A>): #A // tech.annexflow.lvm.maincontext/onMainContext|onMainContext(kotlin.coroutines.SuspendFunction0<0:0>){0§<kotlin.Any?>}[0]

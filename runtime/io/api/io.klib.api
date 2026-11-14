@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-io>
+abstract interface tech.annexflow.lvm.io/AppDirectories { // tech.annexflow.lvm.io/AppDirectories|null[0]
+    abstract val cache // tech.annexflow.lvm.io/AppDirectories.cache|{}cache[0]
+        abstract fun <get-cache>(): kotlinx.io.files/Path // tech.annexflow.lvm.io/AppDirectories.cache.<get-cache>|<get-cache>(){}[0]
+    abstract val data // tech.annexflow.lvm.io/AppDirectories.data|{}data[0]
+        abstract fun <get-data>(): kotlinx.io.files/Path // tech.annexflow.lvm.io/AppDirectories.data.<get-data>|<get-data>(){}[0]
+}
+
+final fun tech.annexflow.lvm.io/AppDirectories(): tech.annexflow.lvm.io/AppDirectories // tech.annexflow.lvm.io/AppDirectories|AppDirectories(){}[0]

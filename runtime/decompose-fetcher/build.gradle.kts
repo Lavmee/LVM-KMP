@@ -1,13 +1,10 @@
 plugins {
     id("tech.annexflow.lvm.multiplatform")
     id("tech.annexflow.lvm.quality")
+    id("tech.annexflow.lvm.publish")
 }
 
 group = "tech.annexflow.lvm"
-
-// The klib of common code is named after archivesName, without the group; the artifact ID keeps it apart from the
-// klibs of other libraries.
-base { archivesName = "lvm-decompose-fetcher" }
 
 lvm {
     targets {

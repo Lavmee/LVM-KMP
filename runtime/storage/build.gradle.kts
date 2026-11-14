@@ -1,6 +1,7 @@
 plugins {
     id("tech.annexflow.lvm.multiplatform")
     id("tech.annexflow.lvm.quality")
+    id("tech.annexflow.lvm.publish")
     // The tests store @Serializable classes.
     alias(libs.plugins.kotlin.serialization)
 }

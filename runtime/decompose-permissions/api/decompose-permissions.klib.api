@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-decompose-permissions>
+final val tech.annexflow.lvm.decompose.permissions/LocalPermissionsController // tech.annexflow.lvm.decompose.permissions/LocalPermissionsController|{}LocalPermissionsController[0]
+    final fun <get-LocalPermissionsController>(): tech.annexflow.lvm.decompose/ComponentLocal<dev.icerock.moko.permissions.ios/PermissionsControllerProtocol> // tech.annexflow.lvm.decompose.permissions/LocalPermissionsController.<get-LocalPermissionsController>|<get-LocalPermissionsController>(){}[0]
+final val tech.annexflow.lvm.decompose.permissions/permissionsController // tech.annexflow.lvm.decompose.permissions/permissionsController|@tech.annexflow.lvm.decompose.AppComponentContext{}permissionsController[0]
+    final fun (tech.annexflow.lvm.decompose/AppComponentContext).<get-permissionsController>(): dev.icerock.moko.permissions.ios/PermissionsControllerProtocol // tech.annexflow.lvm.decompose.permissions/permissionsController.<get-permissionsController>|<get-permissionsController>@tech.annexflow.lvm.decompose.AppComponentContext(){}[0]
+
+final fun tech.annexflow.lvm.decompose.permissions/StubPermissionsController(dev.icerock.moko.permissions/PermissionState = ...): dev.icerock.moko.permissions.ios/PermissionsControllerProtocol // tech.annexflow.lvm.decompose.permissions/StubPermissionsController|StubPermissionsController(dev.icerock.moko.permissions.PermissionState){}[0]

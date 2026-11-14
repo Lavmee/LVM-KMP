@@ -3,14 +3,11 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 plugins {
     id("tech.annexflow.lvm.multiplatform")
     id("tech.annexflow.lvm.quality")
+    id("tech.annexflow.lvm.publish")
     id("tech.annexflow.lvm.compose")
 }
 
 group = "tech.annexflow.lvm"
-
-// The klib of common code is named after archivesName, without the group; the artifact ID keeps it apart from the
-// klibs of other libraries.
-base { archivesName = "lvm-decompose-compose" }
 
 lvm {
     targets {

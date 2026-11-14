@@ -1,0 +1,9 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-logger-console>
+final fun tech.annexflow.lvm.logger.console/consoleLogger(): tech.annexflow.lvm.logger/Logger // tech.annexflow.lvm.logger.console/consoleLogger|consoleLogger(){}[0]

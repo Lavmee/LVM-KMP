@@ -1,0 +1,68 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-core>
+open annotation class tech.annexflow.lvm.core/DelicateApi : kotlin/Annotation { // tech.annexflow.lvm.core/DelicateApi|null[0]
+    constructor <init>() // tech.annexflow.lvm.core/DelicateApi.<init>|<init>(){}[0]
+}
+
+sealed interface <#A: kotlin/Any?, #B: kotlin/Any?> tech.annexflow.lvm.core/EvictingMap : kotlin.collections/MutableMap<#A, #B> { // tech.annexflow.lvm.core/EvictingMap|null[0]
+    abstract val maxSize // tech.annexflow.lvm.core/EvictingMap.maxSize|{}maxSize[0]
+        abstract fun <get-maxSize>(): kotlin/Int // tech.annexflow.lvm.core/EvictingMap.maxSize.<get-maxSize>|<get-maxSize>(){}[0]
+}
+
+sealed interface <#A: out kotlin/Any?> tech.annexflow.lvm.core/Loadable { // tech.annexflow.lvm.core/Loadable|null[0]
+    sealed interface <#A1: out kotlin/Any?> Done : tech.annexflow.lvm.core/Loadable<#A1> // tech.annexflow.lvm.core/Loadable.Done|null[0]
+
+    final class <#A1: out kotlin/Any?> Loaded : tech.annexflow.lvm.core/Loadable.Done<#A1> { // tech.annexflow.lvm.core/Loadable.Loaded|null[0]
+        constructor <init>(#A1) // tech.annexflow.lvm.core/Loadable.Loaded.<init>|<init>(1:0){}[0]
+
+        final val data // tech.annexflow.lvm.core/Loadable.Loaded.data|{}data[0]
+            final fun <get-data>(): #A1 // tech.annexflow.lvm.core/Loadable.Loaded.data.<get-data>|<get-data>(){}[0]
+
+        final fun component1(): #A1 // tech.annexflow.lvm.core/Loadable.Loaded.component1|component1(){}[0]
+        final fun copy(#A1 = ...): tech.annexflow.lvm.core/Loadable.Loaded<#A1> // tech.annexflow.lvm.core/Loadable.Loaded.copy|copy(1:0){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // tech.annexflow.lvm.core/Loadable.Loaded.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // tech.annexflow.lvm.core/Loadable.Loaded.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // tech.annexflow.lvm.core/Loadable.Loaded.toString|toString(){}[0]
+    }
+
+    final class Failed : tech.annexflow.lvm.core/Loadable.Done<kotlin/Nothing> { // tech.annexflow.lvm.core/Loadable.Failed|null[0]
+        constructor <init>(kotlin/Throwable) // tech.annexflow.lvm.core/Loadable.Failed.<init>|<init>(kotlin.Throwable){}[0]
+
+        final val throwable // tech.annexflow.lvm.core/Loadable.Failed.throwable|{}throwable[0]
+            final fun <get-throwable>(): kotlin/Throwable // tech.annexflow.lvm.core/Loadable.Failed.throwable.<get-throwable>|<get-throwable>(){}[0]
+
+        final fun component1(): kotlin/Throwable // tech.annexflow.lvm.core/Loadable.Failed.component1|component1(){}[0]
+        final fun copy(kotlin/Throwable = ...): tech.annexflow.lvm.core/Loadable.Failed // tech.annexflow.lvm.core/Loadable.Failed.copy|copy(kotlin.Throwable){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // tech.annexflow.lvm.core/Loadable.Failed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // tech.annexflow.lvm.core/Loadable.Failed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // tech.annexflow.lvm.core/Loadable.Failed.toString|toString(){}[0]
+    }
+
+    final object Loading : tech.annexflow.lvm.core/Loadable<kotlin/Nothing> { // tech.annexflow.lvm.core/Loadable.Loading|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // tech.annexflow.lvm.core/Loadable.Loading.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // tech.annexflow.lvm.core/Loadable.Loading.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // tech.annexflow.lvm.core/Loadable.Loading.toString|toString(){}[0]
+    }
+}
+
+final fun (kotlin/String).tech.annexflow.lvm.core/replaceLast(kotlin/Char, kotlin/Char, kotlin/Boolean = ...): kotlin/String // tech.annexflow.lvm.core/replaceLast|replaceLast@kotlin.String(kotlin.Char;kotlin.Char;kotlin.Boolean){}[0]
+final fun (kotlin/String).tech.annexflow.lvm.core/replaceLast(kotlin/String, kotlin/String, kotlin/Boolean = ...): kotlin/String // tech.annexflow.lvm.core/replaceLast|replaceLast@kotlin.String(kotlin.String;kotlin.String;kotlin.Boolean){}[0]
+final fun <#A: kotlin/Any?, #B: kotlin/Any?> tech.annexflow.lvm.core/EvictingMap(kotlin/Int): tech.annexflow.lvm.core/EvictingMap<#A, #B> // tech.annexflow.lvm.core/EvictingMap|EvictingMap(kotlin.Int){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (kotlin.collections/Set<#A>).tech.annexflow.lvm.core/switchElement(#A): kotlin.collections/Set<#A> // tech.annexflow.lvm.core/switchElement|switchElement@kotlin.collections.Set<0:0>(0:0){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin/Function0<#A>).tech.annexflow.lvm.core/map(crossinline kotlin/Function1<#A, #B>): kotlin/Function0<#B> // tech.annexflow.lvm.core/map|map@kotlin.Function0<0:0>(kotlin.Function1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (tech.annexflow.lvm.core/Loadable<#A>).tech.annexflow.lvm.core/map(kotlin/Function1<#A, #B>): tech.annexflow.lvm.core/Loadable<#B> // tech.annexflow.lvm.core/map|map@tech.annexflow.lvm.core.Loadable<0:0>(kotlin.Function1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (tech.annexflow.lvm.core/Loadable<kotlin.collections/List<#A>>).tech.annexflow.lvm.core/mapList(kotlin/Function1<#A, #B>): tech.annexflow.lvm.core/Loadable<kotlin.collections/List<#B>> // tech.annexflow.lvm.core/mapList|mapList@tech.annexflow.lvm.core.Loadable<kotlin.collections.List<0:0>>(kotlin.Function1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).tech.annexflow.lvm.core/findOrFirstOrNull(kotlin/Function1<#A, kotlin/Boolean>): #A? // tech.annexflow.lvm.core/findOrFirstOrNull|findOrFirstOrNull@kotlin.collections.Iterable<0:0>(kotlin.Function1<0:0,kotlin.Boolean>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (tech.annexflow.lvm.core/Loadable<#A>).tech.annexflow.lvm.core/getOrElse(kotlin/Function0<#A>): #A // tech.annexflow.lvm.core/getOrElse|getOrElse@tech.annexflow.lvm.core.Loadable<0:0>(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (tech.annexflow.lvm.core/Loadable<#A>).tech.annexflow.lvm.core/getOrNull(): #A? // tech.annexflow.lvm.core/getOrNull|getOrNull@tech.annexflow.lvm.core.Loadable<0:0>(){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (tech.annexflow.lvm.core/Loadable<kotlin.collections/List<#A>>).tech.annexflow.lvm.core/getOrEmpty(): kotlin.collections/List<#A> // tech.annexflow.lvm.core/getOrEmpty|getOrEmpty@tech.annexflow.lvm.core.Loadable<kotlin.collections.List<0:0>>(){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> (kotlin.collections/Iterable<*>).tech.annexflow.lvm.core/firstIsInstance(): #A // tech.annexflow.lvm.core/firstIsInstance|firstIsInstance@kotlin.collections.Iterable<*>(){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> (kotlin.collections/Iterable<*>).tech.annexflow.lvm.core/firstOrNullIsInstance(): #A? // tech.annexflow.lvm.core/firstOrNullIsInstance|firstOrNullIsInstance@kotlin.collections.Iterable<*>(){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> (kotlin.collections/Iterable<*>).tech.annexflow.lvm.core/lastIsInstance(): #A // tech.annexflow.lvm.core/lastIsInstance|lastIsInstance@kotlin.collections.Iterable<*>(){0§<kotlin.Any?>}[0]
+final inline fun <#A: reified kotlin/Any?> (kotlin.collections/Iterable<*>).tech.annexflow.lvm.core/lastOrNullIsInstance(): #A? // tech.annexflow.lvm.core/lastOrNullIsInstance|lastOrNullIsInstance@kotlin.collections.Iterable<*>(){0§<kotlin.Any?>}[0]

@@ -1,0 +1,42 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <tech.annexflow.lvm:lvm-logger>
+final enum class tech.annexflow.lvm.logger/Severity : kotlin/Enum<tech.annexflow.lvm.logger/Severity> { // tech.annexflow.lvm.logger/Severity|null[0]
+    enum entry ASSERT // tech.annexflow.lvm.logger/Severity.ASSERT|null[0]
+    enum entry DEBUG // tech.annexflow.lvm.logger/Severity.DEBUG|null[0]
+    enum entry ERROR // tech.annexflow.lvm.logger/Severity.ERROR|null[0]
+    enum entry INFO // tech.annexflow.lvm.logger/Severity.INFO|null[0]
+    enum entry VERBOSE // tech.annexflow.lvm.logger/Severity.VERBOSE|null[0]
+    enum entry WARN // tech.annexflow.lvm.logger/Severity.WARN|null[0]
+
+    final val entries // tech.annexflow.lvm.logger/Severity.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<tech.annexflow.lvm.logger/Severity> // tech.annexflow.lvm.logger/Severity.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): tech.annexflow.lvm.logger/Severity // tech.annexflow.lvm.logger/Severity.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<tech.annexflow.lvm.logger/Severity> // tech.annexflow.lvm.logger/Severity.values|values#static(){}[0]
+}
+
+abstract fun interface tech.annexflow.lvm.logger/Logger { // tech.annexflow.lvm.logger/Logger|null[0]
+    abstract fun log(tech.annexflow.lvm.logger/Severity, kotlin/String, kotlin/String, kotlin/Throwable?) // tech.annexflow.lvm.logger/Logger.log|log(tech.annexflow.lvm.logger.Severity;kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+}
+
+abstract interface tech.annexflow.lvm.logger/LoggerHolder { // tech.annexflow.lvm.logger/LoggerHolder|null[0]
+    abstract val logger // tech.annexflow.lvm.logger/LoggerHolder.logger|{}logger[0]
+        abstract fun <get-logger>(): tech.annexflow.lvm.logger/Logger // tech.annexflow.lvm.logger/LoggerHolder.logger.<get-logger>|<get-logger>(){}[0]
+}
+
+final fun (tech.annexflow.lvm.logger/Logger).tech.annexflow.lvm.logger/d(kotlin/String, kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/d|d@tech.annexflow.lvm.logger.Logger(kotlin.String;kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/Logger).tech.annexflow.lvm.logger/e(kotlin/String, kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/e|e@tech.annexflow.lvm.logger.Logger(kotlin.String;kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/Logger).tech.annexflow.lvm.logger/i(kotlin/String, kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/i|i@tech.annexflow.lvm.logger.Logger(kotlin.String;kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/Logger).tech.annexflow.lvm.logger/plus(tech.annexflow.lvm.logger/Logger): tech.annexflow.lvm.logger/Logger // tech.annexflow.lvm.logger/plus|plus@tech.annexflow.lvm.logger.Logger(tech.annexflow.lvm.logger.Logger){}[0]
+final fun (tech.annexflow.lvm.logger/Logger).tech.annexflow.lvm.logger/w(kotlin/String, kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/w|w@tech.annexflow.lvm.logger.Logger(kotlin.String;kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/LoggerHolder).tech.annexflow.lvm.logger/d(kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/d|d@tech.annexflow.lvm.logger.LoggerHolder(kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/LoggerHolder).tech.annexflow.lvm.logger/e(kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/e|e@tech.annexflow.lvm.logger.LoggerHolder(kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/LoggerHolder).tech.annexflow.lvm.logger/i(kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/i|i@tech.annexflow.lvm.logger.LoggerHolder(kotlin.Any?;kotlin.Throwable?){}[0]
+final fun (tech.annexflow.lvm.logger/LoggerHolder).tech.annexflow.lvm.logger/log(tech.annexflow.lvm.logger/Severity, kotlin/Any?, kotlin/Throwable? = ..., kotlin/String = ...) // tech.annexflow.lvm.logger/log|log@tech.annexflow.lvm.logger.LoggerHolder(tech.annexflow.lvm.logger.Severity;kotlin.Any?;kotlin.Throwable?;kotlin.String){}[0]
+final fun (tech.annexflow.lvm.logger/LoggerHolder).tech.annexflow.lvm.logger/w(kotlin/Any?, kotlin/Throwable? = ...) // tech.annexflow.lvm.logger/w|w@tech.annexflow.lvm.logger.LoggerHolder(kotlin.Any?;kotlin.Throwable?){}[0]

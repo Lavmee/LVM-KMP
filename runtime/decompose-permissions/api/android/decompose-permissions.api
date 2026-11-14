@@ -1,0 +1,18 @@
+public final class tech/annexflow/lvm/decompose/permissions/LocalPermissionsControllerKt {
+	public static final fun getLocalPermissionsController ()Ltech/annexflow/lvm/decompose/ComponentLocal;
+	public static final fun getPermissionsController (Ltech/annexflow/lvm/decompose/AppComponentContext;)Ldev/icerock/moko/permissions/PermissionsController;
+}
+
+public final class tech/annexflow/lvm/decompose/permissions/PermissionsControllersKt {
+	public static final fun openAppLocaleSettings (Ldev/icerock/moko/permissions/PermissionsController;Landroid/content/Context;)V
+}
+
+public final class tech/annexflow/lvm/decompose/permissions/RetainedPermissionsControllerKt {
+	public static final fun retainedPermissionsController (Landroidx/activity/ComponentActivity;)Ldev/icerock/moko/permissions/PermissionsController;
+}
+
+public final class tech/annexflow/lvm/decompose/permissions/StubPermissionsController_androidKt {
+	public static final fun StubPermissionsController (Ldev/icerock/moko/permissions/PermissionState;)Ldev/icerock/moko/permissions/PermissionsController;
+	public static synthetic fun StubPermissionsController$default (Ldev/icerock/moko/permissions/PermissionState;ILjava/lang/Object;)Ldev/icerock/moko/permissions/PermissionsController;
+}
+

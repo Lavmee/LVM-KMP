@@ -1,0 +1,4 @@
+public final class tech/annexflow/lvm/logger/console/ConsoleLoggerKt {
+	public static final fun consoleLogger ()Ltech/annexflow/lvm/logger/Logger;
+}
+

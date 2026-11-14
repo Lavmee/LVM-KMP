@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("tech.annexflow.lvm.quality")
+    id("tech.annexflow.lvm.publish")
 }
 
 group = "tech.annexflow.lvm"

@@ -1,0 +1,4 @@
+public final class tech/annexflow/lvm/logger/file/FileLoggerKt {
+	public static final fun fileLogger (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ltech/annexflow/lvm/logger/Logger;
+}
+

@@ -1,0 +1,10 @@
+public abstract interface annotation class tech/annexflow/lvm/maincontext/MainContext : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class tech/annexflow/lvm/maincontext/MainContextCompilerApi : java/lang/annotation/Annotation {
+}
+
+public final class tech/annexflow/lvm/maincontext/OnMainContextKt {
+	public static final fun onMainContext (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
