@@ -4,6 +4,7 @@ package tech.annexflow.lvm.blueprint.common
 object LvmDefaults {
     const val ANDROID_COMPILE_SDK: Int = 37
     const val ANDROID_MIN_SDK: Int = 24
+    const val ANDROID_TARGET_SDK: Int = 37
     const val ANDROID_HOST_TESTS: Boolean = true
     const val JVM_TARGET: Int = 21
     const val KOTLIN_WARNINGS_AS_ERRORS: Boolean = false
@@ -28,4 +29,7 @@ object LvmDefaults {
     const val PUBLISH_ABI_ENABLED: Boolean = true
     val PUBLISH_ABI_EXCLUDED_NAMES: List<String> = emptyList()
     val PUBLISH_ABI_EXCLUDED_ANNOTATIONS: List<String> = emptyList()
+    const val APPLICATION_MINIFY: Boolean = true
+    val APPLICATION_PROGUARD_FILES: List<String> = listOf("proguard-rules.pro")
+    const val APPLICATION_DESUGARING: Boolean = true
 }

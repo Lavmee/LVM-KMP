@@ -35,6 +35,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     val mainContext: MainContextDefaults = objects.newInstance(MainContextDefaults::class.java)
     val compose: ComposeDefaults = objects.newInstance(ComposeDefaults::class.java)
     val publish: PublishDefaults = objects.newInstance(PublishDefaults::class.java)
+    val application: ApplicationDefaults = objects.newInstance(ApplicationDefaults::class.java)
 
     fun android(action: Action<AndroidDefaults>) = action.execute(android)
     fun jvm(action: Action<JvmDefaults>) = action.execute(jvm)
@@ -44,6 +45,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     fun mainContext(action: Action<MainContextDefaults>) = action.execute(mainContext)
     fun compose(action: Action<ComposeDefaults>) = action.execute(compose)
     fun publish(action: Action<PublishDefaults>) = action.execute(publish)
+    fun application(action: Action<ApplicationDefaults>) = action.execute(application)
 
     /** Every value that was set, as `lvm.<key>` -> string. Empty lists are not forwarded. */
     internal fun forwardedValues(): Map<String, String> {
@@ -60,6 +62,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
 
         scalar(LvmKeys.ANDROID_COMPILE_SDK, android.compileSdk)
         scalar(LvmKeys.ANDROID_MIN_SDK, android.minSdk)
+        scalar(LvmKeys.ANDROID_TARGET_SDK, android.targetSdk)
         scalar(LvmKeys.ANDROID_HOST_TESTS, android.hostTests)
         scalar(LvmKeys.JVM_TARGET, jvm.target)
         scalar(LvmKeys.KOTLIN_WARNINGS_AS_ERRORS, kotlin.warningsAsErrors)
@@ -93,6 +96,12 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.PUBLISH_ABI_ENABLED, publish.abi.enabled)
         list(LvmKeys.PUBLISH_ABI_EXCLUDED_NAMES, publish.abi.excludedNames)
         list(LvmKeys.PUBLISH_ABI_EXCLUDED_ANNOTATIONS, publish.abi.excludedAnnotations)
+        scalar(LvmKeys.APPLICATION_ID, application.applicationId)
+        scalar(LvmKeys.APPLICATION_VERSION_CODE, application.versionCode)
+        scalar(LvmKeys.APPLICATION_VERSION_NAME, application.versionName)
+        scalar(LvmKeys.APPLICATION_MINIFY, application.minify)
+        list(LvmKeys.APPLICATION_PROGUARD_FILES, application.proguardFiles)
+        scalar(LvmKeys.APPLICATION_DESUGARING, application.desugaring)
         return result
     }
 }
@@ -100,6 +109,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
 abstract class AndroidDefaults {
     abstract val compileSdk: Property<Int>
     abstract val minSdk: Property<Int>
+    abstract val targetSdk: Property<Int>
     abstract val hostTests: Property<Boolean>
 }
 
@@ -188,4 +198,15 @@ abstract class AbiDefaults {
 
     /** Annotations whose declarations stay out of the ABI dump. */
     abstract val excludedAnnotations: ListProperty<String>
+}
+
+abstract class ApplicationDefaults {
+    abstract val applicationId: Property<String>
+    abstract val versionCode: Property<Int>
+    abstract val versionName: Property<String>
+    abstract val minify: Property<Boolean>
+
+    /** Module-relative paths, before a module's own. */
+    abstract val proguardFiles: ListProperty<String>
+    abstract val desugaring: Property<Boolean>
 }

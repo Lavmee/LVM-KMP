@@ -55,6 +55,10 @@ buildConfig {
         "DETEKT_COMPOSE_RULES",
         libs.detekt.composeRules.map { "${it.module}:${it.versionConstraint.requiredVersion}" },
     )
+    buildConfigField(
+        "DESUGAR_JDK_LIBS",
+        libs.android.desugarJdkLibs.map { "${it.module}:${it.versionConstraint.requiredVersion}" },
+    )
     buildConfigField("MIN_GRADLE", "9.6")
     buildConfigField("MIN_KOTLIN", "2.4.0")
     buildConfigField("MIN_AGP", "9.4.0")

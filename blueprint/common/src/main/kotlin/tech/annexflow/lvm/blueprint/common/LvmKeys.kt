@@ -6,6 +6,7 @@ object LvmKeys {
 
     const val ANDROID_COMPILE_SDK: String = "android.compileSdk"
     const val ANDROID_MIN_SDK: String = "android.minSdk"
+    const val ANDROID_TARGET_SDK: String = "android.targetSdk"
     const val ANDROID_HOST_TESTS: String = "android.hostTests"
     const val JVM_TARGET: String = "jvm.target"
     const val KOTLIN_WARNINGS_AS_ERRORS: String = "kotlin.warningsAsErrors"
@@ -39,6 +40,12 @@ object LvmKeys {
     const val PUBLISH_ABI_ENABLED: String = "publish.abi.enabled"
     const val PUBLISH_ABI_EXCLUDED_NAMES: String = "publish.abi.excludedNames"
     const val PUBLISH_ABI_EXCLUDED_ANNOTATIONS: String = "publish.abi.excludedAnnotations"
+    const val APPLICATION_ID: String = "application.applicationId"
+    const val APPLICATION_VERSION_CODE: String = "application.versionCode"
+    const val APPLICATION_VERSION_NAME: String = "application.versionName"
+    const val APPLICATION_MINIFY: String = "application.minify"
+    const val APPLICATION_PROGUARD_FILES: String = "application.proguardFiles"
+    const val APPLICATION_DESUGARING: String = "application.desugaring"
 
     fun property(key: String): String = PREFIX + key
 }

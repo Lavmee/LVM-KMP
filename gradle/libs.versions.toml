@@ -1,5 +1,6 @@
 [versions]
 agp = "9.4.1"
+androidDesugarJdkLibs = "2.1.5"
 kotlin = "2.4.20"
 detekt = "1.23.8"
 detektComposeRules = "1.4.0"
@@ -27,6 +28,7 @@ vanniktech = "0.37.0"
 
 [libraries]
 android-gradlePluginApi = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
+android-desugarJdkLibs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-compilerEmbeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlin-compileTesting = { module = "dev.zacsweers.kctfork:core", version.ref = "kotlinCompileTesting" }

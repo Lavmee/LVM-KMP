@@ -8,6 +8,9 @@ abstract class AndroidSection {
     abstract val compileSdk: Property<Int>
     abstract val minSdk: Property<Int>
 
+    /** Applications only: `tech.annexflow.lvm.android.application` sets it. */
+    abstract val targetSdk: Property<Int>
+
     /** Default: the project group followed by the module path, with `-` replaced by `_`. */
     abstract val namespace: Property<String>
 }

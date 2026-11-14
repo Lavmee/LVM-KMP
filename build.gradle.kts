@@ -11,4 +11,5 @@ plugins {
     id("tech.annexflow.lvm.main-context") apply false
     id("tech.annexflow.lvm.compose") apply false
     id("tech.annexflow.lvm.publish") apply false
+    id("tech.annexflow.lvm.android.application") apply false
 }
