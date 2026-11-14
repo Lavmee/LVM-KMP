@@ -130,11 +130,13 @@ lvm {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(lvmLibs.decompose)
-        implementation(lvmLibs.logger)
+        implementation(lvmLibs.lvm.decompose)
+        implementation(lvmLibs.lvm.logger)
     }
 }
 ```
+
+In `lvmLibs`, LVM's libraries are named after their artifacts (`lvmLibs.lvm.decompose` is `lvm-decompose`) and blueprint's plugins `blueprint-<name>` (`lvmLibs.plugins.blueprint.multiplatform`). The other entries are the libraries and plugins LVM is tested with, such as `lvmLibs.decompose` for Decompose itself. A project without the catalog aligns LVM's versions with `lvm-bom`: `implementation(platform("tech.annexflow.lvm:lvm-bom:x.y.z"))`, then `implementation("tech.annexflow.lvm:lvm-core")` without a version.
 
 ## Configuration
 

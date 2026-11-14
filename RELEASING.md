@@ -10,6 +10,7 @@ Every artifact, runtime libraries and blueprint plugins alike, is published to M
 | Publishing plugin | [`vanniktech/gradle-maven-publish-plugin`](https://github.com/vanniktech/gradle-maven-publish-plugin) |
 | Signing | GPG key uploaded to [keys.openpgp.org](https://keys.openpgp.org) |
 | License | Apache 2.0, declared in the POM of every artifact |
+| POM | The `lvm.publish.*` values in `gradle.properties`: the artifact ID prefix `lvm-`, the description, URL, license and developer of every artifact of both builds |
 
 ### GitHub secrets
 
@@ -41,6 +42,20 @@ The username and password are a Central Portal user token, not your account cred
    ./gradlew publishAndReleaseToMavenCentral
    ./gradlew -p blueprint publishAndReleaseToMavenCentral
    ```
+
+## What is published
+
+- The libraries in `runtime/` and the compiler plugin apply `tech.annexflow.lvm.publish`, which publishes each as `lvm-<project name>` with the POM from `gradle.properties`, sources and javadoc jars, signed.
+- The blueprint modules apply `lvm.blueprint-publish` from `blueprint/buildSrc`, which does the same with vanniktech's plugin as `lvm-blueprint-<name>`, plus a marker for every plugin ID. Blueprint can't apply its own publish plugin from its sources.
+- `bom/` publishes `lvm-bom`, a Gradle platform with every library and the compiler plugin; `versions/` publishes `lvm-versions`, the catalog of `gradle/libs.versions.toml` plus LVM's libraries, BOM and blueprint plugins.
+- The samples are not published.
+
+To check a release locally, publish both builds into a throwaway repository instead of `~/.m2`. Versions ending in `-SNAPSHOT` are not signed; a release version needs `-Plvm.publish.signing=false` without a key.
+
+```bash
+./gradlew publishToMavenLocal -Dmaven.repo.local=/tmp/lvm-repository
+./gradlew -p blueprint publishToMavenLocal -Dmaven.repo.local=/tmp/lvm-repository
+```
 
 ## CI runner
 
