@@ -6,8 +6,10 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 /** Writes [text] to [destination]; used for the detekt configs that the quality plugin generates. */
+@DisableCachingByDefault(because = "Writing a short text is faster than loading it from the build cache")
 internal abstract class WriteDetektConfig : DefaultTask() {
     @get:Input
     abstract val text: Property<String>

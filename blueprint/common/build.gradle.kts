@@ -5,7 +5,13 @@ plugins {
     `kotlin-dsl`
     `java-test-fixtures`
     id("com.github.gmazzo.buildconfig")
+    id("lvm.blueprint-publish")
 }
+
+// The test fixtures, GradleFixture and the test versions, are for blueprint's own tests: they stay unpublished.
+val javaComponent = components["java"] as AdhocComponentWithVariants
+javaComponent.withVariantsFromConfiguration(configurations["testFixturesApiElements"]) { skip() }
+javaComponent.withVariantsFromConfiguration(configurations["testFixturesRuntimeElements"]) { skip() }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17

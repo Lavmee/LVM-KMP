@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     `kotlin-dsl`
     id("lvm.blueprint-fixture-tests")
+    id("lvm.blueprint-publish")
 }
 
 java {
