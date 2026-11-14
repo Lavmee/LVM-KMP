@@ -24,11 +24,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Two jobs run side by side: together they take longer than one job's timeout when blueprint changes and its fixture builds can't come from the build cache.
 jobs:
-  build:
-    # macOS: iOS klibs, frameworks and simulator tests need Xcode. The image also ships the Android SDK.
+  blueprint:
+    # macOS, like the build job: the fixture builds configure iOS targets.
     runs-on: macos-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -53,14 +54,38 @@ jobs:
         id: kotlin
         run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
 
-      # The Kotlin/Native toolchain and its dependencies. No restore keys: a new Kotlin version needs a new toolchain anyway.
-      - uses: actions/cache@v6
+      # The build job saves the Kotlin/Native toolchain. Two jobs saving the same key at once would warn.
+      - uses: actions/cache/restore@v6
         with:
           path: ~/.konan
           key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
 
       - name: Blueprint tests
         run: ./gradlew -p blueprint check
+
+  build:
+    # macOS: iOS klibs, frameworks and simulator tests need Xcode. The image also ships the Android SDK.
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Read the Kotlin version
+        id: kotlin
+        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+
+      # The Kotlin/Native toolchain and its dependencies. No restore keys: a new Kotlin version needs a new toolchain anyway.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
 
       - name: Build and test all targets
         run: ./gradlew build
