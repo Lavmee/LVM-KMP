@@ -14,6 +14,7 @@ import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmAndroid
 import tech.annexflow.lvm.blueprint.common.lvmJvm
 import tech.annexflow.lvm.blueprint.common.lvmKotlin
+import tech.annexflow.lvm.blueprint.common.lvmValues
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 /** An Android library module without Kotlin Multiplatform: AGP's library plugin with its Kotlin built in. */
@@ -39,7 +40,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
             .zip(library.consumerProguardFiles) { buildWide, module -> buildWide + module }
 
         // Defaults that go in now, before the build script runs, so values the script sets natively replace them.
-        val buildWideJvmTarget = values.int(LvmKeys.JVM_TARGET, LvmDefaults.JVM_TARGET).get()
+        val buildWideJvmTarget = project.lvmValues.jvm.target.get()
         project.extensions.configure(LibraryExtension::class.java) {
             setJavaVersion(buildWideJvmTarget)
             testOptions.animationsDisabled = true
@@ -68,7 +69,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
             if (skipAndroidTest.value) variant.androidTest.enable = false
         }
 
-        project.configureKotlin(kotlin, values)
+        project.configureKotlin(kotlin, project.lvmValues.kotlin)
         project.configureExplicitApi(kotlin, androidComponents)
         project.addDesugaringDependency(library.desugaring)
     }

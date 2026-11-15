@@ -5,9 +5,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import tech.annexflow.lvm.blueprint.common.KotlinSection
-import tech.annexflow.lvm.blueprint.common.LvmDefaults
-import tech.annexflow.lvm.blueprint.common.LvmKeys
-import tech.annexflow.lvm.blueprint.common.LvmValues
+import tech.annexflow.lvm.blueprint.common.KotlinValues
 
 /**
  * Compiler options of the Kotlin that AGP builds in, and kotlin-test for unit tests. The JVM target follows the Java
@@ -15,11 +13,9 @@ import tech.annexflow.lvm.blueprint.common.LvmValues
  *
  * Unit tests run on JUnit 4, so they get kotlin-test-junit: kotlin-test alone has no `@Test` for the JVM.
  */
-internal fun Project.configureKotlin(section: KotlinSection, values: LvmValues) {
-    val optIns = values.list(LvmKeys.KOTLIN_OPT_INS, LvmDefaults.KOTLIN_OPT_INS)
-        .zip(section.optIns) { buildWide, module -> buildWide + module }
-    val freeArgs = values.list(LvmKeys.KOTLIN_FREE_COMPILER_ARGS, LvmDefaults.KOTLIN_FREE_COMPILER_ARGS)
-        .zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
+internal fun Project.configureKotlin(section: KotlinSection, values: KotlinValues) {
+    val optIns = values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }
+    val freeArgs = values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
     extensions.configure(KotlinAndroidProjectExtension::class.java) {
         compilerOptions {
             allWarningsAsErrors.set(section.warningsAsErrors)

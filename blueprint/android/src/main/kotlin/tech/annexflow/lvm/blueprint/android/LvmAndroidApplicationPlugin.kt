@@ -13,6 +13,7 @@ import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmAndroid
 import tech.annexflow.lvm.blueprint.common.lvmJvm
 import tech.annexflow.lvm.blueprint.common.lvmKotlin
+import tech.annexflow.lvm.blueprint.common.lvmValues
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 /** An Android application module: AGP's application plugin with its Kotlin built in. */
@@ -40,7 +41,7 @@ class LvmAndroidApplicationPlugin : Plugin<Project> {
             .zip(application.proguardFiles) { buildWide, module -> buildWide + module }
 
         // Defaults that go in now, before the build script runs, so values the script sets natively replace them.
-        val buildWideJvmTarget = values.int(LvmKeys.JVM_TARGET, LvmDefaults.JVM_TARGET).get()
+        val buildWideJvmTarget = project.lvmValues.jvm.target.get()
         project.extensions.configure(ApplicationExtension::class.java) {
             setJavaVersion(buildWideJvmTarget)
             testOptions.animationsDisabled = true
@@ -61,7 +62,7 @@ class LvmAndroidApplicationPlugin : Plugin<Project> {
             project.configureSourceLayout(extension, kotlin.flatLayout.get())
         }
 
-        project.configureKotlin(kotlin, values)
+        project.configureKotlin(kotlin, project.lvmValues.kotlin)
         project.addDesugaringDependency(application.desugaring)
     }
 

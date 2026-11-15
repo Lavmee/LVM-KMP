@@ -8,6 +8,7 @@ import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.LvmDefaults
 import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
+import tech.annexflow.lvm.blueprint.common.lvmValues
 
 internal class KmpTargetWiring(
     private val project: Project,
@@ -17,8 +18,7 @@ internal class KmpTargetWiring(
     values: LvmValues,
 ) : TargetWiring {
 
-    override val defaultHostTests: Provider<Boolean> =
-        values.boolean(LvmKeys.ANDROID_HOST_TESTS, LvmDefaults.ANDROID_HOST_TESTS)
+    override val defaultHostTests: Provider<Boolean> = project.lvmValues.android.hostTests
 
     override val defaultIosArchitectures: Provider<List<String>> =
         values.list(LvmKeys.IOS_ARCHITECTURES, LvmDefaults.IOS_ARCHITECTURES)

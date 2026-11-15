@@ -10,16 +10,12 @@ import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.KotlinSection
-import tech.annexflow.lvm.blueprint.common.LvmDefaults
-import tech.annexflow.lvm.blueprint.common.LvmKeys
-import tech.annexflow.lvm.blueprint.common.LvmValues
+import tech.annexflow.lvm.blueprint.common.KotlinValues
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
-internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension, section: KotlinSection, values: LvmValues) {
-    val optIns = values.list(LvmKeys.KOTLIN_OPT_INS, LvmDefaults.KOTLIN_OPT_INS)
-        .zip(section.optIns) { buildWide, module -> buildWide + module }
-    val freeArgs = values.list(LvmKeys.KOTLIN_FREE_COMPILER_ARGS, LvmDefaults.KOTLIN_FREE_COMPILER_ARGS)
-        .zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
+internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension, section: KotlinSection, values: KotlinValues) {
+    val optIns = values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }
+    val freeArgs = values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
 
     kotlin.compilerOptions {
         allWarningsAsErrors.set(section.warningsAsErrors)

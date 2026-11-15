@@ -10,6 +10,7 @@ import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmAndroid
 import tech.annexflow.lvm.blueprint.common.lvmJvm
 import tech.annexflow.lvm.blueprint.common.lvmKotlin
+import tech.annexflow.lvm.blueprint.common.lvmValues
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 import tech.annexflow.lvm.blueprint.common.requireSupported
 
@@ -38,7 +39,7 @@ class LvmMultiplatformPlugin : Plugin<Project> {
             KmpTargetWiring(project, kotlin, android, jvm, values),
         )
 
-        configureKotlinCompilerOptions(kotlin, kotlinSection, values)
+        configureKotlinCompilerOptions(kotlin, kotlinSection, project.lvmValues.kotlin)
         configureJvmTarget(kotlin, jvm)
         project.configureTestDependencies(kotlinSection)
         project.configureSourceLayout(kotlin, kotlinSection.flatLayout)

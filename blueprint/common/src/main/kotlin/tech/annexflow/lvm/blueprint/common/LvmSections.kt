@@ -5,13 +5,11 @@ import org.gradle.api.Project
 
 @Suppress("UnstableApiUsage") // Project.isolated: reads only the root name, safe under Isolated Projects.
 fun Project.lvmAndroid(): AndroidSection = lvm.section<AndroidSection>("android") { section ->
-    val values = LvmValues(this)
-    section.compileSdk.convention(values.int(LvmKeys.ANDROID_COMPILE_SDK, LvmDefaults.ANDROID_COMPILE_SDK))
-    section.minSdk.convention(values.int(LvmKeys.ANDROID_MIN_SDK, LvmDefaults.ANDROID_MIN_SDK))
-    section.targetSdk.convention(values.int(LvmKeys.ANDROID_TARGET_SDK, LvmDefaults.ANDROID_TARGET_SDK))
-    section.testInstrumentationRunner.convention(
-        values.raw(LvmKeys.ANDROID_TEST_INSTRUMENTATION_RUNNER).orElse(LvmDefaults.ANDROID_TEST_INSTRUMENTATION_RUNNER),
-    )
+    val values = lvmValues.android
+    section.compileSdk.convention(values.compileSdk)
+    section.minSdk.convention(values.minSdk)
+    section.targetSdk.convention(values.targetSdk)
+    section.testInstrumentationRunner.convention(values.testInstrumentationRunner)
     section.namespace.convention(
         provider {
             // A group Gradle derived from the project path is not one the module chose, so it does not name the namespace.
@@ -22,15 +20,15 @@ fun Project.lvmAndroid(): AndroidSection = lvm.section<AndroidSection>("android"
 }
 
 fun Project.lvmJvm(): JvmSection = lvm.section<JvmSection>("jvm") { section ->
-    section.target.convention(LvmValues(this).int(LvmKeys.JVM_TARGET, LvmDefaults.JVM_TARGET))
+    section.target.convention(lvmValues.jvm.target)
 }
 
 fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { section ->
-    val values = LvmValues(this)
-    section.warningsAsErrors.convention(values.boolean(LvmKeys.KOTLIN_WARNINGS_AS_ERRORS, LvmDefaults.KOTLIN_WARNINGS_AS_ERRORS))
-    section.explicitApi.convention(values.boolean(LvmKeys.KOTLIN_EXPLICIT_API, LvmDefaults.KOTLIN_EXPLICIT_API))
-    section.testDependencies.convention(values.boolean(LvmKeys.KOTLIN_TEST_DEPENDENCIES, LvmDefaults.KOTLIN_TEST_DEPENDENCIES))
-    section.flatLayout.convention(values.boolean(LvmKeys.KOTLIN_FLAT_LAYOUT, LvmDefaults.KOTLIN_FLAT_LAYOUT))
+    val values = lvmValues.kotlin
+    section.warningsAsErrors.convention(values.warningsAsErrors)
+    section.explicitApi.convention(values.explicitApi)
+    section.testDependencies.convention(values.testDependencies)
+    section.flatLayout.convention(values.flatLayout)
 }
 
 /** `com.example` + `:feature:user-profile` -> `com.example.feature.user_profile`. */
