@@ -181,6 +181,8 @@ lvm {
 
 Every automatic behavior can be switched off, including the dependencies blueprint adds and the catalog and repositories added by the settings plugin. Anything `lvm { }` doesn't cover is configured with the regular `android { }` and `kotlin { }` blocks. For the Android target of a library, `kotlin { android { } }` is available only when the module also lists the AGP plugin; see [Android](#android).
 
+Your own convention plugins can read the build-wide values and configure the `lvm { }` sections of a module; see [Build logic](docs/build-logic.md).
+
 ### Source layout
 
 Modules use the standard Kotlin Multiplatform layout, `src/commonMain/kotlin/...`, unless `lvm { kotlin { flatLayout = true } }` or `lvm.kotlin.flatLayout=true` turns on the flat layout. It uses shorter directories and leaves the module's root package out of them:
@@ -433,10 +435,13 @@ Blueprint checks the Gradle, AGP and Kotlin versions: a version below the minimu
 
 One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`. Any other version, a patch release included, fails the build.
 
+Blueprint's API for your own convention plugins, described in [Build logic](docs/build-logic.md), stays binary-compatible within a minor version: build logic compiled against 0.2.0 works with every 0.2.x release, and 0.3.0 may change it.
+
 ## Documentation
 
 - [Releasing](RELEASING.md): how releases are published
 - [iOS](docs/ios.md): how an iOS app runs a component tree of `lvm-decompose`
+- [Build logic](docs/build-logic.md): your own convention plugins on top of LVM's
 
 ## License
 
