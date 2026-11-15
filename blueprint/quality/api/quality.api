@@ -1,0 +1,20 @@
+public final class tech/annexflow/lvm/blueprint/quality/LvmQualityPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public abstract class tech/annexflow/lvm/blueprint/quality/QualitySection {
+	public fun <init> (Lorg/gradle/api/Project;)V
+	public abstract fun getBuildUponDefaultConfig ()Lorg/gradle/api/provider/Property;
+	public abstract fun getComposeRules ()Lorg/gradle/api/provider/Property;
+	public abstract fun getConfig ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getSource ()Lorg/gradle/api/provider/ListProperty;
+	public final fun rules (Ljava/lang/Object;)V
+}
+
+public final class tech/annexflow/lvm/blueprint/quality/QualitySectionKt {
+	public static final fun getQuality (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/quality/QualitySection;
+	public static final fun quality (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+}
+

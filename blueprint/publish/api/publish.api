@@ -1,0 +1,53 @@
+public abstract class tech/annexflow/lvm/blueprint/publish/AbiValidation {
+	public fun <init> ()V
+	public abstract fun getExcludedAnnotations ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getExcludedNames ()Lorg/gradle/api/provider/ListProperty;
+}
+
+public final class tech/annexflow/lvm/blueprint/publish/LvmPublishPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public abstract class tech/annexflow/lvm/blueprint/publish/PomDeveloper {
+	public fun <init> ()V
+	public abstract fun getId ()Lorg/gradle/api/provider/Property;
+	public abstract fun getName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getUrl ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/publish/PomLicense {
+	public fun <init> ()V
+	public abstract fun getName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getUrl ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/publish/PomScm {
+	public fun <init> ()V
+	public abstract fun getConnection ()Lorg/gradle/api/provider/Property;
+	public abstract fun getDeveloperConnection ()Lorg/gradle/api/provider/Property;
+	public abstract fun getUrl ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/publish/PublishSection {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
+	public final fun abi (Lorg/gradle/api/Action;)V
+	public final fun developer (Lorg/gradle/api/Action;)V
+	public final fun getAbi ()Ltech/annexflow/lvm/blueprint/publish/AbiValidation;
+	public abstract fun getDescription ()Lorg/gradle/api/provider/Property;
+	public final fun getDeveloper ()Ltech/annexflow/lvm/blueprint/publish/PomDeveloper;
+	public final fun getLicense ()Ltech/annexflow/lvm/blueprint/publish/PomLicense;
+	public abstract fun getName ()Lorg/gradle/api/provider/Property;
+	public final fun getScm ()Ltech/annexflow/lvm/blueprint/publish/PomScm;
+	public abstract fun getSigning ()Lorg/gradle/api/provider/Property;
+	public abstract fun getUrl ()Lorg/gradle/api/provider/Property;
+	public final fun license (Lorg/gradle/api/Action;)V
+	public final fun scm (Lorg/gradle/api/Action;)V
+}
+
+public final class tech/annexflow/lvm/blueprint/publish/PublishSectionKt {
+	public static final fun getPublish (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/publish/PublishSection;
+	public static final fun publish (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+}
+

@@ -1,0 +1,21 @@
+public final class tech/annexflow/lvm/blueprint/maincontext/LvmMainContextPlugin : org/jetbrains/kotlin/gradle/plugin/KotlinCompilerPluginSupportPlugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+	public fun applyToCompilation (Lorg/jetbrains/kotlin/gradle/plugin/KotlinCompilation;)Lorg/gradle/api/provider/Provider;
+	public fun getCompilerPluginId ()Ljava/lang/String;
+	public fun getPluginArtifact ()Lorg/jetbrains/kotlin/gradle/plugin/SubpluginArtifact;
+	public fun isApplicable (Lorg/jetbrains/kotlin/gradle/plugin/KotlinCompilation;)Z
+}
+
+public abstract class tech/annexflow/lvm/blueprint/maincontext/MainContextSection {
+	public fun <init> ()V
+	public abstract fun getDependency ()Lorg/gradle/api/provider/Property;
+	public abstract fun getPlatforms ()Lorg/gradle/api/provider/ListProperty;
+}
+
+public final class tech/annexflow/lvm/blueprint/maincontext/MainContextSectionKt {
+	public static final fun getMainContext (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/maincontext/MainContextSection;
+	public static final fun mainContext (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+}
+

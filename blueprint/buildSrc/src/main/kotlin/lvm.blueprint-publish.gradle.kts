@@ -3,6 +3,8 @@
 // vanniktech's plugin itself.
 
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     id("com.vanniktech.maven.publish")
@@ -48,6 +50,22 @@ mavenPublishing {
             url = projectUrl
             connection = "scm:git:$projectUrl.git"
             developerConnection = "scm:git:$projectUrl.git"
+        }
+    }
+}
+
+// Blueprint's supported API: every module commits its ABI dump in api/, and check runs checkKotlinAbi. Declarations that
+// only blueprint's plugins share carry @InternalBlueprintApi and stay out of the dump, as does the generated LvmBuildInfo.
+pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+    extensions.configure<KotlinJvmProjectExtension> {
+        @OptIn(ExperimentalAbiValidation::class)
+        abiValidation {
+            filters {
+                exclude {
+                    annotatedWith.add("tech.annexflow.lvm.blueprint.common.InternalBlueprintApi")
+                    byNames.add("tech.annexflow.lvm.blueprint.common.LvmBuildInfo")
+                }
+            }
         }
     }
 }

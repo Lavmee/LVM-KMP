@@ -1,0 +1,20 @@
+public abstract class tech/annexflow/lvm/blueprint/compose/ComposeSection {
+	public fun <init> ()V
+	public abstract fun getMetrics ()Lorg/gradle/api/provider/Property;
+	public abstract fun getMetricsDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public abstract fun getReports ()Lorg/gradle/api/provider/Property;
+	public abstract fun getReportsDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public abstract fun getStabilityConfigurationFiles ()Lorg/gradle/api/provider/ListProperty;
+}
+
+public final class tech/annexflow/lvm/blueprint/compose/ComposeSectionKt {
+	public static final fun compose (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+	public static final fun getCompose (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/compose/ComposeSection;
+}
+
+public final class tech/annexflow/lvm/blueprint/compose/LvmComposePlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+

@@ -1,0 +1,37 @@
+public abstract class tech/annexflow/lvm/blueprint/multiplatform/AndroidTargetSpec {
+	public fun <init> ()V
+	public abstract fun getHostTests ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/multiplatform/FrameworkSpec {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
+	public abstract fun getBaseName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getBundleId ()Lorg/gradle/api/provider/Property;
+	public final fun isStatic ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/multiplatform/IosTargetSpec {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
+	public final fun framework (Lorg/gradle/api/Action;)V
+	public abstract fun getArchitectures ()Lorg/gradle/api/provider/ListProperty;
+}
+
+public final class tech/annexflow/lvm/blueprint/multiplatform/LvmMultiplatformPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public abstract class tech/annexflow/lvm/blueprint/multiplatform/TargetsSection {
+	public final fun android ()V
+	public final fun android (Lorg/gradle/api/Action;)V
+	public final fun ios ()V
+	public final fun ios (Lorg/gradle/api/Action;)V
+	public final fun jvm ()V
+}
+
+public final class tech/annexflow/lvm/blueprint/multiplatform/TargetsSectionKt {
+	public static final fun getTargets (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/multiplatform/TargetsSection;
+	public static final fun targets (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+}
+

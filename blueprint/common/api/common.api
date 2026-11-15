@@ -1,0 +1,75 @@
+public abstract class tech/annexflow/lvm/blueprint/common/AndroidSection {
+	public fun <init> ()V
+	public abstract fun getCompileSdk ()Lorg/gradle/api/provider/Property;
+	public abstract fun getMinSdk ()Lorg/gradle/api/provider/Property;
+	public abstract fun getNamespace ()Lorg/gradle/api/provider/Property;
+	public abstract fun getTargetSdk ()Lorg/gradle/api/provider/Property;
+	public abstract fun getTestInstrumentationRunner ()Lorg/gradle/api/provider/Property;
+}
+
+public final class tech/annexflow/lvm/blueprint/common/AndroidValues {
+	public final fun getCompileSdk ()Lorg/gradle/api/provider/Provider;
+	public final fun getHostTests ()Lorg/gradle/api/provider/Provider;
+	public final fun getMinSdk ()Lorg/gradle/api/provider/Provider;
+	public final fun getTargetSdk ()Lorg/gradle/api/provider/Provider;
+	public final fun getTestInstrumentationRunner ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract interface annotation class tech/annexflow/lvm/blueprint/common/InternalBlueprintApi : java/lang/annotation/Annotation {
+}
+
+public abstract class tech/annexflow/lvm/blueprint/common/JvmSection {
+	public fun <init> ()V
+	public abstract fun getTarget ()Lorg/gradle/api/provider/Property;
+}
+
+public final class tech/annexflow/lvm/blueprint/common/JvmValues {
+	public final fun getTarget ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/common/KotlinSection {
+	public fun <init> ()V
+	public abstract fun getExplicitApi ()Lorg/gradle/api/provider/Property;
+	public abstract fun getFlatLayout ()Lorg/gradle/api/provider/Property;
+	public abstract fun getFreeCompilerArgs ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getOptIns ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getTestDependencies ()Lorg/gradle/api/provider/Property;
+	public abstract fun getWarningsAsErrors ()Lorg/gradle/api/provider/Property;
+}
+
+public final class tech/annexflow/lvm/blueprint/common/KotlinValues {
+	public final fun getExplicitApi ()Lorg/gradle/api/provider/Provider;
+	public final fun getFlatLayout ()Lorg/gradle/api/provider/Provider;
+	public final fun getFreeCompilerArgs ()Lorg/gradle/api/provider/Provider;
+	public final fun getOptIns ()Lorg/gradle/api/provider/Provider;
+	public final fun getTestDependencies ()Lorg/gradle/api/provider/Provider;
+	public final fun getWarningsAsErrors ()Lorg/gradle/api/provider/Provider;
+}
+
+public final class tech/annexflow/lvm/blueprint/common/LvmBuildValues {
+	public final fun getAndroid ()Ltech/annexflow/lvm/blueprint/common/AndroidValues;
+	public final fun getJvm ()Ltech/annexflow/lvm/blueprint/common/JvmValues;
+	public final fun getKotlin ()Ltech/annexflow/lvm/blueprint/common/KotlinValues;
+}
+
+public final class tech/annexflow/lvm/blueprint/common/LvmBuildValuesKt {
+	public static final fun getLvmValues (Lorg/gradle/api/Project;)Ltech/annexflow/lvm/blueprint/common/LvmBuildValues;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/common/LvmExtension : org/gradle/api/plugins/ExtensionAware {
+	public fun <init> ()V
+}
+
+public final class tech/annexflow/lvm/blueprint/common/LvmExtensionKt {
+	public static final fun getLvm (Lorg/gradle/api/Project;)Ltech/annexflow/lvm/blueprint/common/LvmExtension;
+}
+
+public final class tech/annexflow/lvm/blueprint/common/SectionsKt {
+	public static final fun android (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+	public static final fun getAndroid (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/common/AndroidSection;
+	public static final fun getJvm (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/common/JvmSection;
+	public static final fun getKotlin (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/common/KotlinSection;
+	public static final fun jvm (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+	public static final fun kotlin (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+}
+

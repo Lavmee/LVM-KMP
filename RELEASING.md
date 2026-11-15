@@ -27,11 +27,12 @@ The username and password are a Central Portal user token, not your account cred
 ## Release steps
 
 1. Set the release version in `gradle.properties` (`VERSION_NAME`, without `-SNAPSHOT`) and in the status line of `README.md`. Blueprint reads the same `gradle.properties`, so there is only one version.
-2. Check the public API:
+2. Check the public API of both builds:
    ```bash
    ./gradlew checkKotlinAbi
+   ./gradlew -p blueprint checkKotlinAbi
    ```
-   If the API change is intentional, run `./gradlew updateKotlinAbi` and commit the updated dumps.
+   If the API change is intentional, run `updateKotlinAbi` in the same build and commit the updated dumps. Blueprint's supported API changes only in a minor release; see "Supported versions" in `README.md`.
 3. Commit, push `main` and wait for CI to pass on that commit: the release workflow doesn't run the tests.
 4. Tag the commit and push the tag. This publishes to Maven Central, which can't be undone:
    ```bash

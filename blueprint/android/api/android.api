@@ -1,0 +1,40 @@
+public abstract class tech/annexflow/lvm/blueprint/android/ApplicationSection {
+	public fun <init> ()V
+	public abstract fun getApplicationId ()Lorg/gradle/api/provider/Property;
+	public abstract fun getDesugaring ()Lorg/gradle/api/provider/Property;
+	public abstract fun getMinify ()Lorg/gradle/api/provider/Property;
+	public abstract fun getProguardFiles ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getVersionCode ()Lorg/gradle/api/provider/Property;
+	public abstract fun getVersionName ()Lorg/gradle/api/provider/Property;
+}
+
+public final class tech/annexflow/lvm/blueprint/android/ApplicationSectionKt {
+	public static final fun application (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+	public static final fun getApplication (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/android/ApplicationSection;
+}
+
+public abstract class tech/annexflow/lvm/blueprint/android/LibrarySection {
+	public fun <init> ()V
+	public abstract fun getConsumerProguardFiles ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getDesugaring ()Lorg/gradle/api/provider/Property;
+	public abstract fun getResourcePrefix ()Lorg/gradle/api/provider/Property;
+	public abstract fun getSkipEmptyAndroidTest ()Lorg/gradle/api/provider/Property;
+}
+
+public final class tech/annexflow/lvm/blueprint/android/LibrarySectionKt {
+	public static final fun getLibrary (Ltech/annexflow/lvm/blueprint/common/LvmExtension;)Ltech/annexflow/lvm/blueprint/android/LibrarySection;
+	public static final fun library (Ltech/annexflow/lvm/blueprint/common/LvmExtension;Lorg/gradle/api/Action;)V
+}
+
+public final class tech/annexflow/lvm/blueprint/android/LvmAndroidApplicationPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public final class tech/annexflow/lvm/blueprint/android/LvmAndroidLibraryPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
