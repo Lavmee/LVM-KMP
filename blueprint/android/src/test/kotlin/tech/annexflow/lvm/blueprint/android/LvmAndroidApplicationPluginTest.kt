@@ -127,6 +127,18 @@ class LvmAndroidApplicationPluginTest {
     }
 
     @Test
+    fun `an empty list of keep rules in settings or a Gradle property leaves out proguard-rules pro`() {
+        val fixture = applicationFixture(dir, PRINT_DSL, settingsLvm = "catalog = false\napplication { proguardFiles = emptyList() }")
+        fixture.file("app/proguard-rules.pro", "-dontobfuscate")
+        val withoutRules = "proguard=[proguard-android-optimize.txt-9.4.1] animationsDisabled="
+
+        assertContains(fixture.build(":app:help").output, withoutRules)
+
+        fixture.file("settings.gradle.kts", GradleFixture.settingsHeader() + "\nrootProject.name = \"fixture\"\ninclude(\":app\")")
+        assertContains(fixture.build(":app:help", "-Plvm.application.proguardFiles=").output, withoutRules)
+    }
+
+    @Test
     fun `desugaring adds desugar_jdk_libs unless turned off`() {
         val fixture = applicationFixture(dir, PRINT_DSL)
 

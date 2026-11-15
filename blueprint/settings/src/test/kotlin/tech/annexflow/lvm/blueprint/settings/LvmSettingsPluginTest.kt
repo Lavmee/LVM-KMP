@@ -33,7 +33,7 @@ class LvmSettingsPluginTest {
             """.trimIndent(),
         )
         val printer = """
-            val line = "lvm " + path + ": minSdk=" + extra["lvm.android.minSdk"] + " optIns=" + extra["lvm.kotlin.optIns"] + " hasCompileSdk=" + extra.has("lvm.android.compileSdk")
+            val line = "lvm " + path + ": minSdk=" + extra["lvm.android.minSdk"] + " optIns=" + extra["lvm.kotlin.optIns"] + " hasCompileSdk=" + extra.has("lvm.android.compileSdk") + " hasArchitectures=" + extra.has("lvm.ios.architectures")
             tasks.register("printLvm") {
                 // Task actions can't capture script-level values under the configuration cache.
                 val text = line
@@ -45,8 +45,8 @@ class LvmSettingsPluginTest {
 
         val result = fixture.build("printLvm", "-Dorg.gradle.unsafe.isolated-projects=true")
 
-        assertContains(result.output, "lvm :a: minSdk=26 optIns=a.B,c.D hasCompileSdk=false")
-        assertContains(result.output, "lvm :b:c: minSdk=26 optIns=a.B,c.D hasCompileSdk=false")
+        assertContains(result.output, "lvm :a: minSdk=26 optIns=a.B,c.D hasCompileSdk=false hasArchitectures=false")
+        assertContains(result.output, "lvm :b:c: minSdk=26 optIns=a.B,c.D hasCompileSdk=false hasArchitectures=false")
     }
 
     @Test

@@ -47,7 +47,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     fun publish(action: Action<PublishDefaults>) = action.execute(publish)
     fun application(action: Action<ApplicationDefaults>) = action.execute(application)
 
-    /** Every value that was set, as `lvm.<key>` -> string. Empty lists are not forwarded. */
+    /** Every value that was set, as `lvm.<key>` -> string. A list set to `emptyList()` is forwarded as an empty string. */
     internal fun forwardedValues(): Map<String, String> {
         val result = LinkedHashMap<String, String>()
         values.get().forEach { (key, value) -> result[LvmKeys.property(key)] = value }
@@ -57,7 +57,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         }
 
         fun list(key: String, value: ListProperty<String>) {
-            value.get().takeIf(List<String>::isNotEmpty)?.let { result[LvmKeys.property(key)] = LvmValueParsing.joinList(it) }
+            value.orNull?.let { result[LvmKeys.property(key)] = LvmValueParsing.joinList(it) }
         }
 
         scalar(LvmKeys.ANDROID_COMPILE_SDK, android.compileSdk)
@@ -106,6 +106,12 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     }
 }
 
+/**
+ * A Gradle list starts as an empty list, which can't be told apart from one set to `emptyList()`. Without a value, a
+ * list that the settings script leaves alone is not forwarded, while an empty one is, and replaces the default.
+ */
+private fun startWithoutValue(vararg lists: ListProperty<String>) = lists.forEach { it.unsetConvention() }
+
 abstract class AndroidDefaults {
     abstract val compileSdk: Property<Int>
     abstract val minSdk: Property<Int>
@@ -124,11 +130,19 @@ abstract class KotlinDefaults {
     abstract val explicitApi: Property<Boolean>
     abstract val testDependencies: Property<Boolean>
     abstract val flatLayout: Property<Boolean>
+
+    init {
+        startWithoutValue(optIns, freeCompilerArgs)
+    }
 }
 
 abstract class IosDefaults {
     /** `iosArm64`, `iosSimulatorArm64`. */
     abstract val architectures: ListProperty<String>
+
+    init {
+        startWithoutValue(architectures)
+    }
 }
 
 abstract class QualityDefaults {
@@ -139,12 +153,20 @@ abstract class QualityDefaults {
     abstract val source: ListProperty<String>
     abstract val buildUponDefaultConfig: Property<Boolean>
     abstract val composeRules: Property<Boolean>
+
+    init {
+        startWithoutValue(config, source)
+    }
 }
 
 abstract class MainContextDefaults {
     /** `android`, `ios`, `jvm`. */
     abstract val platforms: ListProperty<String>
     abstract val dependency: Property<Boolean>
+
+    init {
+        startWithoutValue(platforms)
+    }
 }
 
 abstract class ComposeDefaults {
@@ -153,6 +175,10 @@ abstract class ComposeDefaults {
 
     /** Stability configuration files of the Compose compiler, relative to the root project directory. */
     abstract val stabilityConfigurationFiles: ListProperty<String>
+
+    init {
+        startWithoutValue(stabilityConfigurationFiles)
+    }
 }
 
 abstract class PublishDefaults @Inject constructor(objects: ObjectFactory) {
@@ -198,6 +224,10 @@ abstract class AbiDefaults {
 
     /** Annotations whose declarations stay out of the ABI dump. */
     abstract val excludedAnnotations: ListProperty<String>
+
+    init {
+        startWithoutValue(excludedNames, excludedAnnotations)
+    }
 }
 
 abstract class ApplicationDefaults {
@@ -209,4 +239,8 @@ abstract class ApplicationDefaults {
     /** Module-relative paths, before a module's own. */
     abstract val proguardFiles: ListProperty<String>
     abstract val desugaring: Property<Boolean>
+
+    init {
+        startWithoutValue(proguardFiles)
+    }
 }
