@@ -1,0 +1,92 @@
+name: Release
+
+# A v* tag publishes both builds to Maven Central, which can't be undone. RELEASING.md describes the steps.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+# One release at a time, and never cancelled halfway.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  libraries:
+    # macOS: the iOS klibs are built there.
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the version
+        run: |
+          version=$(sed -n 's/^VERSION_NAME=//p' gradle.properties)
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME doesn't match VERSION_NAME=$version in gradle.properties."
+            exit 1
+          fi
+          case "$version" in
+            *-SNAPSHOT)
+              echo "::error::$version is a snapshot version; Maven Central takes only release versions."
+              exit 1
+              ;;
+          esac
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Read the Kotlin version
+        id: kotlin
+        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+
+      # The Kotlin/Native toolchain that CI saves on main.
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
+
+      # Publishing doesn't check the ABI dumps; the tests ran in CI on the tagged commit.
+      - name: Check the ABI dumps
+        run: ./gradlew checkKotlinAbi
+
+      - name: Publish the libraries
+        run: ./gradlew publishAndReleaseToMavenCentral
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+  blueprint:
+    # Blueprint is an included build, which the root publishing task doesn't reach. It goes after the libraries: the
+    # settings plugin imports lvm-versions of its own version. If this job fails, re-run it alone; the libraries are out.
+    needs: libraries
+    # Blueprint has only JVM code.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Publish the blueprint plugins
+        run: ./gradlew -p blueprint publishAndReleaseToMavenCentral
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}

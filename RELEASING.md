@@ -26,22 +26,25 @@ The username and password are a Central Portal user token, not your account cred
 
 ## Release steps
 
-1. Set the new version in `gradle.properties` (`VERSION_NAME`). Blueprint reads the same value, so there is only one place to change.
+1. Set the release version in `gradle.properties` (`VERSION_NAME`, without `-SNAPSHOT`) and in the status line of `README.md`. Blueprint reads the same `gradle.properties`, so there is only one version.
 2. Check the public API:
    ```bash
    ./gradlew checkKotlinAbi
    ```
    If the API change is intentional, run `./gradlew updateKotlinAbi` and commit the updated dumps.
-3. Tag the release and push the tag:
+3. Commit, push `main` and wait for CI to pass on that commit: the release workflow doesn't run the tests.
+4. Tag the commit and push the tag. This publishes to Maven Central, which can't be undone:
    ```bash
    git tag vX.Y.Z
    git push origin vX.Y.Z
    ```
-4. The release workflow runs on the `v*` tag and publishes both builds. Blueprint is an included build, so the root publishing task doesn't reach it and needs its own invocation:
+5. The release workflow, `.github/workflows/release.yml`, runs on the `v*` tag. It checks that the tag is `v` followed by `VERSION_NAME` and not a snapshot, checks the ABI dumps, and publishes and releases both builds, with the secrets above as Gradle properties:
    ```bash
    ./gradlew publishAndReleaseToMavenCentral
    ./gradlew -p blueprint publishAndReleaseToMavenCentral
    ```
+   Blueprint is an included build, so the root publishing task doesn't reach it: it has its own job, which starts after the libraries are out, since the settings plugin imports `lvm-versions` of its own version. If the blueprint job fails, re-run that job alone: Maven Central refuses to take the libraries' version a second time.
+6. Once the artifacts are on Maven Central, set `VERSION_NAME` to the next snapshot version, such as `0.2.0-SNAPSHOT`.
 
 ## What is published
 
@@ -59,7 +62,7 @@ To check a release locally, publish both builds into a throwaway repository inst
 
 ## CI runner
 
-The release workflow runs on `macos-latest` because the iOS klibs are built there. Kotlin can cross-compile klibs for Apple targets on Linux, with limitations, and not when a module uses its own cinterop. Moving to Linux is possible later if no module needs cinterop.
+The libraries job of the release workflow runs on `macos-latest` because the iOS klibs are built there; the blueprint job has only JVM code and runs on `ubuntu-latest`. Kotlin can cross-compile klibs for Apple targets on Linux, with limitations, and not when a module uses its own cinterop. Moving to Linux is possible later if no module needs cinterop.
 
 ## Plugin markers
 
