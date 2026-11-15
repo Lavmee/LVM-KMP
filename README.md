@@ -65,6 +65,8 @@ Every component tree starts from a root context: `retainedAppComponent(logger) {
 
 `ChildSlotModalBottomSheet(slot, onDismiss = { navigation.dismiss() }) { child -> ... }` shows the child of a Decompose `ChildSlot` in compose-unstyled's modal bottom sheet. The sheet opens when the slot gets a child and closes when the slot is empty again; when the user hides it, by dragging it down, tapping outside of it or pressing back, `onDismiss` receives the child. `drag = SheetDrag.Handle` lets the sheet drag only from parts of its content marked with `Modifier.sheetDragHandle()`, `windowContent` runs inside the sheet's window, and `overlay` draws a `Scrim` under the sheet.
 
+On Android, back gestures, predictive back included, reach Compose through Google's `androidx.navigationevent`. `lvm-decompose-compose` asks for the version that androidx.activity depends on, so an app keeps the version that its own androidx.activity brings. Components get back through essenty's `BackHandler`, as in Decompose, and `lvm-decompose` depends on androidx.activity. On JVM and iOS, Compose Multiplatform brings JetBrains' build of navigationevent. The versions LVM is tested with are those in `lvm-versions`.
+
 `lvm-decompose-fetcher` reads data for components through the app's Ktor `HttpClient`. `installFetcherCache(directory, isOffline)` in the client's configuration keeps responses in a directory, for example `Path(appDirectories.cache, "fetcher")`, and serves them while `isOffline()` returns `true`. The root provides `Fetcher(httpClient)` with `provideLocals(LocalFetcher provides ...)`, and a component reads it as `fetcher`: `fetcherResultState { fetcher.get(url).body<Rows>() }` retries the read and holds its result as a `Loadable`.
 
 ## Getting started

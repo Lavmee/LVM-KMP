@@ -16,6 +16,8 @@ okio = "3.18.2"
 decompose = "3.6.2"
 essenty = "2.7.1"
 androidxActivity = "1.13.0"
+# The version androidx.activity depends on, so lvm-decompose-compose doesn't raise it in Android apps.
+androidxNavigationevent = "1.0.0"
 androidxPaging = "3.5.3"
 mokoPermissions = "0.20.1"
 composeMultiplatform = "1.12.2"
@@ -62,6 +64,7 @@ essenty-lifecycle-coroutines = { module = "com.arkivanov.essenty:lifecycle-corou
 essenty-state-keeper = { module = "com.arkivanov.essenty:state-keeper", version.ref = "essenty" }
 androidx-activity = { module = "androidx.activity:activity", version.ref = "androidxActivity" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+androidx-navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "androidxNavigationevent" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "androidxPaging" }
 moko-permissions = { module = "dev.icerock.moko:permissions", version.ref = "mokoPermissions" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

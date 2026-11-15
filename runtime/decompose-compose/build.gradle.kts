@@ -46,10 +46,19 @@ kotlin {
             api(libs.essenty.back.handler)
             implementation(libs.compose.foundation)
             implementation(libs.composeUnstyled.modal)
+        }
+        androidMain.dependencies {
+            // Google's build at the version androidx.activity depends on, so the library doesn't raise the
+            // androidx.navigationevent that delivers an app's back gestures. Common code can't depend on
+            // navigationevent-compose for the same reason, so rememberWindowBackHandler() is expect.
+            implementation(libs.androidx.navigationevent.compose)
+        }
+        getByName("nonAndroidMain").dependencies {
             implementation(libs.navigationevent.compose)
         }
         commonTest.dependencies {
             implementation(libs.compose.ui.test)
+            implementation(libs.navigationevent.compose)
         }
         jvmTest.dependencies {
             // Skia for the operating system that runs the tests.
