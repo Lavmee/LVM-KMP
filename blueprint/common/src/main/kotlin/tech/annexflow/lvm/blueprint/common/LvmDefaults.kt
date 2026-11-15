@@ -34,4 +34,8 @@ object LvmDefaults {
     const val APPLICATION_MINIFY: Boolean = true
     val APPLICATION_PROGUARD_FILES: List<String> = listOf("proguard-rules.pro")
     const val APPLICATION_DESUGARING: Boolean = true
+    const val LIBRARY_DESUGARING: Boolean = true
+    val LIBRARY_CONSUMER_PROGUARD_FILES: List<String> = listOf("consumer-rules.pro")
+    const val LIBRARY_RESOURCE_PREFIX: Boolean = true
+    const val LIBRARY_SKIP_EMPTY_ANDROID_TEST: Boolean = true
 }

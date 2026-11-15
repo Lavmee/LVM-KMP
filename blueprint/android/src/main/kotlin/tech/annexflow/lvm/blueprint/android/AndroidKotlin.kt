@@ -1,5 +1,6 @@
 package tech.annexflow.lvm.blueprint.android
 
+import com.android.build.api.variant.AndroidComponentsExtension
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
@@ -30,4 +31,18 @@ internal fun Project.configureKotlin(section: KotlinSection, values: LvmValues) 
     val kotlinTest = dependencies.create("org.jetbrains.kotlin:kotlin-test-junit:${getKotlinPluginVersion()}")
     val kotlinTestIfEnabled = section.testDependencies.map { enabled -> if (enabled) listOf(kotlinTest) else emptyList() }
     configurations.named("testImplementation").configure { dependencies.addAllLater(kotlinTestIfEnabled) }
+}
+
+/**
+ * Strict explicit API mode for the main code of every variant. A variant's main compilation carries the variant's name;
+ * those of unit tests, instrumented tests and test fixtures don't, so tests keep default visibility.
+ */
+internal fun Project.configureExplicitApi(section: KotlinSection, androidComponents: AndroidComponentsExtension<*, *, *>) {
+    val arguments = section.explicitApi.map { enabled -> if (enabled) listOf("-Xexplicit-api=strict") else emptyList() }
+    val compilations = extensions.getByType(KotlinAndroidProjectExtension::class.java).target.compilations
+    androidComponents.onVariants { variant ->
+        compilations.matching { it.name == variant.name }.configureEach {
+            compileTaskProvider.configure { compilerOptions.freeCompilerArgs.addAll(arguments) }
+        }
+    }
 }

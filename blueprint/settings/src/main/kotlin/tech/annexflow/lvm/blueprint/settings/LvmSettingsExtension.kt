@@ -36,6 +36,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     val compose: ComposeDefaults = objects.newInstance(ComposeDefaults::class.java)
     val publish: PublishDefaults = objects.newInstance(PublishDefaults::class.java)
     val application: ApplicationDefaults = objects.newInstance(ApplicationDefaults::class.java)
+    val library: LibraryDefaults = objects.newInstance(LibraryDefaults::class.java)
 
     fun android(action: Action<AndroidDefaults>) = action.execute(android)
     fun jvm(action: Action<JvmDefaults>) = action.execute(jvm)
@@ -46,6 +47,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
     fun compose(action: Action<ComposeDefaults>) = action.execute(compose)
     fun publish(action: Action<PublishDefaults>) = action.execute(publish)
     fun application(action: Action<ApplicationDefaults>) = action.execute(application)
+    fun library(action: Action<LibraryDefaults>) = action.execute(library)
 
     /** Every value that was set, as `lvm.<key>` -> string. A list set to `emptyList()` is forwarded as an empty string. */
     internal fun forwardedValues(): Map<String, String> {
@@ -103,6 +105,10 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.APPLICATION_MINIFY, application.minify)
         list(LvmKeys.APPLICATION_PROGUARD_FILES, application.proguardFiles)
         scalar(LvmKeys.APPLICATION_DESUGARING, application.desugaring)
+        scalar(LvmKeys.LIBRARY_DESUGARING, library.desugaring)
+        list(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, library.consumerProguardFiles)
+        scalar(LvmKeys.LIBRARY_RESOURCE_PREFIX, library.resourcePrefix)
+        scalar(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, library.skipEmptyAndroidTest)
         return result
     }
 }
@@ -244,5 +250,18 @@ abstract class ApplicationDefaults {
 
     init {
         startWithoutValue(proguardFiles)
+    }
+}
+
+abstract class LibraryDefaults {
+    abstract val desugaring: Property<Boolean>
+
+    /** Module-relative paths, before a module's own. */
+    abstract val consumerProguardFiles: ListProperty<String>
+    abstract val resourcePrefix: Property<Boolean>
+    abstract val skipEmptyAndroidTest: Property<Boolean>
+
+    init {
+        startWithoutValue(consumerProguardFiles)
     }
 }

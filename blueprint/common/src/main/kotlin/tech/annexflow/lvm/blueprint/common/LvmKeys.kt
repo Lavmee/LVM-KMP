@@ -47,6 +47,10 @@ object LvmKeys {
     const val APPLICATION_MINIFY: String = "application.minify"
     const val APPLICATION_PROGUARD_FILES: String = "application.proguardFiles"
     const val APPLICATION_DESUGARING: String = "application.desugaring"
+    const val LIBRARY_DESUGARING: String = "library.desugaring"
+    const val LIBRARY_CONSUMER_PROGUARD_FILES: String = "library.consumerProguardFiles"
+    const val LIBRARY_RESOURCE_PREFIX: String = "library.resourcePrefix"
+    const val LIBRARY_SKIP_EMPTY_ANDROID_TEST: String = "library.skipEmptyAndroidTest"
 
     fun property(key: String): String = PREFIX + key
 }

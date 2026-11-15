@@ -37,5 +37,9 @@ gradlePlugin {
             id = "tech.annexflow.lvm.android.application"
             implementationClass = "tech.annexflow.lvm.blueprint.android.LvmAndroidApplicationPlugin"
         }
+        register("lvmAndroidLibrary") {
+            id = "tech.annexflow.lvm.android.library"
+            implementationClass = "tech.annexflow.lvm.blueprint.android.LvmAndroidLibraryPlugin"
+        }
     }
 }

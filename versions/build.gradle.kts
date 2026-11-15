@@ -32,5 +32,6 @@ catalog {
             plugin("blueprint-$name", "tech.annexflow.lvm.$name").versionRef("lvm")
         }
         plugin("blueprint-android-application", "tech.annexflow.lvm.android.application").versionRef("lvm")
+        plugin("blueprint-android-library", "tech.annexflow.lvm.android.library").versionRef("lvm")
     }
 }

@@ -4,6 +4,7 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.io.TempDir
@@ -60,6 +61,49 @@ class AndroidSourceLayoutTest {
         val fixture = applicationFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
 
         val output = fixture.buildAndFail(":app:help").output
+
+        assertContains(output, "src/main/kotlin")
+    }
+
+    @Test
+    fun `a flavor's flat directories compile into that flavor's variants only`() {
+        assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
+        val fixture = libraryFixture(
+            dir,
+            """
+            android {
+                flavorDimensions += "tier"
+                productFlavors {
+                    register("free") { dimension = "tier" }
+                    register("paid") { dimension = "tier" }
+                }
+            }
+            """,
+            settingsLvm = "catalog = false\nkotlin { flatLayout = true }",
+        )
+        dir.resolve("core/ui/src/main/kotlin").deleteRecursively()
+        fixture.file("core/ui/src/Main.kt", "class Main")
+        fixture.file("core/ui/src@paid/PaidOnly.kt", "class PaidOnly")
+        fixture.file("core/ui/test/MainTest.kt", "class MainTest { @kotlin.test.Test fun works() { Main() } }")
+        fixture.file("core/ui/test@paid/PaidTest.kt", "class PaidTest { @kotlin.test.Test fun works() { PaidOnly() } }")
+
+        fixture.build(":core:ui:testFreeDebugUnitTest", ":core:ui:testPaidDebugUnitTest")
+
+        val results = dir.resolve("core/ui/build/test-results")
+        assertTrue(dir.libraryClass("Main", "freeDebug").isFile)
+        assertTrue(dir.libraryClass("PaidOnly", "paidDebug").isFile)
+        assertFalse(dir.libraryClass("PaidOnly", "freeDebug").exists())
+        assertTrue(results.resolve("testFreeDebugUnitTest/TEST-MainTest.xml").isFile)
+        assertTrue(results.resolve("testPaidDebugUnitTest/TEST-PaidTest.xml").isFile)
+        assertFalse(results.resolve("testFreeDebugUnitTest/TEST-PaidTest.xml").exists())
+    }
+
+    @Test
+    fun `a library with the flat layout fails while conventional source directories remain`() {
+        assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
+        val fixture = libraryFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+
+        val output = fixture.buildAndFail(":core:ui:help").output
 
         assertContains(output, "src/main/kotlin")
     }
