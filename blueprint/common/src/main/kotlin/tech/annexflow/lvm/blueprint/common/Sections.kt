@@ -8,11 +8,14 @@ abstract class AndroidSection {
     abstract val compileSdk: Property<Int>
     abstract val minSdk: Property<Int>
 
-    /** Applications only: `tech.annexflow.lvm.android.application` sets it. */
+    /** Target SDK level of an application, and of the instrumented tests and lint of an Android library. */
     abstract val targetSdk: Property<Int>
 
     /** Default: the project group followed by the module path, with `-` replaced by `_`. */
     abstract val namespace: Property<String>
+
+    /** Runner of instrumented tests in applications and Android libraries. */
+    abstract val testInstrumentationRunner: Property<String>
 }
 
 /** `lvm { jvm { } }` */

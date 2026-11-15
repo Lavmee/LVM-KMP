@@ -1,6 +1,6 @@
 package tech.annexflow.lvm.blueprint.android
 
-import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
 
@@ -28,7 +28,7 @@ internal fun flatSourceDirectory(sourceSetName: String): String {
  * their conventional directories. A module that still has Kotlin or Java sources in `src/<sourceSet>/kotlin` or
  * `src/<sourceSet>/java` fails, because `src` would compile those files a second time.
  */
-internal fun Project.configureSourceLayout(extension: ApplicationExtension, flatLayout: Boolean) {
+internal fun Project.configureSourceLayout(extension: CommonExtension, flatLayout: Boolean) {
     if (!flatLayout) return
     extension.sourceSets.configureEach {
         val directory = flatSourceDirectory(name)

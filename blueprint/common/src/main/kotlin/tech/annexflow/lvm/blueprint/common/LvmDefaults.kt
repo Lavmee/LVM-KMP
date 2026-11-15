@@ -5,6 +5,7 @@ object LvmDefaults {
     const val ANDROID_COMPILE_SDK: Int = 37
     const val ANDROID_MIN_SDK: Int = 24
     const val ANDROID_TARGET_SDK: Int = 37
+    const val ANDROID_TEST_INSTRUMENTATION_RUNNER: String = "androidx.test.runner.AndroidJUnitRunner"
     const val ANDROID_HOST_TESTS: Boolean = true
     const val JVM_TARGET: Int = 21
     const val KOTLIN_WARNINGS_AS_ERRORS: Boolean = false

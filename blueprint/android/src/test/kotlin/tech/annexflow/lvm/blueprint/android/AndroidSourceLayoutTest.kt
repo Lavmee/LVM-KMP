@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.io.TempDir
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
 
-class ApplicationSourceLayoutTest {
+class AndroidSourceLayoutTest {
 
     @TempDir
     lateinit var dir: File

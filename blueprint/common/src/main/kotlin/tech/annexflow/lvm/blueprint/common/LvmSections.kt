@@ -9,6 +9,9 @@ fun Project.lvmAndroid(): AndroidSection = lvm.section<AndroidSection>("android"
     section.compileSdk.convention(values.int(LvmKeys.ANDROID_COMPILE_SDK, LvmDefaults.ANDROID_COMPILE_SDK))
     section.minSdk.convention(values.int(LvmKeys.ANDROID_MIN_SDK, LvmDefaults.ANDROID_MIN_SDK))
     section.targetSdk.convention(values.int(LvmKeys.ANDROID_TARGET_SDK, LvmDefaults.ANDROID_TARGET_SDK))
+    section.testInstrumentationRunner.convention(
+        values.raw(LvmKeys.ANDROID_TEST_INSTRUMENTATION_RUNNER).orElse(LvmDefaults.ANDROID_TEST_INSTRUMENTATION_RUNNER),
+    )
     section.namespace.convention(
         provider {
             // A group Gradle derived from the project path is not one the module chose, so it does not name the namespace.

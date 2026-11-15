@@ -1,0 +1,63 @@
+package tech.annexflow.lvm.blueprint.android
+
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.variant.AndroidComponentsExtension
+import org.gradle.api.JavaVersion
+import org.gradle.api.Project
+import org.gradle.api.provider.Provider
+import tech.annexflow.lvm.blueprint.common.AndroidSection
+import tech.annexflow.lvm.blueprint.common.JvmSection
+import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
+import tech.annexflow.lvm.blueprint.common.requireSupported
+
+/** Fails below the oldest AGP that LVM supports, and warns above the one it was tested with. */
+internal fun Project.requireSupportedAgp(androidComponents: AndroidComponentsExtension<*, *, *>) {
+    val agp = androidComponents.pluginVersion
+    requireSupported(
+        tool = "Android Gradle plugin",
+        actual = "${agp.major}.${agp.minor}.${agp.micro}",
+        minimum = LvmBuildInfo.MIN_AGP,
+        tested = LvmBuildInfo.TESTED_AGP,
+    )
+}
+
+/** Fills in the compile and minimum SDK levels and the namespace where the build script left them unset. */
+internal fun CommonExtension.fillSdkAndNamespace(android: AndroidSection) {
+    if (compileSdk == null && compileSdkPreview == null) compileSdk = android.compileSdk.get()
+    // With a preview level, AGP reports an API level for minSdk, so it isn't null either.
+    if (defaultConfig.minSdk == null) defaultConfig.minSdk = android.minSdk.get()
+    if (namespace == null) namespace = android.namespace.get()
+}
+
+internal fun CommonExtension.fillTestInstrumentationRunner(android: AndroidSection) {
+    val config = defaultConfig
+    if (config.testInstrumentationRunner == null) config.testInstrumentationRunner = android.testInstrumentationRunner.get()
+}
+
+/**
+ * Sets the Java version, which AGP's built-in Kotlin follows for its JVM target. AGP throws when finalizeDsl reads the
+ * Java version, set or not, so lvm can't tell a native one there: the plugins set the build-wide version when they are
+ * applied, so `compileOptions` in the build script replace it, and [applyModuleJvmTarget] applies a module's own value.
+ */
+internal fun CommonExtension.setJavaVersion(version: Int) {
+    compileOptions.sourceCompatibility = JavaVersion.toVersion(version)
+    compileOptions.targetCompatibility = JavaVersion.toVersion(version)
+}
+
+/** Applies a module's own `lvm { jvm { target } }`. The section's convention is the build-wide value, so a different one is the module's. */
+internal fun CommonExtension.applyModuleJvmTarget(jvm: JvmSection, buildWideJvmTarget: Int) {
+    val jvmTarget = jvm.target.get()
+    if (jvmTarget != buildWideJvmTarget) setJavaVersion(jvmTarget)
+}
+
+/** Turns core library desugaring on while [enabled]. It never turns it off, so a build script that turns it on keeps it. */
+internal fun CommonExtension.enableDesugaring(enabled: Boolean) {
+    if (enabled) compileOptions.isCoreLibraryDesugaringEnabled = true
+}
+
+/** Adds `desugar_jdk_libs` to `coreLibraryDesugaring` while [enabled] is true. */
+internal fun Project.addDesugaringDependency(enabled: Provider<Boolean>) {
+    val desugarJdkLibs = dependencies.create(LvmBuildInfo.DESUGAR_JDK_LIBS)
+    val dependencyIfEnabled = enabled.map { on -> if (on) listOf(desugarJdkLibs) else emptyList() }
+    configurations.named("coreLibraryDesugaring").configure { dependencies.addAllLater(dependencyIfEnabled) }
+}

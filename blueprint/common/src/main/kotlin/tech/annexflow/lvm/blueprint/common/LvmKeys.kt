@@ -7,6 +7,7 @@ object LvmKeys {
     const val ANDROID_COMPILE_SDK: String = "android.compileSdk"
     const val ANDROID_MIN_SDK: String = "android.minSdk"
     const val ANDROID_TARGET_SDK: String = "android.targetSdk"
+    const val ANDROID_TEST_INSTRUMENTATION_RUNNER: String = "android.testInstrumentationRunner"
     const val ANDROID_HOST_TESTS: String = "android.hostTests"
     const val JVM_TARGET: String = "jvm.target"
     const val KOTLIN_WARNINGS_AS_ERRORS: String = "kotlin.warningsAsErrors"

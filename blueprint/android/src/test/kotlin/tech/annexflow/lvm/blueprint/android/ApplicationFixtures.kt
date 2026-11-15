@@ -18,7 +18,8 @@ androidComponents.finalizeDsl { android ->
     println(
         "lvm-dsl namespace=" + android.namespace + " applicationId=" + config.applicationId +
             " compileSdk=" + android.compileSdk + " minSdk=" + config.minSdk + " targetSdk=" + config.targetSdk +
-            " versionCode=" + config.versionCode + " versionName=" + config.versionName,
+            " versionCode=" + config.versionCode + " versionName=" + config.versionName +
+            " runner=" + config.testInstrumentationRunner,
     )
     println(
         "lvm-dsl desugaring=" + android.compileOptions.isCoreLibraryDesugaringEnabled +

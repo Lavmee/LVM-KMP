@@ -26,7 +26,7 @@ class LvmAndroidApplicationPluginTest {
 
         val output = fixture.build(":app:help").output
 
-        assertContains(output, "lvm-dsl namespace=com.example.app applicationId=null compileSdk=37 minSdk=24 targetSdk=37 versionCode=null versionName=null")
+        assertContains(output, "lvm-dsl namespace=com.example.app applicationId=null compileSdk=37 minSdk=24 targetSdk=37 versionCode=null versionName=null runner=androidx.test.runner.AndroidJUnitRunner")
         assertContains(
             output,
             "lvm-dsl desugaring=true minify=true shrink=true proguard=[proguard-android-optimize.txt-9.4.1] " +
@@ -44,12 +44,12 @@ class LvmAndroidApplicationPluginTest {
                 application { applicationId = "com.example.custom" }
             }
             """ + PRINT_DSL,
-            settingsLvm = "catalog = false\nandroid { minSdk = 26; targetSdk = 35 }\napplication { versionCode = 2; versionName = \"1.0\" }",
+            settingsLvm = "catalog = false\nandroid { minSdk = 26; targetSdk = 35; testInstrumentationRunner = \"com.example.SettingsRunner\" }\napplication { versionCode = 2; versionName = \"1.0\" }",
         )
 
         val output = fixture.build(":app:help", "-Plvm.application.versionName=2.0").output
 
-        assertContains(output, "lvm-dsl namespace=com.example.app applicationId=com.example.custom compileSdk=37 minSdk=26 targetSdk=36 versionCode=2 versionName=2.0")
+        assertContains(output, "lvm-dsl namespace=com.example.app applicationId=com.example.custom compileSdk=37 minSdk=26 targetSdk=36 versionCode=2 versionName=2.0 runner=com.example.SettingsRunner")
     }
 
     @Test
@@ -65,18 +65,22 @@ class LvmAndroidApplicationPluginTest {
                     minSdk = 30
                     targetSdk = 35
                     versionCode = 3
+                    testInstrumentationRunner = "com.example.NativeRunner"
                 }
                 buildTypes.getByName("release").proguardFiles("custom-rules.pro")
                 testOptions.animationsDisabled = false
                 packaging.resources.excludes.remove("/META-INF/DEPENDENCIES")
             }
-            lvm { application { versionCode = 9; versionName = "9.0" } }
+            lvm {
+                android { testInstrumentationRunner = "com.example.LvmRunner" }
+                application { versionCode = 9; versionName = "9.0" }
+            }
             """ + PRINT_DSL,
         )
 
         val output = fixture.build(":app:help").output
 
-        assertContains(output, "lvm-dsl namespace=com.example.nativedsl applicationId=com.example.id compileSdk=36 minSdk=30 targetSdk=35 versionCode=3 versionName=9.0")
+        assertContains(output, "lvm-dsl namespace=com.example.nativedsl applicationId=com.example.id compileSdk=36 minSdk=30 targetSdk=35 versionCode=3 versionName=9.0 runner=com.example.NativeRunner")
         assertContains(output, "proguard=[custom-rules.pro] animationsDisabled=false excludes=[/META-INF/INDEX.LIST]")
     }
 

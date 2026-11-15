@@ -63,6 +63,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.ANDROID_COMPILE_SDK, android.compileSdk)
         scalar(LvmKeys.ANDROID_MIN_SDK, android.minSdk)
         scalar(LvmKeys.ANDROID_TARGET_SDK, android.targetSdk)
+        scalar(LvmKeys.ANDROID_TEST_INSTRUMENTATION_RUNNER, android.testInstrumentationRunner)
         scalar(LvmKeys.ANDROID_HOST_TESTS, android.hostTests)
         scalar(LvmKeys.JVM_TARGET, jvm.target)
         scalar(LvmKeys.KOTLIN_WARNINGS_AS_ERRORS, kotlin.warningsAsErrors)
@@ -116,6 +117,7 @@ abstract class AndroidDefaults {
     abstract val compileSdk: Property<Int>
     abstract val minSdk: Property<Int>
     abstract val targetSdk: Property<Int>
+    abstract val testInstrumentationRunner: Property<String>
     abstract val hostTests: Property<Boolean>
 }
 
