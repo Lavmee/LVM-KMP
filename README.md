@@ -5,7 +5,7 @@
 
 Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS and desktop apps.
 
-> **Status:** early development, not published yet.
+> **Status:** early development. The latest release is 0.1.0.
 
 ## What's inside
 
