@@ -16,9 +16,11 @@ import co.touchlab.kermit.Logger as KermitLogger
  * thread. So [directory] may do disk work itself, such as reading the cache directory of `AppDirectories` from
  * `lvm-io`: `fileLogger("app") { Path(appDirectories.cache, "logs") }`.
  *
- * [Logger.log] returns once the writer has taken the line. On JVM and Android, a line is dropped when the logging
- * thread is interrupted while it waits for the writer. If writing fails, for example because [directory] throws, the
- * error is printed once and every later line is dropped.
+ * [Logger.log] hands the line to the writer and returns at once while fewer than 64 lines wait to be written; when 64
+ * lines wait, it waits for the writer to take one. On JVM and Android, a line is dropped when the logging thread is
+ * interrupted while it waits. If writing fails, the error is printed once and lines are dropped until the file can be
+ * written again; a deleted directory is created again. If [directory] throws, the error is printed once and every
+ * later line is dropped.
  *
  * Each call starts a writer thread that runs until the process ends. Build one logger per file and share it: two
  * loggers on the same file lose lines when they roll it.

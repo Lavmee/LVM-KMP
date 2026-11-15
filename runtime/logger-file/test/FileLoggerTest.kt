@@ -6,7 +6,15 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
@@ -17,11 +25,7 @@ import tech.annexflow.lvm.logger.file.internal.asExternal
 import tech.annexflow.lvm.logger.i
 import co.touchlab.kermit.Logger as KermitLogger
 
-/**
- * Lines reach the writer through a channel without a buffer: [Logger.log] returns when the writer has taken the line,
- * and the writer takes the next line only after writing and flushing the previous one. So once a second line has been
- * logged, the first one is in the file, and the tests need no waiting.
- */
+/** The writer runs on its own thread, so the tests wait for a line to reach the file before they read it. */
 class FileLoggerTest {
 
     private val root = Path(SystemTemporaryDirectory, "lvm-logger-test-${Random.nextLong().toULong()}")
@@ -39,40 +43,117 @@ class FileLoggerTest {
 
         val logger = fileLogger(fileName = "app") { directory }
         logger.i(tag = "Import", message = "first line")
-        logger.i(tag = "Import", message = "second line")
 
-        val written = readText(Path(directory, "app.log"))
-        assertContains(written, "Import")
-        assertContains(written, "first line")
+        assertContains(awaitText(Path(directory, "app.log"), "first line"), "Import")
     }
 
     @Test
-    fun `a full log rolls over and files beyond the limit are dropped`() {
-        val writer = KermitRollingFileLogWriter(
-            config = KermitRollingFileLogWriterConfig(
-                logFileName = "app",
-                logFilePath = lazy { root },
-                rollOnSize = 100,
-                maxLogFiles = 2,
-                prependTimestamp = false,
+    fun `a caller doesn't wait for a slow writer while the buffer has room`() {
+        val directory = Path(root, "logs")
+        val writerMayStart = CompletableDeferred<Unit>()
+        val logger = fileLogger(fileName = "app") {
+            runBlocking { writerMayStart.await() }
+            directory
+        }
+
+        try {
+            // The writer takes no line before the directory resolves, so every line waits in the buffer of 64.
+            val returned = runOnAnotherThread { repeat(64) { logger.i(tag = "Test", message = "line $it") } }
+            assertTrue(returned, "a log call waited for the writer while the buffer had room")
+        } finally {
+            writerMayStart.complete(Unit)
+        }
+        awaitText(Path(directory, "app.log"), "line 63")
+    }
+
+    @Test
+    fun `logging resumes after a write fails`() {
+        val sinks = FailingSinks()
+        val logger = KermitLogger(
+            loggerConfigInit(
+                KermitRollingFileLogWriter(
+                    config = KermitRollingFileLogWriterConfig(logFileName = "app", logFilePath = lazy { root }),
+                    openSink = sinks::open,
+                ),
             ),
-        )
-        val logger = KermitLogger(loggerConfigInit(writer)).asExternal()
+        ).asExternal()
+        val log = Path(root, "app.log")
 
-        // Without a timestamp every line is 65 bytes: a log holds two lines and rolls when the third arrives. So the
-        // 20th line never rolls, and the checks below don't race the writer.
-        repeat(20) { logger.i(tag = "Test", message = "a line long enough to fill a small log file quickly") }
+        logger.i(tag = "Test", message = "before the failure")
+        awaitText(log, "before the failure")
+        sinks.failNextWrite()
+        logger.i(tag = "Test", message = "line that fails")
+        logger.i(tag = "Test", message = "after the failure")
 
-        assertTrue(SystemFileSystem.exists(Path(root, "app.log")))
-        assertTrue(SystemFileSystem.exists(Path(root, "app-1.log")))
-        assertFalse(SystemFileSystem.exists(Path(root, "app-2.log")))
+        awaitText(log, "after the failure")
+        assertTrue(sinks.failed, "no write failed")
+    }
+
+    @Test
+    fun `a deleted directory is created again when the log rolls`() {
+        val directory = Path(root, "logs")
+        val logger = smallRollingLogger(directory)
+        val log = Path(directory, "app.log")
+        // Longer than the log may grow, so the next line rolls it.
+        val longText = "x".repeat(SMALL_ROLL_SIZE.toInt())
+
+        logger.i(tag = "Test", message = "first $longText")
+        awaitText(log, "first")
+        deleteRecursively(directory)
+        logger.i(tag = "Test", message = "second $longText")
+
+        awaitText(log, "second")
+    }
+
+    @Test
+    fun `logs roll past 10 MB and five files are kept`() {
+        val directory = Path(root, "logs")
+        val logger = fileLogger(fileName = "app") { directory }
+        val text = "x".repeat(10_000)
+
+        // A little over five full files: the fifth roll would make a sixth file.
+        repeat(5_500) { logger.i(tag = "Test", message = text) }
+        logger.i(tag = "Test", message = "last line")
+        awaitText(Path(directory, "app.log"), "last line")
+
+        val maxSize = 10L * 1024 * 1024
+        for (index in 1..4) {
+            val size = assertNotNull(SystemFileSystem.metadataOrNull(Path(directory, "app-$index.log"))).size
+            assertTrue(size in (maxSize + 1)..(maxSize + text.length + LINE_OVERHEAD), "app-$index.log has $size bytes")
+        }
+        assertFalse(SystemFileSystem.exists(Path(directory, "app-5.log")))
     }
 
     @Test
     fun `logging keeps returning when the directory can't be resolved`() {
         val logger = fileLogger(fileName = "app") { error("no directory") }
 
-        // Without a live writer, a send on the channel would wait forever; the test fails by hanging.
-        repeat(3) { logger.i(tag = "Test", message = "line") }
+        // More lines than the buffer holds: without a live writer, a send would wait forever, so the test fails by
+        // hanging.
+        repeat(100) { logger.i(tag = "Test", message = "line") }
     }
+
+    private fun smallRollingLogger(directory: Path): Logger = KermitLogger(
+        loggerConfigInit(
+            KermitRollingFileLogWriter(
+                config = KermitRollingFileLogWriterConfig(
+                    logFileName = "app",
+                    logFilePath = lazy { directory },
+                    rollOnSize = SMALL_ROLL_SIZE,
+                    prependTimestamp = false,
+                ),
+            ),
+        ),
+    ).asExternal()
+}
+
+private const val SMALL_ROLL_SIZE = 100L
+
+/** The timestamp, severity and tag in front of a message. */
+private const val LINE_OVERHEAD = 200
+
+/** Runs [block] on another thread and returns whether it finished in time. A blocked [block] stays blocked. */
+private fun runOnAnotherThread(block: () -> Unit): Boolean {
+    val job = CoroutineScope(Dispatchers.Default).launch { block() }
+    return runBlocking { withTimeoutOrNull(10.seconds) { job.join() } } != null
 }

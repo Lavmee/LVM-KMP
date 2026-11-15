@@ -7,14 +7,13 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.random.Random
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
+import tech.annexflow.lvm.logger.Logger
 import tech.annexflow.lvm.logger.i
 
 class FileLoggerThreadTest {
@@ -30,9 +29,9 @@ class FileLoggerThreadTest {
             directory
         }
         logger.i(tag = "Test", message = "line")
+        awaitText(Path(directory, "app.log"), "line")
 
-        val thread = assertNotNull(resolvedOn.get(), "the writer took a line before resolving the directory")
-        assertNotEquals(Thread.currentThread(), thread)
+        assertNotEquals(Thread.currentThread(), resolvedOn.get())
         deleteRecursively(directory)
     }
 
@@ -44,9 +43,10 @@ class FileLoggerThreadTest {
             failDirectory.await()
             error("no directory")
         }
+        // The writer takes no line before the directory resolves, so the buffer fills and the next call waits.
+        logger.fillTheBuffer()
 
         val logging = thread(isDaemon = true) { logger.i(tag = "Test", message = "line") }
-        // The writer takes no line before the directory resolves, so the log call parks in the channel.
         check(logging.awaitBlocked()) { "the log call returned before the writer failed" }
         failDirectory.countDown()
 
@@ -56,35 +56,37 @@ class FileLoggerThreadTest {
 
     /** Threads are interrupted, for example when an executor shuts down, and still log on their way out. */
     @Test
-    fun `an interrupted thread logs its line and keeps its interrupt`() {
+    fun `an interrupted thread waits for room, logs its line and keeps its interrupt`() {
         val resolveDirectory = CountDownLatch(1)
         val directory = Path(SystemTemporaryDirectory, "lvm-logger-interrupt-test-${Random.nextLong().toULong()}")
         val logger = fileLogger(fileName = "app") {
             resolveDirectory.await()
             directory
         }
+        logger.fillTheBuffer()
         val failure = AtomicReference<Throwable>()
         val interruptKept = AtomicBoolean()
 
         val logging = thread(isDaemon = true) {
             Thread.currentThread().interrupt()
-            runCatching { logger.i(tag = "Test", message = "first line") }.onFailure(failure::set)
+            runCatching { logger.i(tag = "Test", message = "interrupted line") }.onFailure(failure::set)
             interruptKept.set(Thread.currentThread().isInterrupted)
         }
-        // The writer takes no line before the directory resolves, so a working log call blocks in the channel.
-        logging.awaitBlocked()
+        check(logging.awaitBlocked()) { "the interrupted log call didn't wait for room in the buffer" }
         resolveDirectory.countDown()
         logging.join(TIMEOUT_MILLIS)
-        logger.i(tag = "Test", message = "second line")
 
         assertNull(failure.get())
         assertTrue(interruptKept.get())
-        assertContains(readText(Path(directory, "app.log")), "first line")
+        awaitText(Path(directory, "app.log"), "interrupted line")
         deleteRecursively(directory)
     }
 }
 
 private const val TIMEOUT_MILLIS = 10_000L
+
+/** Logs as many lines as the writer buffers, so that the next call waits while the writer takes no line. */
+private fun Logger.fillTheBuffer() = repeat(64) { i(tag = "Test", message = "filler $it") }
 
 /** Waits until this thread blocks, and returns false if it ends first. */
 private fun Thread.awaitBlocked(): Boolean {

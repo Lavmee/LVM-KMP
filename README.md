@@ -51,7 +51,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-bom` | BOM for projects that don't use the version catalog |
 | `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
 
-`fileLogger` from `lvm-logger-file` takes its directory as a lambda that runs on the writer's thread, for example `fileLogger("app") { Path(appDirectories.cache, "logs") }` with `AppDirectories` from `lvm-io`.
+`fileLogger` from `lvm-logger-file` takes its directory as a lambda that runs on the writer's thread, for example `fileLogger("app") { Path(appDirectories.cache, "logs") }` with `AppDirectories` from `lvm-io`. Logging doesn't wait for the disk: the writer buffers up to 64 lines, and a log call waits only when the buffer is full. When a write fails, lines are dropped until the file can be written again, and a deleted directory is created again.
 
 `createDataStore` from `lvm-storage` returns androidx's `DataStore` with its file in the data directory of `AppDirectories`, for example `createDataStore(appDirectories, "settings.json", jsonSerializer { Settings() })`. `jsonSerializer` and `binarySerializer` store `@Serializable` values, so the module that declares them applies the Kotlin serialization plugin. A file that can't be decoded is replaced with the default value, unless the store gets another `corruptionHandler`.
 

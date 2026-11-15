@@ -9,7 +9,7 @@
  * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  *
- * Modified in LVM: copied from `co.touchlab.kermit.io.RollingFileLogWriterConfig` of kermit-io 2.1.0. The directory
+ * Modified in LVM: copied from `co.touchlab.kermit.io.RollingFileLogWriterConfig` of kermit-io 2.2.0. The directory
  * path is lazy; see `KermitRollingFileLogWriter`.
  */
 
