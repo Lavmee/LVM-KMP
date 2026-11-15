@@ -15,7 +15,13 @@ lvm {
     }
 }
 
+android {
+    // The sample library has a tier dimension that the app doesn't have.
+    defaultConfig { missingDimensionStrategy("tier", "free") }
+}
+
 dependencies {
+    implementation(project(":samples:android-library"))
     implementation(project(":runtime:decompose"))
     implementation(project(":runtime:decompose-compose"))
     implementation(project(":runtime:logger-console"))

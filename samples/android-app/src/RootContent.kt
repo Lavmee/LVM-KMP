@@ -13,6 +13,7 @@ import com.arkivanov.decompose.ExperimentalDecomposeApi
 import com.arkivanov.decompose.extensions.compose.experimental.stack.ChildStack
 import tech.annexflow.lvm.decompose.compose.slide
 import tech.annexflow.lvm.decompose.compose.stackAnimation
+import tech.annexflow.lvm.samples.android.library.greeting
 
 @OptIn(ExperimentalDecomposeApi::class)
 @Composable
@@ -33,6 +34,7 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
 @Composable
 private fun Colors(child: RootComponent.Child.Colors) {
     Column(Modifier.padding(16.dp)) {
+        BasicText(greeting(), Modifier.padding(8.dp))
         child.colors.forEach { color ->
             BasicText(color, Modifier.clickable { child.onSelect(color) }.padding(8.dp))
         }
