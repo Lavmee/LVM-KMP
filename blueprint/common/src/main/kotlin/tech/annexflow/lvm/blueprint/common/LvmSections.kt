@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.common
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
 
+@InternalBlueprintApi
 @Suppress("UnstableApiUsage") // Project.isolated: reads only the root name, safe under Isolated Projects.
 fun Project.lvmAndroid(): AndroidSection = lvm.section<AndroidSection>("android") { section ->
     val values = lvmValues.android
@@ -19,10 +20,12 @@ fun Project.lvmAndroid(): AndroidSection = lvm.section<AndroidSection>("android"
     )
 }
 
+@InternalBlueprintApi
 fun Project.lvmJvm(): JvmSection = lvm.section<JvmSection>("jvm") { section ->
     section.target.convention(lvmValues.jvm.target)
 }
 
+@InternalBlueprintApi
 fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { section ->
     val values = lvmValues.kotlin
     section.warningsAsErrors.convention(values.warningsAsErrors)

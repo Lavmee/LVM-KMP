@@ -1,6 +1,7 @@
 package tech.annexflow.lvm.blueprint.common
 
 /** Keys of build-wide values. As Gradle properties and forwarded settings values they carry the `lvm.` prefix. */
+@InternalBlueprintApi
 object LvmKeys {
     const val PREFIX: String = "lvm."
 

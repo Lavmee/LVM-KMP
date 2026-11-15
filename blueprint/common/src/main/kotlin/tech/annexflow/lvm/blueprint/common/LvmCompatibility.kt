@@ -30,6 +30,7 @@ internal object LvmCompatibility {
 }
 
 /** Fails when [actual] is older than [minimum]; warns on [logger] when it is newer than [tested]. */
+@InternalBlueprintApi
 fun requireSupported(logger: Logger, tool: String, actual: String, minimum: String, tested: String) {
     when (LvmCompatibility.support(actual, minimum, tested)) {
         Support.TOO_OLD -> throw tooOld(tool, minimum, actual)
@@ -38,6 +39,7 @@ fun requireSupported(logger: Logger, tool: String, actual: String, minimum: Stri
     }
 }
 
+@InternalBlueprintApi
 fun Project.requireSupported(tool: String, actual: String, minimum: String, tested: String) {
     requireSupported(logger, tool, actual, minimum, tested)
 }
@@ -46,11 +48,13 @@ fun Project.requireSupported(tool: String, actual: String, minimum: String, test
  * The full Gradle check: fails below [LvmBuildInfo.MIN_GRADLE] and warns above the tested version.
  * Only the settings plugin runs it, so the warning appears once per build rather than once per module.
  */
+@InternalBlueprintApi
 fun requireSupportedGradle(logger: Logger, actual: String = GradleVersion.current().version) {
     requireSupported(logger, GRADLE, actual, LvmBuildInfo.MIN_GRADLE, LvmBuildInfo.TESTED_GRADLE)
 }
 
 /** Fails below [LvmBuildInfo.MIN_GRADLE] without warning, so builds without the settings plugin are protected too. */
+@InternalBlueprintApi
 fun requireMinimumGradle(actual: String = GradleVersion.current().version) {
     val minimum = LvmBuildInfo.MIN_GRADLE
     if (LvmCompatibility.compare(actual, minimum) < 0) throw tooOld(GRADLE, minimum, actual)

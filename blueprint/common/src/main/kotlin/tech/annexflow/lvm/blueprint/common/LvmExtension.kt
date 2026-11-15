@@ -11,6 +11,7 @@ val Project.lvm: LvmExtension
         ?: extensions.create("lvm", LvmExtension::class.java)
 
 /** Returns the section named [name], creating it and calling [onCreate] the first time. Several plugins share sections. */
+@InternalBlueprintApi
 inline fun <reified T : Any> LvmExtension.section(name: String, onCreate: (T) -> Unit): T {
     extensions.findByType(T::class.java)?.let { return it }
     return extensions.create(name, T::class.java).also(onCreate)

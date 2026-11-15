@@ -1,6 +1,7 @@
 package tech.annexflow.lvm.blueprint.common
 
 /** Values used when neither a module, a Gradle property nor settings set one. */
+@InternalBlueprintApi
 object LvmDefaults {
     const val ANDROID_COMPILE_SDK: Int = 37
     const val ANDROID_MIN_SDK: Int = 24

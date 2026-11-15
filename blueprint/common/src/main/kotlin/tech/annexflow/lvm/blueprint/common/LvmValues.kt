@@ -7,6 +7,7 @@ import org.gradle.api.provider.Provider
  * Build-wide values of one project: the `lvm.<key>` Gradle property, then the value forwarded from settings, then the default.
  * A module's own `lvm { }` block sits above these; sections apply the result as a convention.
  */
+@InternalBlueprintApi
 class LvmValues(private val project: Project) {
 
     // The settings plugin sets these extra properties before the build script runs, so reading them once here is enough.

@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.common
 import org.gradle.api.InvalidUserDataException
 
 /** Parses the string form of build-wide values: Gradle properties and values forwarded from settings. */
+@InternalBlueprintApi
 object LvmValueParsing {
 
     fun int(key: String, raw: String): Int =

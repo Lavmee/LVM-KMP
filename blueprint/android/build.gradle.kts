@@ -16,6 +16,7 @@ kotlin {
         jvmTarget = JvmTarget.JVM_17
         // Compile against the JDK 17 API, so blueprint can't call methods that don't exist on the JDK it targets.
         freeCompilerArgs.add("-Xjdk-release=17")
+        optIn.add("tech.annexflow.lvm.blueprint.common.InternalBlueprintApi")
     }
 }
 
