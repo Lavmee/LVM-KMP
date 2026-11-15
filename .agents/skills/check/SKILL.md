@@ -39,6 +39,7 @@ Blueprint is an included build, so the root `build` does not run its tests. Run 
 ## New modules
 
 - A new blueprint plugin needs its module in `blueprint/settings.gradle.kts` with `id("lvm.blueprint-publish")`, a `gradlePlugin { }` registration, an `apply false` entry in the root `build.gradle.kts`, a `blueprint-<name>` entry in `versions/build.gradle.kts` and a row in the README plugin table.
+- A new plugin in an existing blueprint module needs its `gradlePlugin { }` registration, an `apply false` entry in the root `build.gradle.kts`, a `blueprint-<name>` entry in `versions/build.gradle.kts` and a row in the README plugin table.
 - A new library goes in `runtime/<name>` (Gradle path `:runtime:<name>`, flat, with hyphens: `runtime/logger-console`) and needs an `include` in the root `settings.gradle.kts`, `id("tech.annexflow.lvm.publish")`, an entry in `bom/build.gradle.kts` and in `versions/build.gradle.kts`, and its ABI dump: run `./gradlew :runtime:<name>:updateKotlinAbi` and commit `api/`. A new sample module needs only the `include`.
 - A new compiler plugin goes in `compiler/<name>` (Gradle path `:compiler:<name>`) and needs what a new library needs.
 - A module of this build that applies `tech.annexflow.lvm.main-context` needs the dependency substitution of `samples/main-context-sample/build.gradle.kts`.
