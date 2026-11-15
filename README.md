@@ -25,7 +25,7 @@ All artifacts are published to Maven Central under the `tech.annexflow.lvm` grou
 | `tech.annexflow.lvm.settings` | Settings plugin: the `lvmLibs` version catalog, repositories and build-wide defaults |
 | `tech.annexflow.lvm.multiplatform` | Kotlin Multiplatform targets, source sets and compiler options |
 | `tech.annexflow.lvm.compose` | Compose Multiplatform and the Compose compiler |
-| `tech.annexflow.lvm.android.application` | Android application |
+| `tech.annexflow.lvm.android.application` | Android application: SDK levels, Java version, release minification and desugaring |
 | `tech.annexflow.lvm.publish` | Maven Central publishing and ABI validation |
 | `tech.annexflow.lvm.quality` | detekt |
 | `tech.annexflow.lvm.main-context` | The `@MainContext` compiler plugin; see [Main context](#main-context) |
@@ -147,7 +147,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config` and `compose.stabilityConfigurationFiles` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles` and `application.proguardFiles` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma.
 
 ```kotlin
 // settings.gradle.kts
@@ -187,7 +187,9 @@ Modules use the standard Kotlin Multiplatform layout, `src/commonMain/kotlin/...
 | `src@<name>/` | `<name>Main`, for example `src@jvm/`, `src@ios/` or `src@android/` |
 | `test@<name>/` | `<name>Test`, for example `test@jvm/` or `test@androidHost/` |
 
-With the flat layout, the quality plugin analyzes all of these directories, turns off detekt's `InvalidPackageDeclaration` and treats `test@<name>/` as test code; the build's own detekt config files can override both. A module can't mix the two layouts: blueprint fails if it still has `src/<sourceSet>/kotlin`. Resources, Android `res` and the manifest keep their conventional directories, and a build-wide `lvm.quality.source` replaces the flat default entirely.
+With the flat layout, the quality plugin analyzes all of these directories, turns off detekt's `InvalidPackageDeclaration` and treats `test@<name>/` and `androidTest@<name>/` as test code; the build's own detekt config files can override both. A module can't mix the two layouts: blueprint fails if it still has `src/<sourceSet>/kotlin`. Resources, Android `res` and the manifest keep their conventional directories, and a build-wide `lvm.quality.source` replaces the flat default entirely.
+
+An Android application follows the same switch for its Kotlin sources: `src/` for `main`, `test/` for unit tests, `androidTest/` for instrumented tests and `testFixtures/` for test fixtures, each followed by `@<name>` for a build type, a flavor or a variant, as in `src@debug/`, `test@debug/` or `androidTest@freeDebug/`. Java sources have no flat directories, so an application with Java sources keeps the conventional layout. With the flat layout, an application fails while it still has `src/<sourceSet>/kotlin` or `src/<sourceSet>/java`.
 
 ### Settings plugin options
 
@@ -209,10 +211,44 @@ lvm {
 
 ## Android
 
-- **Applications** use `tech.annexflow.lvm.android.application`.
+- **Applications** use `tech.annexflow.lvm.android.application`; see [Applications](#applications).
 - **Libraries** get their Android target from `lvm { targets { android() } }`, which applies `com.android.kotlin.multiplatform.library`. This requires AGP 9.4 or newer.
   The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "..." } }`.
   Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
+
+### Applications
+
+`tech.annexflow.lvm.android.application` applies AGP's `com.android.application` with its built-in Kotlin. It sets the SDK levels and the namespace from `lvm { android { } }`, the Java version from `lvm { jvm { } }`, and the application from `lvm { application { } }`: its ID and version, R8 and resource shrinking in the release build type with the keep rules, and core library desugaring with `desugar_jdk_libs`. It also passes `lvm { kotlin { } }` to the compiler, adds `kotlin-test-junit` to unit tests, turns off animations in instrumented tests and leaves `/META-INF/INDEX.LIST` and `/META-INF/DEPENDENCIES` out of the APK.
+
+```kotlin
+// app/build.gradle.kts
+plugins {
+    alias(lvmLibs.plugins.blueprint.android.application)
+    alias(lvmLibs.plugins.kotlin.compose)
+}
+
+lvm {
+    android { namespace = "com.example.app" }
+    application {
+        versionCode = 3
+        versionName = "1.2.0"
+    }
+}
+```
+
+| Setting | Default | Effect |
+|---|---|---|
+| `android.targetSdk` | `37` | Target SDK level. `compileSdk`, `minSdk` and `namespace` work as for libraries |
+| `application.applicationId` | unset | Application ID; AGP uses the namespace while it is unset |
+| `application.versionCode` | unset | Version code, which CI can pass as `-Plvm.application.versionCode=42` |
+| `application.versionName` | unset | Version name |
+| `application.minify` | `true` | R8 and resource shrinking in the release build type |
+| `application.proguardFiles` | `proguard-rules.pro` | Keep rules of the release build type after AGP's `proguard-android-optimize.txt`, relative to the module; files that don't exist are skipped |
+| `application.desugaring` | `true` | Core library desugaring, with `desugar_jdk_libs` in `coreLibraryDesugaring` |
+
+Values set with the native `android { }` DSL win. lvm fills in the SDK levels, the namespace, the application ID, the version and the keep rules only where the build script left them unset, and turns on minification and desugaring only where they are off; `minify = false` and `desugaring = false` keep them off. The Java version is set differently, because AGP doesn't let a plugin read it before the DSL is final: the plugin sets the build-wide `jvm.target` when it is applied, so `compileOptions` in the build script replace it, and a module's own `lvm { jvm { target } }` applies over both. Kotlin's JVM target follows the Java version.
+
+Compose code needs the Compose compiler plugin, `org.jetbrains.kotlin.plugin.compose`, which the application applies itself: `tech.annexflow.lvm.compose` is for Kotlin Multiplatform modules. [`samples/android-app`](samples/android-app) is an application with a Compose UI on `lvm-decompose-compose`.
 
 ## Compose
 
@@ -243,7 +279,7 @@ kotlin {
 lvm.compose.reports=true
 ```
 
-In a module that also applies `tech.annexflow.lvm.quality`, the detekt Compose rules are on by default, and detekt accepts composable functions named like types. `lvm { quality { composeRules = false } }` turns the rules off.
+In a module that also applies `tech.annexflow.lvm.quality`, the detekt Compose rules are on by default, and detekt accepts composable functions named like types. `lvm { quality { composeRules = false } }` turns the rules off. The quality plugin recognizes a Compose module by the Compose compiler plugin, so this also holds for an Android application that applies `org.jetbrains.kotlin.plugin.compose` itself.
 
 ## Publishing
 
