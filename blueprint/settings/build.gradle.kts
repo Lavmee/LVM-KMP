@@ -21,7 +21,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":common"))
+    api(project(":common"))
 
     testImplementation(testFixtures(project(":common")))
     testImplementation(platform(libs.junit.bom))

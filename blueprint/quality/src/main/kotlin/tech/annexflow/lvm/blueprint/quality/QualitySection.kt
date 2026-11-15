@@ -1,9 +1,12 @@
 package tech.annexflow.lvm.blueprint.quality
 
 import javax.inject.Inject
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import tech.annexflow.lvm.blueprint.common.LvmExtension
+import tech.annexflow.lvm.blueprint.common.requireSection
 
 /** `lvm { quality { } }` */
 abstract class QualitySection @Inject constructor(private val project: Project) {
@@ -32,3 +35,9 @@ abstract class QualitySection @Inject constructor(private val project: Project) 
         project.dependencies.add("detektPlugins", dependency)
     }
 }
+
+/** The module's `lvm { quality { } }`, which `tech.annexflow.lvm.quality` adds. */
+val LvmExtension.quality: QualitySection
+    get() = requireSection(QualitySection::class.java, "quality", "tech.annexflow.lvm.quality")
+
+fun LvmExtension.quality(action: Action<QualitySection>) = action.execute(quality)

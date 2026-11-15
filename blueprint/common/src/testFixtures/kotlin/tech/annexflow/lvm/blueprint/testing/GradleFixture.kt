@@ -18,6 +18,39 @@ class GradleFixture(val rootDir: File) {
 
     fun buildAndFail(vararg arguments: String): BuildResult = runner(arguments).buildAndFail()
 
+    /**
+     * Writes `build-logic`, an included build with the plugin `consumer`, implemented by the class `ConsumerPlugin` in
+     * [source]. It compiles against the classes of [api] with `compileOnly`, as a consumer's build logic compiles against
+     * blueprint, so at runtime the classes come from the fixture's blueprint plugins. [settingsHeader] includes it when
+     * called with `buildLogic = true`.
+     */
+    fun buildLogic(source: String, vararg api: Class<*>) {
+        val classpath = api.map { File(it.protectionDomain.codeSource.location.toURI()).invariantSeparatorsPath }.distinct()
+        file(
+            "build-logic/settings.gradle.kts",
+            """
+            dependencyResolutionManagement { repositories { mavenCentral() } }
+            rootProject.name = "build-logic"
+            """,
+        )
+        file(
+            "build-logic/build.gradle.kts",
+            """
+            plugins { `kotlin-dsl` }
+            dependencies { compileOnly(files(${classpath.joinToString { "\"$it\"" }})) }
+            gradlePlugin {
+                plugins {
+                    register("consumer") {
+                        id = "consumer"
+                        implementationClass = "ConsumerPlugin"
+                    }
+                }
+            }
+            """,
+        )
+        file("build-logic/src/main/kotlin/ConsumerPlugin.kt", source)
+    }
+
     /** AGP reads the SDK location from here when ANDROID_HOME is not set for the test process. */
     fun writeLocalProperties() {
         val sdk = checkNotNull(androidSdkDir()) { "Android SDK not found: set ANDROID_HOME." }
@@ -38,10 +71,13 @@ class GradleFixture(val rootDir: File) {
         val agpVersion: String = LvmBuildInfo.TESTED_AGP
         val detektVersion: String = LvmTestVersions.DETEKT
 
-        /** Start of settings.gradle.kts: blueprint from sources, the settings plugin, and [lvmBlock] inside `lvm { }`. */
-        fun settingsHeader(lvmBlock: String = "catalog = false"): String = """
+        /**
+         * Start of settings.gradle.kts: blueprint from sources, the settings plugin, and [lvmBlock] inside `lvm { }`.
+         * With [buildLogic], it also includes the build that [GradleFixture.buildLogic] writes.
+         */
+        fun settingsHeader(lvmBlock: String = "catalog = false", buildLogic: Boolean = false): String = """
             |pluginManagement {
-            |    includeBuild("$blueprintDir")
+            |    includeBuild("$blueprintDir")${if (buildLogic) "\n|    includeBuild(\"build-logic\")" else ""}
             |    repositories {
             |        google()
             |        mavenCentral()

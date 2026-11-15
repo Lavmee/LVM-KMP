@@ -1,7 +1,10 @@
 package tech.annexflow.lvm.blueprint.android
 
+import org.gradle.api.Action
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import tech.annexflow.lvm.blueprint.common.LvmExtension
+import tech.annexflow.lvm.blueprint.common.requireSection
 
 /** `lvm { application { } }` */
 abstract class ApplicationSection {
@@ -19,3 +22,9 @@ abstract class ApplicationSection {
     /** Core library desugaring, with `desugar_jdk_libs`. */
     abstract val desugaring: Property<Boolean>
 }
+
+/** The module's `lvm { application { } }`, which `tech.annexflow.lvm.android.application` adds. */
+val LvmExtension.application: ApplicationSection
+    get() = requireSection(ApplicationSection::class.java, "application", "tech.annexflow.lvm.android.application")
+
+fun LvmExtension.application(action: Action<ApplicationSection>) = action.execute(application)

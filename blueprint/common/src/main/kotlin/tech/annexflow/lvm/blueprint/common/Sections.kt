@@ -1,5 +1,6 @@
 package tech.annexflow.lvm.blueprint.common
 
+import org.gradle.api.Action
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
@@ -18,11 +19,23 @@ abstract class AndroidSection {
     abstract val testInstrumentationRunner: Property<String>
 }
 
+/** The module's `lvm { android { } }`. It exists once a plugin that uses the section is applied. */
+val LvmExtension.android: AndroidSection
+    get() = requireSection(AndroidSection::class.java, "android", ANDROID_PLUGINS)
+
+fun LvmExtension.android(action: Action<AndroidSection>) = action.execute(android)
+
 /** `lvm { jvm { } }` */
 abstract class JvmSection {
     /** Bytecode version of JVM and Android compilations, for example 17 or 21. */
     abstract val target: Property<Int>
 }
+
+/** The module's `lvm { jvm { } }`. It exists once a plugin that uses the section is applied. */
+val LvmExtension.jvm: JvmSection
+    get() = requireSection(JvmSection::class.java, "jvm", JVM_AND_KOTLIN_PLUGINS)
+
+fun LvmExtension.jvm(action: Action<JvmSection>) = action.execute(jvm)
 
 /** `lvm { kotlin { } }` */
 abstract class KotlinSection {
@@ -46,3 +59,14 @@ abstract class KotlinSection {
      */
     abstract val flatLayout: Property<Boolean>
 }
+
+/** The module's `lvm { kotlin { } }`. It exists once a plugin that uses the section is applied. */
+val LvmExtension.kotlin: KotlinSection
+    get() = requireSection(KotlinSection::class.java, "kotlin", JVM_AND_KOTLIN_PLUGINS)
+
+fun LvmExtension.kotlin(action: Action<KotlinSection>) = action.execute(kotlin)
+
+private const val ANDROID_PLUGINS =
+    "tech.annexflow.lvm.multiplatform, tech.annexflow.lvm.android.application or tech.annexflow.lvm.android.library"
+private const val JVM_AND_KOTLIN_PLUGINS = "tech.annexflow.lvm.multiplatform, tech.annexflow.lvm.android.application, " +
+    "tech.annexflow.lvm.android.library or tech.annexflow.lvm.quality"

@@ -21,7 +21,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":common"))
+    api(project(":common"))
     compileOnly(libs.kotlin.composeCompilerGradlePlugin)
 
     testImplementation(testFixtures(project(":common")))

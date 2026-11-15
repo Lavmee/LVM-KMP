@@ -6,6 +6,8 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import tech.annexflow.lvm.blueprint.common.LvmExtension
+import tech.annexflow.lvm.blueprint.common.requireSection
 
 /** `lvm { targets { } }`: each call creates its targets immediately, using the spec configured in the call. */
 abstract class TargetsSection @Inject internal constructor(
@@ -32,6 +34,12 @@ abstract class TargetsSection @Inject internal constructor(
 
     fun jvm() = wiring.jvm()
 }
+
+/** The module's `lvm { targets { } }`, which `tech.annexflow.lvm.multiplatform` adds. */
+val LvmExtension.targets: TargetsSection
+    get() = requireSection(TargetsSection::class.java, "targets", "tech.annexflow.lvm.multiplatform")
+
+fun LvmExtension.targets(action: Action<TargetsSection>) = action.execute(targets)
 
 abstract class AndroidTargetSpec {
     /** Creates the Android host test compilation. Build-wide key: `lvm.android.hostTests`. */

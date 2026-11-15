@@ -1,8 +1,11 @@
 package tech.annexflow.lvm.blueprint.compose
 
+import org.gradle.api.Action
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import tech.annexflow.lvm.blueprint.common.LvmExtension
+import tech.annexflow.lvm.blueprint.common.requireSection
 
 /** `lvm { compose { } }` */
 abstract class ComposeSection {
@@ -24,3 +27,9 @@ abstract class ComposeSection {
      */
     abstract val stabilityConfigurationFiles: ListProperty<String>
 }
+
+/** The module's `lvm { compose { } }`, which `tech.annexflow.lvm.compose` adds. */
+val LvmExtension.compose: ComposeSection
+    get() = requireSection(ComposeSection::class.java, "compose", "tech.annexflow.lvm.compose")
+
+fun LvmExtension.compose(action: Action<ComposeSection>) = action.execute(compose)

@@ -1,5 +1,6 @@
 package tech.annexflow.lvm.blueprint.common
 
+import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 
@@ -16,3 +17,11 @@ inline fun <reified T : Any> LvmExtension.section(name: String, onCreate: (T) ->
     extensions.findByType(T::class.java)?.let { return it }
     return extensions.create(name, T::class.java).also(onCreate)
 }
+
+/** Returns the section of type [type] for an accessor of `lvm { }`, failing with the [plugins] that add it when none did. */
+@InternalBlueprintApi
+fun <T : Any> LvmExtension.requireSection(type: Class<T>, name: String, plugins: String): T =
+    extensions.findByType(type) ?: throw InvalidUserCodeException(
+        "lvm { $name { } } exists only in a module with $plugins: apply it first, or reach the section inside " +
+            "pluginManager.withPlugin(...) when your plugin may be applied before it.",
+    )

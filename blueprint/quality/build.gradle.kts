@@ -21,7 +21,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":common"))
+    api(project(":common"))
     compileOnly(libs.detekt.gradlePlugin)
 
     testImplementation(testFixtures(project(":common")))

@@ -5,6 +5,8 @@ import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import tech.annexflow.lvm.blueprint.common.LvmExtension
+import tech.annexflow.lvm.blueprint.common.requireSection
 
 /** `lvm { publish { } }`: the POM, signing and ABI validation of a published module. */
 abstract class PublishSection @Inject constructor(objects: ObjectFactory) {
@@ -29,6 +31,12 @@ abstract class PublishSection @Inject constructor(objects: ObjectFactory) {
     fun scm(action: Action<PomScm>) = action.execute(scm)
     fun abi(action: Action<AbiValidation>) = action.execute(abi)
 }
+
+/** The module's `lvm { publish { } }`, which `tech.annexflow.lvm.publish` adds. */
+val LvmExtension.publish: PublishSection
+    get() = requireSection(PublishSection::class.java, "publish", "tech.annexflow.lvm.publish")
+
+fun LvmExtension.publish(action: Action<PublishSection>) = action.execute(publish)
 
 abstract class PomLicense {
     abstract val name: Property<String>
