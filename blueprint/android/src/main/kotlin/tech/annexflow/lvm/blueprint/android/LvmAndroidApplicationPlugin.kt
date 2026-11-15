@@ -68,6 +68,7 @@ class LvmAndroidApplicationPlugin : Plugin<Project> {
             configureSdk(extension, android)
             project.configureApplication(extension, application, proguardFiles)
             configureJava(extension, jvm, buildWideJvmTarget, application)
+            project.configureSourceLayout(extension, kotlin.flatLayout.get())
         }
 
         project.configureKotlin(kotlin, values)

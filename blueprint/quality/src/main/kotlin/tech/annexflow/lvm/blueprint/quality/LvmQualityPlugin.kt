@@ -36,8 +36,9 @@ class LvmQualityPlugin : Plugin<Project> {
         )
         section.composeRules.convention(values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, LvmDefaults.QUALITY_COMPOSE_RULES))
         // A Compose module gets the Compose rules and config by default; withPlugin also fires when compose comes later.
+        // The Compose compiler plugin marks one, whether tech.annexflow.lvm.compose applies it or the module does.
         val compose = project.objects.property(Boolean::class.java).convention(false)
-        project.pluginManager.withPlugin(COMPOSE_PLUGIN_ID) {
+        project.pluginManager.withPlugin(COMPOSE_COMPILER_PLUGIN_ID) {
             compose.set(true)
             section.composeRules.convention(values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, true))
         }
@@ -105,4 +106,4 @@ class LvmQualityPlugin : Plugin<Project> {
     }
 }
 
-private const val COMPOSE_PLUGIN_ID = "tech.annexflow.lvm.compose"
+private const val COMPOSE_COMPILER_PLUGIN_ID = "org.jetbrains.kotlin.plugin.compose"

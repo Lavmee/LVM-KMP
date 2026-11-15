@@ -16,7 +16,8 @@ object LvmDefaults {
     val IOS_ARCHITECTURES: List<String> = listOf("iosArm64", "iosSimulatorArm64")
     val QUALITY_CONFIG: List<String> = emptyList()
     val QUALITY_SOURCE: List<String> = listOf("src")
-    val QUALITY_SOURCE_FLAT: List<String> = listOf("src", "test", "src@*", "test@*")
+    val QUALITY_SOURCE_FLAT: List<String> =
+        listOf("src", "test", "src@*", "test@*", "androidTest", "androidTest@*", "testFixtures", "testFixtures@*")
     const val QUALITY_BUILD_UPON_DEFAULT_CONFIG: Boolean = true
     const val QUALITY_COMPOSE_RULES: Boolean = false
     val MAIN_CONTEXT_PLATFORMS: List<String> = listOf("android", "ios", "jvm")

@@ -23,7 +23,7 @@ internal abstract class WriteDetektConfig : DefaultTask() {
     }
 }
 
-/** detekt's default path patterns for test code, plus the flat layout's platform test directories. */
+/** detekt's default path patterns for test code, plus the flat layout's test directories of platforms and variants. */
 private val TEST_EXCLUDES = listOf(
     "**/test/**",
     "**/androidTest/**",
@@ -34,6 +34,7 @@ private val TEST_EXCLUDES = listOf(
     "**/jsTest/**",
     "**/iosTest/**",
     "**/test@*/**",
+    "**/androidTest@*/**",
 )
 
 /** The rules whose default config (detekt 1.23) skips test code by path, grouped by rule set. */
@@ -58,8 +59,8 @@ private val RULES_EXCLUDING_TESTS = mapOf(
 
 /**
  * detekt config for the flat layout: the package-path check is off, because the root package is left out of the
- * directories, and the rules that skip test code also skip `test@<name>` directories. The quality plugin puts it before
- * the build's own config files, so those can override it.
+ * directories, and the rules that skip test code also skip `test@<name>` and `androidTest@<name>` directories. The
+ * quality plugin puts it before the build's own config files, so those can override it.
  */
 internal fun flatLayoutDetektConfig(): String = buildString {
     RULES_EXCLUDING_TESTS.forEach { (ruleSet, rules) ->

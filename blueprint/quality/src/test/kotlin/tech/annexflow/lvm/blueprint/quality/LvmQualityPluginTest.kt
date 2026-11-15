@@ -4,6 +4,7 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.io.TempDir
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.detektVersion
@@ -22,6 +23,7 @@ class LvmQualityPluginTest {
             """
             plugins {
                 id("org.jetbrains.kotlin.multiplatform") version "$kotlinVersion" apply false
+                id("org.jetbrains.kotlin.plugin.compose") version "$kotlinVersion" apply false
                 id("io.gitlab.arturbosch.detekt") version "$detektVersion" apply false
                 id("tech.annexflow.lvm.multiplatform") apply false
                 id("tech.annexflow.lvm.quality") apply false
@@ -99,6 +101,26 @@ class LvmQualityPluginTest {
     }
 
     @Test
+    fun `a module with the Compose compiler plugin gets the Compose rules`() {
+        val fixture = fixture()
+        fixture.file(
+            "lib/build.gradle.kts",
+            """
+            plugins {
+                id("tech.annexflow.lvm.multiplatform")
+                id("tech.annexflow.lvm.quality")
+                id("org.jetbrains.kotlin.plugin.compose")
+            }
+            lvm { targets { jvm() } }
+            """,
+        )
+
+        val output = fixture.build(":lib:dependencies", "--configuration", "detektPlugins").output
+
+        assertContains(output, "ru.kode:detekt-rules-compose:1.4.0")
+    }
+
+    @Test
     fun `adds a rule set from a project without deprecation warnings`() {
         val fixture = fixture()
         fixture.file("settings.gradle.kts", settingsHeader() + "\nrootProject.name = \"fixture\"\ninclude(\":lib\", \":rules\")")
@@ -148,6 +170,20 @@ class LvmQualityPluginTest {
         )
 
         fixture.build(":lib:detekt")
+    }
+
+    @Test
+    fun `the flat layout analyzes the directories of an Android application`() {
+        val fixture = flatFixture()
+        fixture.file("lib/androidTest@debug/DeviceTest.kt", "package com.example.lib\n\nfun deviceTest() = answer(42 * 3)\n\nfun empty() {}")
+        fixture.file("lib/testFixtures/Fixtures.kt", "package com.example.lib\n\nfun fixture(): Int = 42 * 3")
+
+        val findings = fixture.buildAndFail(":lib:detekt").output.lines()
+
+        // androidTest@debug is analyzed as test code: its empty function is reported, its magic number isn't.
+        assertTrue(findings.any { "DeviceTest.kt" in it && "EmptyFunctionBlock" in it })
+        assertFalse(findings.any { "DeviceTest.kt" in it && "MagicNumber" in it })
+        assertTrue(findings.any { "Fixtures.kt" in it && "MagicNumber" in it })
     }
 
     @Test
