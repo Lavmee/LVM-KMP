@@ -56,6 +56,10 @@ jobs:
       - name: Check the ABI dumps
         run: ./gradlew checkKotlinAbi
 
+      # Blueprint publishes in its own job once the libraries are out, too late to stop the release.
+      - name: Check the blueprint ABI dumps
+        run: ./gradlew -p blueprint checkKotlinAbi
+
       - name: Publish the libraries
         run: ./gradlew publishAndReleaseToMavenCentral
         env:
