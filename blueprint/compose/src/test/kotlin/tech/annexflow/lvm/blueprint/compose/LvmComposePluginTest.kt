@@ -5,8 +5,10 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.io.TempDir
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
+import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.agpVersion
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.detektVersion
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.kotlinVersion
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.settingsHeader
@@ -71,6 +73,58 @@ class LvmComposePluginTest {
         fixture.file("lib/build.gradle.kts", module("lvm { quality { composeRules = false } }", quality = true))
         val off = fixture.build(":lib:dependencies", "--configuration", "detektPlugins").output
         assertFalse(off.contains("ru.kode:detekt-rules-compose"))
+    }
+
+    /** The build doesn't declare Compose Multiplatform, so the module fails to configure if the plugin applies it. */
+    @Test
+    fun `an Android module without Kotlin Multiplatform gets the compiler settings without Compose Multiplatform`() {
+        assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
+        val fixture = GradleFixture(dir).apply {
+            file("settings.gradle.kts", settingsHeader("catalog = false\ncompose { reports = true }") + "\ninclude(\":ui\")")
+            file(
+                "build.gradle.kts",
+                """
+                plugins {
+                    id("com.android.library") version "$agpVersion" apply false
+                    id("org.jetbrains.kotlin.plugin.compose") version "$kotlinVersion" apply false
+                    id("tech.annexflow.lvm.android.library") apply false
+                    id("tech.annexflow.lvm.compose") apply false
+                }
+                """,
+            )
+            file(
+                "ui/build.gradle.kts",
+                """
+                plugins {
+                    id("tech.annexflow.lvm.android.library")
+                    id("tech.annexflow.lvm.compose")
+                }
+                group = "com.example"
+                dependencies {
+                    implementation("org.jetbrains.compose.runtime:runtime:${LvmTestVersions.COMPOSE_MULTIPLATFORM}")
+                }
+                """,
+            )
+            file("ui/src/main/AndroidManifest.xml", "<manifest />")
+            file(
+                "ui/src/main/kotlin/Greeting.kt",
+                """
+                import androidx.compose.runtime.Composable
+
+                class Holder(val names: List<String>)
+
+                @Composable
+                fun Greeting(holder: Holder) {
+                    holder.names.size
+                }
+                """,
+            )
+            writeLocalProperties()
+        }
+
+        fixture.build(":ui:compileDebugKotlin")
+
+        assertTrue(dir.resolve("ui/build/compose-reports").hasFileEndingWith("-classes.txt"))
     }
 
     private fun fixture(settingsLvm: String = "catalog = false"): GradleFixture = GradleFixture(dir).apply {

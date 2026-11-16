@@ -24,7 +24,7 @@ All artifacts are published to Maven Central under the `tech.annexflow.lvm` grou
 |---|---|
 | `tech.annexflow.lvm.settings` | Settings plugin: the `lvmLibs` version catalog, repositories and build-wide defaults |
 | `tech.annexflow.lvm.multiplatform` | Kotlin Multiplatform targets, source sets and compiler options |
-| `tech.annexflow.lvm.compose` | Compose Multiplatform and the Compose compiler |
+| `tech.annexflow.lvm.compose` | The Compose compiler, and Compose Multiplatform in Kotlin Multiplatform modules |
 | `tech.annexflow.lvm.android.application` | Android application: SDK levels, Java version, release minification and desugaring |
 | `tech.annexflow.lvm.android.library` | Android library without Kotlin Multiplatform: SDK levels, Java version, flavor source sets, desugaring and consumer keep rules |
 | `tech.annexflow.lvm.publish` | Maven Central publishing and ABI validation |
@@ -116,6 +116,8 @@ plugins {
     alias(lvmLibs.plugins.blueprint.main.context) apply false
 }
 ```
+
+`compose.multiplatform` is needed only by Kotlin Multiplatform modules that apply `tech.annexflow.lvm.compose`. A build whose Compose code is only in Android modules without Kotlin Multiplatform, such as an app on Jetpack Compose, leaves it out.
 
 ### 3. Apply plugins in a module
 
@@ -232,7 +234,7 @@ lvm {
 // app/build.gradle.kts
 plugins {
     alias(lvmLibs.plugins.blueprint.android.application)
-    alias(lvmLibs.plugins.kotlin.compose)
+    alias(lvmLibs.plugins.blueprint.compose)
 }
 
 lvm {
@@ -257,7 +259,7 @@ lvm {
 
 Values set with the native `android { }` DSL win. lvm fills in the SDK levels, the namespace, the application ID, the version and the keep rules only where the build script left them unset, and turns on minification and desugaring only where they are off; `minify = false` and `desugaring = false` keep them off. The Java version is set differently, because AGP doesn't let a plugin read it before the DSL is final: the plugin sets the build-wide `jvm.target` when it is applied, so `compileOptions` in the build script replace it, and a module's own `lvm { jvm { target } }` applies over both. Kotlin's JVM target follows the Java version.
 
-Compose code needs the Compose compiler plugin, `org.jetbrains.kotlin.plugin.compose`, which the application applies itself: `tech.annexflow.lvm.compose` is for Kotlin Multiplatform modules. [`samples/android-app`](samples/android-app) is an application with a Compose UI on `lvm-decompose-compose`.
+Compose code needs the Compose compiler, which `tech.annexflow.lvm.compose` applies and configures as in Kotlin Multiplatform modules; see [Compose](#compose). [`samples/android-app`](samples/android-app) is an application with a Compose UI on `lvm-decompose-compose`.
 
 ### Android libraries
 
@@ -267,7 +269,7 @@ Compose code needs the Compose compiler plugin, `org.jetbrains.kotlin.plugin.com
 // core/ui/build.gradle.kts
 plugins {
     alias(lvmLibs.plugins.blueprint.android.library)
-    alias(lvmLibs.plugins.kotlin.compose)
+    alias(lvmLibs.plugins.blueprint.compose)
 }
 
 group = "com.example"
@@ -308,7 +310,7 @@ Values set with the native `android { }` DSL win, as in applications: lvm fills 
 
 ## Compose
 
-`tech.annexflow.lvm.compose` sets up a Kotlin Multiplatform module for Compose: it applies Compose Multiplatform (`org.jetbrains.compose`) and the Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`), and configures the compiler's metrics, reports and stability configuration files. It adds no dependencies; a module declares the Compose libraries it uses, which `lvm-versions` lists at the tested version.
+`tech.annexflow.lvm.compose` sets up a module for Compose: it applies the Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`) and configures the compiler's metrics, reports and stability configuration files. In a Kotlin Multiplatform module, it also applies Compose Multiplatform (`org.jetbrains.compose`). An Android application or library without Kotlin Multiplatform gets only the compiler, so a build with such modules alone needs only `org.jetbrains.kotlin.plugin.compose` on its build classpath. The plugin adds no dependencies; a module declares the Compose libraries it uses, which `lvm-versions` lists at the tested version.
 
 ```kotlin
 // feature/build.gradle.kts
