@@ -402,6 +402,8 @@ suspend fun open(id: Id) {
 }
 ```
 
+The plugin works the same in Android modules without Kotlin Multiplatform, such as those of `tech.annexflow.lvm.android.library`, and in Kotlin/JVM modules.
+
 The plugin adds `lvm-main-context`, which holds the annotation, and runs the compiler plugin `lvm-main-context-compiler` of the same version. The compiler plugin moves each call, together with its receiver and arguments, into `withContext(Dispatchers.Main.immediate)`. A call made on the main thread runs at once.
 
 - Calls move from suspend functions, suspend lambdas and lambdas passed to inline functions there, unless the parameter is `crossinline` or `noinline`. Calls from other code, calls through function references and calls in default parameter values run where they are made.
@@ -414,7 +416,7 @@ The plugin adds `lvm-main-context`, which holds the annotation, and runs the com
 | Setting | Default | Effect |
 |---|---|---|
 | `platforms` | `android`, `ios`, `jvm` | Platforms whose main and test compilations run the compiler plugin. An empty list turns it off |
-| `dependency` | `true` | Adds `lvm-main-context` to `commonMain` |
+| `dependency` | `true` | Adds `lvm-main-context` to `commonMain`, or to `implementation` in a module without Kotlin Multiplatform |
 
 ```kotlin
 // feature/build.gradle.kts
@@ -423,7 +425,7 @@ lvm {
 }
 ```
 
-The compiler plugin works only with the Kotlin version it was built for; see [Supported versions](#supported-versions).
+The compiler plugin works only with the Kotlin version it was built for, or a version that differs from it only in the last digit; see [Supported versions](#supported-versions).
 
 ## Supported versions
 
@@ -433,7 +435,7 @@ The minimums are strict on purpose and will stay that way. They follow recent Gr
 
 Blueprint checks the Gradle, AGP and Kotlin versions: a version below the minimum fails the build with a clear error, and a version newer than tested produces a warning. For Gradle, that warning comes only from `tech.annexflow.lvm.settings`, once per build; without the settings plugin, the project plugins still enforce the minimum. Compose and detekt versions are not checked.
 
-One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: a compiler plugin works only with the Kotlin version it was built for, so projects that apply it must use the Kotlin version from `lvm-versions`. Any other version, a patch release included, fails the build.
+One exception to choosing your own Kotlin version is `tech.annexflow.lvm.main-context`: its compiler plugin depends on compiler APIs that can change in any Kotlin release, so projects that apply it must use the Kotlin version from `lvm-versions` or a version that differs from it only in the last digit of the patch number. A compiler plugin built with Kotlin 2.4.20 also runs on the bugfix releases 2.4.21 and 2.4.22, with a warning. Any other version, such as 2.4.30 or 2.5.0, fails the build.
 
 Blueprint's API for your own convention plugins, described in [Build logic](docs/build-logic.md), stays binary-compatible within a minor version: build logic compiled against 0.2.0 works with every 0.2.x release, and 0.3.0 may change it.
 

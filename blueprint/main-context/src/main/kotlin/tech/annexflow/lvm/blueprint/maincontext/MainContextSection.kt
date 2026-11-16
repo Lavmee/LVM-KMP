@@ -14,7 +14,10 @@ abstract class MainContextSection {
      */
     abstract val platforms: ListProperty<String>
 
-    /** Adds `lvm-main-context`, with the `@MainContext` annotation, to `commonMain`. */
+    /**
+     * Adds `lvm-main-context`, with the `@MainContext` annotation, to `commonMain`, or to `implementation` in a module
+     * without Kotlin Multiplatform.
+     */
     abstract val dependency: Property<Boolean>
 }
 
