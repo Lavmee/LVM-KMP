@@ -31,6 +31,9 @@ androidComponents.finalizeDsl { android ->
 }
 """
 
+/** The name of AGP's default keep rules file, which AGP writes with its own version in the name. */
+val DEFAULT_KEEP_RULES: String = "proguard-android-optimize.txt-$agpVersion"
+
 /** A build with one application module, `:app`, in group `com.example`, whose build script ends with [body]. */
 fun applicationFixture(dir: File, body: String, settingsLvm: String = "catalog = false"): GradleFixture =
     GradleFixture(dir).apply {

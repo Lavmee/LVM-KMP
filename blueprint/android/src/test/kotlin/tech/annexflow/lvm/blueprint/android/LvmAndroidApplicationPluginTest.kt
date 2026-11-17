@@ -29,7 +29,7 @@ class LvmAndroidApplicationPluginTest {
         assertContains(output, "lvm-dsl namespace=com.example.app applicationId=null compileSdk=37 minSdk=24 targetSdk=37 versionCode=null versionName=null runner=androidx.test.runner.AndroidJUnitRunner")
         assertContains(
             output,
-            "lvm-dsl desugaring=true minify=true shrink=true proguard=[proguard-android-optimize.txt-9.4.1] " +
+            "lvm-dsl desugaring=true minify=true shrink=true proguard=[$DEFAULT_KEEP_RULES] " +
                 "animationsDisabled=true excludes=[/META-INF/DEPENDENCIES, /META-INF/INDEX.LIST]",
         )
     }
@@ -126,15 +126,15 @@ class LvmAndroidApplicationPluginTest {
         val minified = fixture.build(":app:help").output
         val notMinified = fixture.build(":app:help", "-Plvm.application.minify=false").output
 
-        assertContains(minified, "minify=true shrink=true proguard=[proguard-android-optimize.txt-9.4.1, proguard-rules.pro, extra-rules.pro]")
-        assertContains(notMinified, "minify=false shrink=false proguard=[proguard-android-optimize.txt-9.4.1, proguard-rules.pro, extra-rules.pro]")
+        assertContains(minified, "minify=true shrink=true proguard=[$DEFAULT_KEEP_RULES, proguard-rules.pro, extra-rules.pro]")
+        assertContains(notMinified, "minify=false shrink=false proguard=[$DEFAULT_KEEP_RULES, proguard-rules.pro, extra-rules.pro]")
     }
 
     @Test
     fun `an empty list of keep rules in settings or a Gradle property leaves out proguard-rules pro`() {
         val fixture = applicationFixture(dir, PRINT_DSL, settingsLvm = "catalog = false\napplication { proguardFiles = emptyList() }")
         fixture.file("app/proguard-rules.pro", "-dontobfuscate")
-        val withoutRules = "proguard=[proguard-android-optimize.txt-9.4.1] animationsDisabled="
+        val withoutRules = "proguard=[$DEFAULT_KEEP_RULES] animationsDisabled="
 
         assertContains(fixture.build(":app:help").output, withoutRules)
 

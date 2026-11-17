@@ -6,6 +6,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.io.TempDir
+import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.detektVersion
 import tech.annexflow.lvm.blueprint.testing.GradleFixture.Companion.kotlinVersion
@@ -97,7 +98,7 @@ class LvmQualityPluginTest {
         assertFalse(without.contains("ru.kode:detekt-rules-compose"))
 
         val with = fixture.build(":lib:dependencies", "--configuration", "detektPlugins", "-Plvm.quality.composeRules=true").output
-        assertContains(with, "ru.kode:detekt-rules-compose:1.4.0")
+        assertContains(with, LvmBuildInfo.DETEKT_COMPOSE_RULES)
     }
 
     @Test
@@ -117,7 +118,7 @@ class LvmQualityPluginTest {
 
         val output = fixture.build(":lib:dependencies", "--configuration", "detektPlugins").output
 
-        assertContains(output, "ru.kode:detekt-rules-compose:1.4.0")
+        assertContains(output, LvmBuildInfo.DETEKT_COMPOSE_RULES)
     }
 
     @Test
