@@ -1,8 +1,7 @@
 plugins {
     id("tech.annexflow.lvm.android.application")
     id("tech.annexflow.lvm.quality")
-    // The Compose compiler for the app's own Compose code; tech.annexflow.lvm.compose is for Kotlin Multiplatform modules.
-    alias(libs.plugins.kotlin.compose)
+    id("tech.annexflow.lvm.compose")
     alias(libs.plugins.kotlin.serialization)
 }
 

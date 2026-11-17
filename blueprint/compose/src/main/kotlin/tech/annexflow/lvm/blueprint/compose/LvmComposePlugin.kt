@@ -9,7 +9,10 @@ import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
-/** Compose Multiplatform and the Compose compiler for a Kotlin Multiplatform module. */
+/**
+ * The Compose compiler for a module with Compose code, and Compose Multiplatform for a Kotlin Multiplatform module. An
+ * Android module without Kotlin Multiplatform gets only the compiler, so its build doesn't need Compose Multiplatform.
+ */
 class LvmComposePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
@@ -22,7 +25,11 @@ class LvmComposePlugin : Plugin<Project> {
         section.reportsDirectory.convention(project.layout.buildDirectory.dir("compose-reports"))
 
         project.pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
-        project.pluginManager.apply("org.jetbrains.compose")
+        // Compose Multiplatform adds nothing to an Android module without Kotlin Multiplatform, and applying it there
+        // would require it on the build classpath. withPlugin also fires when Kotlin Multiplatform comes later.
+        project.pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+            project.pluginManager.apply("org.jetbrains.compose")
+        }
         configureCompiler(project, values, section)
     }
 
