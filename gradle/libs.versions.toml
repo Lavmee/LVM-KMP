@@ -1,7 +1,7 @@
 [versions]
 agp = "9.4.1"
 androidDesugarJdkLibs = "2.1.5"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 detekt = "1.23.8"
 detektComposeRules = "1.4.0"
 junit = "5.13.4"
