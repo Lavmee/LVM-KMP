@@ -4,8 +4,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.DisposableEffect
@@ -26,7 +24,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
-import com.arkivanov.decompose.Child
 import androidx.navigationevent.DirectNavigationEventInput
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.composeunstyled.ModalBottomSheetProperties
@@ -295,13 +292,4 @@ class ChildSlotModalBottomSheetTest {
         const val ScrimTag = "scrim"
         const val SheetTag = "sheet"
     }
-}
-
-internal fun slotOf(instance: String): ChildSlot<String, String> =
-    ChildSlot(child = Child.Created(configuration = instance, instance = instance))
-
-/** Sheet content tagged with [instance]. */
-@androidx.compose.runtime.Composable
-internal fun Content(instance: String, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxWidth().height(200.dp).testTag(instance))
 }

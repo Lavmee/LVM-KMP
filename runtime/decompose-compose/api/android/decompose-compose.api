@@ -2,10 +2,20 @@ public final class tech/annexflow/lvm/decompose/compose/BackHandlerKt {
 	public static final fun BackHandler (Lcom/arkivanov/essenty/backhandler/BackHandler;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
 }
 
+public final class tech/annexflow/lvm/decompose/compose/ChildSlotContentKt {
+	public static final fun ChildSlotContent (Lcom/arkivanov/decompose/router/slot/ChildSlot;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ChildSlotContent (Lcom/arkivanov/decompose/value/Value;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class tech/annexflow/lvm/decompose/compose/ChildSlotModalBottomSheetKt {
 	public static final fun ChildSlotModalBottomSheet (Lcom/arkivanov/decompose/router/slot/ChildSlot;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/composeunstyled/SheetDetent;Lcom/composeunstyled/ModalBottomSheetState;Ltech/annexflow/lvm/decompose/compose/SheetDrag;Lcom/composeunstyled/ModalBottomSheetProperties;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;III)V
 	public static final fun ChildSlotModalBottomSheet (Lcom/arkivanov/decompose/value/Value;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/composeunstyled/SheetDetent;Lcom/composeunstyled/ModalBottomSheetState;Ltech/annexflow/lvm/decompose/compose/SheetDrag;Lcom/composeunstyled/ModalBottomSheetProperties;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;III)V
 	public static final fun Scrim-T042LqI (Ltech/annexflow/lvm/decompose/compose/DecomposeModalBottomSheetOverlayScope;Landroidx/compose/ui/Modifier;JLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class tech/annexflow/lvm/decompose/compose/ChildSlotOverlayKt {
+	public static final fun ChildSlotOverlay (Lcom/arkivanov/decompose/router/slot/ChildSlot;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ChildSlotOverlay (Lcom/arkivanov/decompose/value/Value;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class tech/annexflow/lvm/decompose/compose/ComposableSingletons$ChildSlotModalBottomSheetKt {
