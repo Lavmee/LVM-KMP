@@ -3,6 +3,8 @@ name = "lvm-tui"
 # Matches VERSION_NAME in ../gradle.properties: lvm-tui is released together with LVM.
 version = "0.4.0-SNAPSHOT"
 edition = "2024"
+# The oldest Rust that builds it; clippy flags library functions that are newer.
+rust-version = "1.96"
 description = "Terminal app for Gradle builds that use LVM's convention plugins"
 license = "Apache-2.0"
 repository = "https://github.com/Lavmee/LVM-KMP"
@@ -30,3 +32,8 @@ unsafe_code = "forbid"
 [lints.clippy]
 dbg_macro = "warn"
 todo = "warn"
+
+# The binaries of the GitHub Release: smaller, without symbols.
+[profile.release]
+lto = "thin"
+strip = true
