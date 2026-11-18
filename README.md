@@ -218,6 +218,16 @@ lvm {
 }
 ```
 
+### Report
+
+Every module with an LVM plugin has the task `lvmReport`, which writes what the plugins set up in the module as JSON, for tools that show or check a build. Run it for the whole build, then read the reports from one directory of the root project:
+
+```bash
+./gradlew lvmReport
+```
+
+Each module's report is `build/lvm/report/<path>/project.json`, where `<path>` is the module's path with `/` for `:`, so `:feature:chat` writes `build/lvm/report/feature/chat/project.json`. It holds the LVM plugins the module applies, its targets, the versions of Gradle, Kotlin and AGP with the minimum and tested ones, the options of the settings plugin, the declared project and LVM dependencies, the source sets and the tasks. Every value of `lvm { }` that the module uses comes with its source: `default`, `settings` for the `lvm { }` block of `settings.gradle.kts`, `property` for a `lvm.*` Gradle property or `module` for the module's own `lvm { }`. The field `schema` changes when a field changes its meaning.
+
 ## Android
 
 - **Applications** use `tech.annexflow.lvm.android.application`; see [Applications](#applications).

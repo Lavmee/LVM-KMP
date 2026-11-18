@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.settings
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 import org.gradle.api.logging.Logging
+import tech.annexflow.lvm.blueprint.common.LVM_SETTINGS_PREFIX
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 import tech.annexflow.lvm.blueprint.common.requireSupportedGradle
 
@@ -29,7 +30,18 @@ class LvmSettingsPlugin : Plugin<Settings> {
                 dependencyResolutionManagement.versionCatalogs.create(extension.catalogName.get()) { from(notation) }
             }
             @Suppress("UnstableApiUsage")
-            gradle.lifecycle.beforeProject(ForwardLvmValues(extension.forwardedValues()))
+            gradle.lifecycle.beforeProject(ForwardLvmValues(extension.forwardedValues() + extension.reportedOptions()))
         }
     }
 }
+
+/**
+ * The plugin's own options as `lvm.settings.<name>` extra properties, which `lvmReport` writes. They pass as strings,
+ * since project plugins may see blueprint's classes through another class loader.
+ */
+private fun LvmSettingsExtension.reportedOptions(): Map<String, String> = mapOf(
+    LVM_SETTINGS_PREFIX + "catalog" to catalog.get().toString(),
+    LVM_SETTINGS_PREFIX + "catalogName" to catalogName.get(),
+    LVM_SETTINGS_PREFIX + "catalogVersion" to catalogVersion.get(),
+    LVM_SETTINGS_PREFIX + "repositories" to repositories.get().toString(),
+)

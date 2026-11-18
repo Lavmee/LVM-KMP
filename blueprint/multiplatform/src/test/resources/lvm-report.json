@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "lvmVersion": "0.4.0-SNAPSHOT",
+  "path": ":lib",
+  "projectDir": "lib",
+  "plugins": [
+    "tech.annexflow.lvm.multiplatform"
+  ],
+  "targets": {
+    "ios": {
+      "architectures": [
+        "iosArm64",
+        "iosSimulatorArm64"
+      ],
+      "framework": {
+        "baseName": "Lib",
+        "isStatic": true
+      }
+    },
+    "jvm": {}
+  },
+  "toolchain": {
+    "gradle": {
+      "actual": "9.9.1",
+      "minimum": "9.6",
+      "tested": "9.9.1"
+    },
+    "kotlin": {
+      "actual": "2.4.21",
+      "minimum": "2.4.0",
+      "tested": "2.4.21"
+    }
+  },
+  "values": {
+    "ios.architectures": {
+      "value": [
+        "iosArm64",
+        "iosSimulatorArm64"
+      ],
+      "source": "default"
+    },
+    "jvm.target": {
+      "value": 17,
+      "source": "settings"
+    },
+    "kotlin.explicitApi": {
+      "value": true,
+      "source": "property"
+    },
+    "kotlin.flatLayout": {
+      "value": false,
+      "source": "default"
+    },
+    "kotlin.freeCompilerArgs": {
+      "value": [],
+      "source": "default"
+    },
+    "kotlin.optIns": {
+      "value": [
+        "kotlin.ExperimentalStdlibApi",
+        "kotlin.uuid.ExperimentalUuidApi"
+      ],
+      "source": "module"
+    },
+    "kotlin.testDependencies": {
+      "value": true,
+      "source": "default"
+    },
+    "kotlin.warningsAsErrors": {
+      "value": true,
+      "source": "module"
+    }
+  },
+  "lvmDependencies": {
+    "commonMainImplementation": [
+      "lvm-core"
+    ]
+  },
+  "projectDependencies": {
+    "commonMainImplementation": [
+      ":core"
+    ]
+  },
+  "settings": {
+    "catalog": false,
+    "catalogName": "lvmLibs",
+    "catalogVersion": "0.4.0-SNAPSHOT",
+    "repositories": true
+  },
+  "sourceSets": [
+    "appleMain",
+    "appleTest",
+    "commonMain",
+    "commonTest",
+    "iosArm64Main",
+    "iosArm64Test",
+    "iosMain",
+    "iosSimulatorArm64Main",
+    "iosSimulatorArm64Test",
+    "iosTest",
+    "jvmMain",
+    "jvmTest",
+    "nativeMain",
+    "nativeTest"
+  ],
+  "tasks": [
+    "assemble",
+    "build",
+    "check",
+    "compileKotlinJvm",
+    "iosSimulatorArm64Test",
+    "jvmTest",
+    "linkDebugFrameworkIosSimulatorArm64",
+    "linkReleaseFrameworkIosArm64",
+    "lvmReport"
+  ]
+}

@@ -31,13 +31,26 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         val jvm = project.lvmJvm()
         val kotlin = project.lvmKotlin()
         val library = project.lvm.extensions.create("library", LibrarySection::class.java)
-        library.desugaring.convention(values.boolean(LvmKeys.LIBRARY_DESUGARING, LvmDefaults.LIBRARY_DESUGARING))
-        library.resourcePrefix.convention(values.boolean(LvmKeys.LIBRARY_RESOURCE_PREFIX, LvmDefaults.LIBRARY_RESOURCE_PREFIX))
-        library.skipEmptyAndroidTest.convention(
-            values.boolean(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, LvmDefaults.LIBRARY_SKIP_EMPTY_ANDROID_TEST),
-        )
-        val consumerProguardFiles = values.list(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, LvmDefaults.LIBRARY_CONSUMER_PROGUARD_FILES)
+        val desugaring = values.boolean(LvmKeys.LIBRARY_DESUGARING, LvmDefaults.LIBRARY_DESUGARING)
+        val resourcePrefix = values.boolean(LvmKeys.LIBRARY_RESOURCE_PREFIX, LvmDefaults.LIBRARY_RESOURCE_PREFIX)
+        val skipEmptyAndroidTest = values.boolean(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, LvmDefaults.LIBRARY_SKIP_EMPTY_ANDROID_TEST)
+        val buildWideConsumerProguardFiles =
+            values.list(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, LvmDefaults.LIBRARY_CONSUMER_PROGUARD_FILES)
+        library.desugaring.convention(desugaring)
+        library.resourcePrefix.convention(resourcePrefix)
+        library.skipEmptyAndroidTest.convention(skipEmptyAndroidTest)
+        val consumerProguardFiles = buildWideConsumerProguardFiles
             .zip(library.consumerProguardFiles) { buildWide, module -> buildWide + module }
+
+        project.reportAndroidModule(
+            "tech.annexflow.lvm.android.library",
+            android,
+            project.extensions.getByType(LibraryExtension::class.java),
+        )
+        values.report(LvmKeys.LIBRARY_DESUGARING, library.desugaring, desugaring)
+        values.report(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, consumerProguardFiles, buildWideConsumerProguardFiles)
+        values.report(LvmKeys.LIBRARY_RESOURCE_PREFIX, library.resourcePrefix, resourcePrefix)
+        values.report(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, library.skipEmptyAndroidTest, skipEmptyAndroidTest)
 
         // Defaults that go in now, before the build script runs, so values the script sets natively replace them.
         val buildWideJvmTarget = project.lvmValues.jvm.target.get()

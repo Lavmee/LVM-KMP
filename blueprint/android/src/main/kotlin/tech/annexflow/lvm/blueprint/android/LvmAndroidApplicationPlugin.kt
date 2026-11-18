@@ -30,15 +30,31 @@ class LvmAndroidApplicationPlugin : Plugin<Project> {
         val jvm = project.lvmJvm()
         val kotlin = project.lvmKotlin()
         val application = project.lvm.extensions.create("application", ApplicationSection::class.java)
-        application.applicationId.convention(values.raw(LvmKeys.APPLICATION_ID))
-        application.versionCode.convention(
-            values.raw(LvmKeys.APPLICATION_VERSION_CODE).map { LvmValueParsing.int(LvmKeys.APPLICATION_VERSION_CODE, it) },
+        val applicationId = values.raw(LvmKeys.APPLICATION_ID)
+        val versionCode = values.raw(LvmKeys.APPLICATION_VERSION_CODE)
+            .map { LvmValueParsing.int(LvmKeys.APPLICATION_VERSION_CODE, it) }
+        val versionName = values.raw(LvmKeys.APPLICATION_VERSION_NAME)
+        val minify = values.boolean(LvmKeys.APPLICATION_MINIFY, LvmDefaults.APPLICATION_MINIFY)
+        val desugaring = values.boolean(LvmKeys.APPLICATION_DESUGARING, LvmDefaults.APPLICATION_DESUGARING)
+        val buildWideProguardFiles = values.list(LvmKeys.APPLICATION_PROGUARD_FILES, LvmDefaults.APPLICATION_PROGUARD_FILES)
+        application.applicationId.convention(applicationId)
+        application.versionCode.convention(versionCode)
+        application.versionName.convention(versionName)
+        application.minify.convention(minify)
+        application.desugaring.convention(desugaring)
+        val proguardFiles = buildWideProguardFiles.zip(application.proguardFiles) { buildWide, module -> buildWide + module }
+
+        project.reportAndroidModule(
+            "tech.annexflow.lvm.android.application",
+            android,
+            project.extensions.getByType(ApplicationExtension::class.java),
         )
-        application.versionName.convention(values.raw(LvmKeys.APPLICATION_VERSION_NAME))
-        application.minify.convention(values.boolean(LvmKeys.APPLICATION_MINIFY, LvmDefaults.APPLICATION_MINIFY))
-        application.desugaring.convention(values.boolean(LvmKeys.APPLICATION_DESUGARING, LvmDefaults.APPLICATION_DESUGARING))
-        val proguardFiles = values.list(LvmKeys.APPLICATION_PROGUARD_FILES, LvmDefaults.APPLICATION_PROGUARD_FILES)
-            .zip(application.proguardFiles) { buildWide, module -> buildWide + module }
+        values.report(LvmKeys.APPLICATION_ID, application.applicationId, applicationId)
+        values.report(LvmKeys.APPLICATION_VERSION_CODE, application.versionCode, versionCode)
+        values.report(LvmKeys.APPLICATION_VERSION_NAME, application.versionName, versionName)
+        values.report(LvmKeys.APPLICATION_MINIFY, application.minify, minify)
+        values.report(LvmKeys.APPLICATION_PROGUARD_FILES, proguardFiles, buildWideProguardFiles)
+        values.report(LvmKeys.APPLICATION_DESUGARING, application.desugaring, desugaring)
 
         // Defaults that go in now, before the build script runs, so values the script sets natively replace them.
         val buildWideJvmTarget = project.lvmValues.jvm.target.get()

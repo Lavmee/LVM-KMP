@@ -18,6 +18,7 @@ import tech.annexflow.lvm.blueprint.common.LvmDefaults
 import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
+import tech.annexflow.lvm.blueprint.common.reportPlugin
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 /**
@@ -33,8 +34,13 @@ class LvmMainContextPlugin : KotlinCompilerPluginSupportPlugin {
         requireMinimumGradle()
         val values = LvmValues(target)
         section = target.lvm.extensions.create("mainContext", MainContextSection::class.java)
-        section.platforms.convention(values.list(LvmKeys.MAIN_CONTEXT_PLATFORMS, LvmDefaults.MAIN_CONTEXT_PLATFORMS))
-        section.dependency.convention(values.boolean(LvmKeys.MAIN_CONTEXT_DEPENDENCY, LvmDefaults.MAIN_CONTEXT_DEPENDENCY))
+        val platforms = values.list(LvmKeys.MAIN_CONTEXT_PLATFORMS, LvmDefaults.MAIN_CONTEXT_PLATFORMS)
+        val dependency = values.boolean(LvmKeys.MAIN_CONTEXT_DEPENDENCY, LvmDefaults.MAIN_CONTEXT_DEPENDENCY)
+        section.platforms.convention(platforms)
+        section.dependency.convention(dependency)
+        target.reportPlugin("tech.annexflow.lvm.main-context")
+        values.report(LvmKeys.MAIN_CONTEXT_PLATFORMS, section.platforms, platforms)
+        values.report(LvmKeys.MAIN_CONTEXT_DEPENDENCY, section.dependency, dependency)
 
         val annotation = target.dependencies.create(
             "${LvmBuildInfo.GROUP}:${LvmBuildInfo.MAIN_CONTEXT_ARTIFACT}:${LvmBuildInfo.VERSION}",
