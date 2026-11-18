@@ -440,3 +440,64 @@ fn a_library_is_added_with_what_it_needs() {
     assert!(script.contains("implementation(lvmLibs.lvm.storage)"), "{script}");
     assert!(script.contains("alias(lvmLibs.plugins.kotlin.serialization)"), "{script}");
 }
+
+/// The fixture with `:core:data` published, part of its POM set and its ABI changed since the dump.
+fn published_consumer() -> tempfile::TempDir {
+    let dir = consumer();
+    let root = dir.path();
+    let script = root.join("core/data/build.gradle.kts");
+    let text = fs::read_to_string(&script).unwrap().replace(
+        "alias(lvmLibs.plugins.blueprint.multiplatform)",
+        "alias(lvmLibs.plugins.blueprint.multiplatform)\n    alias(lvmLibs.plugins.blueprint.publish)",
+    );
+    fs::write(script, text).unwrap();
+    fs::write(
+        root.join("gradle.properties"),
+        "lvm.publish.description=Data\nlvm.publish.url=https://example.com/data\n",
+    )
+    .unwrap();
+    fs::create_dir_all(root.join("core/data/api")).unwrap();
+    fs::write(root.join("core/data/api/data.api"), "public final class Repository {\n\tpublic fun load ()V\n}\n")
+        .unwrap();
+    dir
+}
+
+#[cfg(unix)]
+#[test]
+fn the_library_checks_the_abi_and_shows_what_changed() {
+    let dir = published_consumer();
+    let generated = "mkdir -p core/data/build/kotlin/abi\nprintf 'public final class Repository {\\n\\tpublic fun save ()V\\n}\\n' > core/data/build/kotlin/abi/data.api\nexit 1";
+    let (mut app, events) = app_with_gradle(dir.path(), generated);
+    let home = tempfile::tempdir().unwrap();
+    fs::write(home.path().join("gradle.properties"), "mavenCentralUsername=me\nmavenCentralPassword=secret\n").unwrap();
+    app.library.gradle_home = Some(home.path().to_owned());
+
+    assert_eq!(app.tabs().last(), Some(&Tab::Library));
+    press(&mut app, "6");
+    assert_eq!(app.tab, Tab::Library);
+    press(&mut app, "c");
+    until_finished(&mut app, &events);
+    assert_eq!(app.runs[0].command, ":core:data:checkKotlinAbi");
+    let lvm_tui::library::AbiState::Changed(diffs) = &app.library.abi else { panic!("the ABI changed") };
+    assert_eq!((diffs[0].added, diffs[0].removed), (1, 1));
+    assert_snapshot!("library_with_a_changed_abi", render(&mut app));
+}
+
+#[cfg(unix)]
+#[test]
+fn the_library_publishes_to_maven_local_without_signing() {
+    let dir = published_consumer();
+    let (mut app, events) = app_with_gradle(dir.path(), "echo \"$*\"");
+    press(&mut app, "6p");
+    until_finished(&mut app, &events);
+    assert_eq!(app.runs[0].lines[0], ":core:data:publishToMavenLocal -Plvm.publish.signing=false --console=plain");
+}
+
+#[test]
+fn the_library_tab_exists_only_where_a_module_publishes() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    assert!(!app.tabs().contains(&Tab::Library));
+    press(&mut app, "6");
+    assert_eq!(app.tab, Tab::Overview);
+}

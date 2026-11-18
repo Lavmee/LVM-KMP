@@ -217,13 +217,14 @@ impl App {
     }
 
     /// Runs [args] in the background and shows its log.
-    pub fn run_gradle(&mut self, args: Vec<String>) {
-        self.runner.submit(args, Purpose::Task);
+    pub fn run_gradle(&mut self, args: Vec<String>) -> crate::gradle::JobId {
+        let job = self.runner.submit(args, Purpose::Task);
         self.tasks.pane = ResultsPane::Log;
         self.tasks.run = None;
         self.tasks.follow = true;
         self.tasks.cursor = None;
         self.status = None;
+        job
     }
 
     pub(crate) fn on_tasks_key(&mut self, key: KeyEvent) {

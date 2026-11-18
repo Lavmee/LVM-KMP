@@ -7,6 +7,8 @@ pub mod edit;
 pub mod event;
 pub mod form;
 pub mod gradle;
+pub mod library;
+pub mod library_tab;
 pub mod maven;
 pub mod migrate;
 pub mod project;

@@ -172,3 +172,30 @@ fn bugfix_releases_share_a_line() {
     assert_ne!(bugfix_line("2.4.30"), bugfix_line("2.4.21"));
     assert_eq!(bugfix_line("2.4"), None);
 }
+
+#[test]
+fn finds_secrets_in_the_build_and_incomplete_poms() {
+    let dir = consumer();
+    let root = dir.path();
+    fs::write(
+        root.join("gradle.properties"),
+        "signingInMemoryKeyPassword=hunter2\nlvm.publish.url=https://example.com\n",
+    )
+    .unwrap();
+    replace(
+        root,
+        "core/data/build.gradle.kts",
+        "alias(lvmLibs.plugins.blueprint.multiplatform)",
+        "alias(lvmLibs.plugins.blueprint.multiplatform)\n    alias(lvmLibs.plugins.blueprint.publish)",
+    );
+    let project = Project::load(root);
+
+    let findings = diagnose(&project, &healthy(root));
+
+    let secret = findings.iter().find(|f| f.rule == "publish-secrets").expect("a secret finding");
+    assert_eq!(secret.line, Some(1));
+    assert!(!secret.message.contains("hunter2"), "the message never shows the secret");
+    let pom = findings.iter().find(|f| f.rule == "pom").expect("a pom finding");
+    assert!(pom.message.contains("lvm.publish.description"), "{}", pom.message);
+    assert!(!pom.message.contains("lvm.publish.url"), "{}", pom.message);
+}

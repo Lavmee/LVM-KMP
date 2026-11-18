@@ -149,6 +149,7 @@ pub fn diagnose(project: &Project, env: &Environment) -> Vec<Finding> {
     }
     toolchain(project, &mut findings);
     environment(project, env, &mut findings);
+    publishing(project, &mut findings);
     findings.sort_by(|a, b| (a.severity, &a.file, a.line, a.rule).cmp(&(b.severity, &b.file, b.line, b.rule)));
     findings
 }
@@ -670,6 +671,34 @@ fn jdk(project: &Project, env: &Environment, lvm: &[&Module], findings: &mut Vec
         )),
         (None, None) => findings.push(finding("jdk", Severity::Warning, "No JDK found: set JAVA_HOME")),
         (None, Some(_)) => {}
+    }
+}
+
+/// Secrets in the build's `gradle.properties`, and POMs that Maven Central would reject.
+fn publishing(project: &Project, findings: &mut Vec<Finding>) {
+    for key in crate::library::SECRETS {
+        if let Some(entry) = project.properties.entry(key).filter(|e| !e.value.is_empty()) {
+            let message = format!(
+                "{key} is in the build's gradle.properties, which git shares: move it to ~/.gradle/gradle.properties or ORG_GRADLE_PROJECT_{key}"
+            );
+            findings
+                .push(finding("publish-secrets", Severity::Error, message).at("gradle.properties", Some(entry.line)));
+        }
+    }
+    for module in project.modules.iter().filter(|m| m.has_plugin("publish")) {
+        let missing: Vec<String> = crate::library::REQUIRED_POM
+            .iter()
+            .filter(|key| value(module, key).is_none_or(|v| v.as_str() == Some("")))
+            .map(|key| format!("lvm.{key}"))
+            .collect();
+        if !missing.is_empty() {
+            let message = format!(
+                "The POM of {} needs {}: set them in lvm {{ publish {{ }} }} of settings.gradle.kts or in gradle.properties",
+                module.path,
+                missing.join(", ")
+            );
+            findings.push(finding("pom", Severity::Error, message).in_module(module));
+        }
     }
 }
 

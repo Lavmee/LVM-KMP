@@ -13,6 +13,7 @@ use crate::edit::ChangeSet;
 use crate::event::Message;
 use crate::form::{Form, FormEvent};
 use crate::gradle::{GradleEvent, JobId, Outcome, Purpose, Runner};
+use crate::library_tab::LibraryView;
 use crate::migrate;
 use crate::project::Project;
 use crate::project::model::{Module, ValueRow};
@@ -30,10 +31,11 @@ pub enum Tab {
     Tasks,
     Doctor,
     Updates,
+    Library,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 5] = [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Doctor, Tab::Updates];
+    pub const ALL: [Tab; 6] = [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Doctor, Tab::Updates, Tab::Library];
 
     pub fn title(self) -> &'static str {
         match self {
@@ -42,6 +44,7 @@ impl Tab {
             Self::Tasks => "Tasks",
             Self::Doctor => "Doctor",
             Self::Updates => "Updates",
+            Self::Library => "Library",
         }
     }
 
@@ -52,6 +55,7 @@ impl Tab {
             Self::Tasks => "tasks",
             Self::Doctor => "doctor",
             Self::Updates => "updates",
+            Self::Library => "library",
         }
     }
 }
@@ -67,6 +71,7 @@ pub enum Action {
     ShowTasks,
     ShowDoctor,
     ShowUpdates,
+    ShowLibrary,
     UpgradeLvm,
     RunCommand,
     RerunFailedTests,
@@ -84,7 +89,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 22] = [
+    pub const ALL: [Action; 23] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
@@ -93,6 +98,7 @@ impl Action {
         Action::ShowTasks,
         Action::ShowDoctor,
         Action::ShowUpdates,
+        Action::ShowLibrary,
         Action::UpgradeLvm,
         Action::RunCommand,
         Action::RerunFailedTests,
@@ -119,6 +125,7 @@ impl Action {
             Self::ShowTasks => "Show the tasks, the log and the test results",
             Self::ShowDoctor => "Show the doctor's findings",
             Self::ShowUpdates => "Show LVM's releases",
+            Self::ShowLibrary => "Show the published modules: POM, signing, ABI",
             Self::UpgradeLvm => "Upgrade LVM to the selected release",
             Self::RunCommand => "Run a Gradle command",
             Self::RerunFailedTests => "Run the failed tests again",
@@ -146,6 +153,7 @@ impl Action {
             Self::ShowTasks => "3",
             Self::ShowDoctor => "4",
             Self::ShowUpdates => "5",
+            Self::ShowLibrary => "6",
             Self::UpgradeLvm => "u",
             Self::RunCommand => "c",
             Self::RerunFailedTests => "a",
@@ -271,6 +279,7 @@ pub struct App {
     pub help: bool,
     pub status: Option<String>,
     pub updates: UpdatesView,
+    pub library: LibraryView,
     /// Whether the Updates tab asks Maven Central; tests turn it off and send the answers themselves.
     pub fetch_releases: bool,
     /// The builds of this session, the latest last.
@@ -311,6 +320,7 @@ impl App {
             help: false,
             status: None,
             updates: UpdatesView::default(),
+            library: LibraryView::default(),
             fetch_releases: true,
             runs: Vec::new(),
             editor: None,
@@ -320,6 +330,24 @@ impl App {
         };
         app.reload_results();
         app
+    }
+
+    /// The tabs of this build: Library only where a module publishes.
+    pub fn tabs(&self) -> Vec<Tab> {
+        let publishes = !self.published_modules().is_empty();
+        Tab::ALL.into_iter().filter(|tab| *tab != Tab::Library || publishes).collect()
+    }
+
+    pub fn show_tab(&mut self, tab: Tab) {
+        if !self.tabs().contains(&tab) {
+            return;
+        }
+        self.tab = tab;
+        match tab {
+            Tab::Updates => self.open_updates(),
+            Tab::Library => self.refresh_library(),
+            _ => {}
+        }
     }
 
     pub fn state(&self) -> State {
@@ -366,14 +394,12 @@ impl App {
                     self.status = Some("Cancelling...".to_owned());
                 }
             }
-            Action::ShowOverview => self.tab = Tab::Overview,
-            Action::ShowModules => self.tab = Tab::Modules,
-            Action::ShowTasks => self.tab = Tab::Tasks,
-            Action::ShowDoctor => self.tab = Tab::Doctor,
-            Action::ShowUpdates => {
-                self.tab = Tab::Updates;
-                self.open_updates();
-            }
+            Action::ShowOverview => self.show_tab(Tab::Overview),
+            Action::ShowModules => self.show_tab(Tab::Modules),
+            Action::ShowTasks => self.show_tab(Tab::Tasks),
+            Action::ShowDoctor => self.show_tab(Tab::Doctor),
+            Action::ShowUpdates => self.show_tab(Tab::Updates),
+            Action::ShowLibrary => self.show_tab(Tab::Library),
             Action::UpgradeLvm => {
                 self.tab = Tab::Updates;
                 self.open_updates();
@@ -471,23 +497,23 @@ impl App {
             KeyCode::Char(':') => self.palette = Some(Palette { query: String::new(), selected: 0 }),
             KeyCode::Char('r') => self.perform(Action::RunReport),
             KeyCode::Char('R') => self.perform(Action::Reload),
-            KeyCode::Char('1') => self.perform(Action::ShowOverview),
-            KeyCode::Char('2') => self.perform(Action::ShowModules),
-            KeyCode::Char('3') => self.perform(Action::ShowTasks),
-            KeyCode::Char('4') => self.perform(Action::ShowDoctor),
-            KeyCode::Char('5') => self.perform(Action::ShowUpdates),
-            KeyCode::Tab | KeyCode::BackTab => {
-                let position = Tab::ALL.iter().position(|tab| *tab == self.tab).unwrap_or(0);
-                let step = if key.code == KeyCode::Tab { 1 } else { Tab::ALL.len() - 1 };
-                self.tab = Tab::ALL[(position + step) % Tab::ALL.len()];
-                if self.tab == Tab::Updates {
-                    self.open_updates();
+            KeyCode::Char(c @ '1'..='9') => {
+                let index = c as usize - '1' as usize;
+                if let Some(tab) = self.tabs().get(index).copied() {
+                    self.show_tab(tab);
                 }
+            }
+            KeyCode::Tab | KeyCode::BackTab => {
+                let tabs = self.tabs();
+                let position = tabs.iter().position(|tab| *tab == self.tab).unwrap_or(0);
+                let step = if key.code == KeyCode::Tab { 1 } else { tabs.len() - 1 };
+                self.show_tab(tabs[(position + step) % tabs.len()]);
             }
             _ if self.tab == Tab::Modules => self.on_modules_key(key),
             _ if self.tab == Tab::Tasks => self.on_tasks_key(key),
             _ if self.tab == Tab::Doctor => self.on_doctor_key(key),
             _ if self.tab == Tab::Updates => self.on_updates_key(key),
+            _ if self.tab == Tab::Library => self.on_library_key(key),
             _ => {}
         }
     }
@@ -662,6 +688,16 @@ impl App {
             self.status = Some("Select a value of a module first: 2, then l and j".to_owned());
             return;
         };
+        let (path, key) = (module.path.clone(), row.key.clone());
+        self.open_edit(&path, &key);
+    }
+
+    /// Opens the editor for the value [key] of the module at [path].
+    pub(crate) fn open_edit(&mut self, path: &str, key: &str) {
+        let Some(row) = self.project.module(path).and_then(|m| m.values.iter().find(|r| r.key == key)).cloned() else {
+            self.status = Some(format!("{path} has no value {key}"));
+            return;
+        };
         let layers = values_edit::layers(&row.key);
         if layers.is_empty() {
             self.status = Some(format!("{} is not a value lvm-tui can edit", row.key));
@@ -675,7 +711,7 @@ impl App {
         };
         let edit = EditDialog {
             key: row.key.clone(),
-            module: module.path.clone(),
+            module: path.to_owned(),
             value: row.value.clone(),
             source: row.source,
             layer: layers.iter().position(|l| *l == layer).unwrap_or(0),
@@ -888,6 +924,7 @@ impl App {
                     Purpose::Report => self.reload(),
                     Purpose::Task => self.reload_results(),
                 }
+                self.on_library_job(job, &outcome);
                 self.status = Some(self.describe_outcome(job, &outcome, elapsed));
             }
         }

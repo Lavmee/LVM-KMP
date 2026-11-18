@@ -3,6 +3,7 @@
 mod dialog;
 mod doctor;
 pub(crate) mod form;
+mod library;
 mod modules;
 mod overview;
 mod tasks;
@@ -32,6 +33,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         Tab::Modules => modules::draw(frame, app, body),
         Tab::Tasks => tasks::draw(frame, app, body),
         Tab::Updates => updates::draw(frame, app, body),
+        Tab::Library => library::draw(frame, app, body),
         Tab::Doctor => doctor::draw(frame, app, body),
     }
     draw_status(frame, app, status);
@@ -47,8 +49,9 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
 }
 
 fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
-    let titles = Tab::ALL.iter().enumerate().map(|(i, tab)| format!("{} {}", i + 1, tab.title()));
-    let selected = Tab::ALL.iter().position(|tab| *tab == app.tab);
+    let tabs = app.tabs();
+    let titles = tabs.iter().enumerate().map(|(i, tab)| format!("{} {}", i + 1, tab.title()));
+    let selected = tabs.iter().position(|tab| *tab == app.tab);
     let [tabs, name] =
         Layout::horizontal([Constraint::Fill(1), Constraint::Length(app.project.name.len() as u16 + 14)]).areas(area);
     frame.render_widget(
@@ -87,6 +90,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
                     Tab::Tasks => " enter run   c command   v log/tests/detekt/history   x cancel   ? keys",
                     Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
                     Tab::Updates => " j k release   u upgrade   f ask Maven Central again   ? keys",
+                    Tab::Library => " c check ABI   u update dump   p publish to Maven local   e edit POM   ? keys",
                 };
                 spans.push(hint.dim());
             }
@@ -97,7 +101,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_help(frame: &mut Frame) {
     let rows: Vec<Line> = [
-        ("1-5, tab", "switch tabs"),
+        ("1-6, tab", "switch tabs"),
         ("r", "run lvmReport, then read the reports"),
         ("R", "read the build files again"),
         ("ctrl-p, :", "command palette"),
