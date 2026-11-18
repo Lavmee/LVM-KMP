@@ -13,6 +13,7 @@
     { "key": "kotlin.explicitApi", "type": "boolean", "default": false },
     { "key": "kotlin.testDependencies", "type": "boolean", "default": true },
     { "key": "kotlin.flatLayout", "type": "boolean", "default": false },
+    { "key": "kotlin.jvmDefault", "type": "string" },
     { "key": "ios.architectures", "type": "list", "default": ["iosArm64", "iosSimulatorArm64"], "module": "replace" },
     { "key": "quality.config", "type": "list", "default": [], "module": "append" },
     { "key": "quality.source", "type": "list", "default": ["src"], "module": "replace" },
@@ -47,6 +48,7 @@
     { "key": "library.desugaring", "type": "boolean", "default": true },
     { "key": "library.consumerProguardFiles", "type": "list", "default": ["consumer-rules.pro"], "module": "append" },
     { "key": "library.resourcePrefix", "type": "boolean", "default": true },
+    { "key": "library.resourcePrefixDroppedSegments", "type": "list", "default": [], "module": "append" },
     { "key": "library.skipEmptyAndroidTest", "type": "boolean", "default": true }
   ]
 }

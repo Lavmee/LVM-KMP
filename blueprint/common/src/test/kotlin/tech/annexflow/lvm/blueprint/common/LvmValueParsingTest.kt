@@ -23,6 +23,14 @@ class LvmValueParsingTest {
     }
 
     @Test
+    fun `accepts the modes of jvm-default only`() {
+        assertEquals("no-compatibility", LvmValueParsing.jvmDefault(" no-compatibility "))
+        assertEquals(listOf("enable", "disable"), listOf("enable", "disable").map(LvmValueParsing::jvmDefault))
+        val error = assertFailsWith<InvalidUserDataException> { LvmValueParsing.jvmDefault("all") }
+        assertContains(error.message!!, "lvm.kotlin.jvmDefault")
+    }
+
+    @Test
     fun `parses and joins comma-separated lists`() {
         assertEquals(listOf("a.B", "c.D"), LvmValueParsing.list(" a.B , ,c.D "))
         assertEquals("a.B,c.D", LvmValueParsing.joinList(listOf("a.B", "c.D")))

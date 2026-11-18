@@ -4,6 +4,8 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.io.TempDir
 
 class CompilerOptionsTest {
@@ -35,6 +37,19 @@ class CompilerOptionsTest {
         )
         fixture.build(":lib:compileKotlinJvm", "-Plvm.jvm.target=11")
         assertEquals(65, classFileMajorVersion(helloClass))
+    }
+
+    @Test
+    fun `jvmDefault reaches JVM targets, and Kotlin's own default stays while it is unset`() {
+        val fixture = kmpFixture(dir, JVM_MODULE)
+        fixture.file("lib/src/commonMain/kotlin/Greeter.kt", "interface Greeter { fun greet(): String = \"hello\" }")
+        val defaultImpls = dir.resolve("lib/build/classes/kotlin/jvm/main/Greeter\$DefaultImpls.class")
+
+        fixture.build(":lib:compileKotlinJvm")
+        assertTrue(defaultImpls.isFile)
+
+        fixture.build(":lib:compileKotlinJvm", "-Plvm.kotlin.jvmDefault=no-compatibility")
+        assertFalse(defaultImpls.exists())
     }
 
     @Test

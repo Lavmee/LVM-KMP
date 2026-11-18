@@ -33,6 +33,10 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         val library = project.lvm.extensions.create("library", LibrarySection::class.java)
         val desugaring = values.boolean(LvmKeys.LIBRARY_DESUGARING, LvmDefaults.LIBRARY_DESUGARING)
         val resourcePrefix = values.boolean(LvmKeys.LIBRARY_RESOURCE_PREFIX, LvmDefaults.LIBRARY_RESOURCE_PREFIX)
+        val buildWideDroppedSegments = values.list(
+            LvmKeys.LIBRARY_RESOURCE_PREFIX_DROPPED_SEGMENTS,
+            LvmDefaults.LIBRARY_RESOURCE_PREFIX_DROPPED_SEGMENTS,
+        )
         val skipEmptyAndroidTest = values.boolean(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, LvmDefaults.LIBRARY_SKIP_EMPTY_ANDROID_TEST)
         val buildWideConsumerProguardFiles =
             values.list(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, LvmDefaults.LIBRARY_CONSUMER_PROGUARD_FILES)
@@ -41,6 +45,8 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         library.skipEmptyAndroidTest.convention(skipEmptyAndroidTest)
         val consumerProguardFiles = buildWideConsumerProguardFiles
             .zip(library.consumerProguardFiles) { buildWide, module -> buildWide + module }
+        val droppedSegments = buildWideDroppedSegments
+            .zip(library.resourcePrefixDroppedSegments) { buildWide, module -> buildWide + module }
 
         project.reportAndroidModule(
             "tech.annexflow.lvm.android.library",
@@ -50,6 +56,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         values.report(LvmKeys.LIBRARY_DESUGARING, library.desugaring, desugaring)
         values.report(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, consumerProguardFiles, buildWideConsumerProguardFiles)
         values.report(LvmKeys.LIBRARY_RESOURCE_PREFIX, library.resourcePrefix, resourcePrefix)
+        values.report(LvmKeys.LIBRARY_RESOURCE_PREFIX_DROPPED_SEGMENTS, droppedSegments, buildWideDroppedSegments)
         values.report(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, library.skipEmptyAndroidTest, skipEmptyAndroidTest)
 
         // Defaults that go in now, before the build script runs, so values the script sets natively replace them.
@@ -57,6 +64,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         project.extensions.configure(LibraryExtension::class.java) {
             setJavaVersion(buildWideJvmTarget)
             testOptions.animationsDisabled = true
+            excludeDuplicateMetadata()
         }
 
         // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.
@@ -69,7 +77,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
             extension.enableDesugaring(library.desugaring.get())
             project.fillConsumerProguardFiles(extension, consumerProguardFiles)
             if (extension.resourcePrefix == null && library.resourcePrefix.get()) {
-                extension.resourcePrefix = defaultResourcePrefix(project.path)
+                extension.resourcePrefix = defaultResourcePrefix(project.path, droppedSegments.get())
             }
             project.configureSourceLayout(extension, kotlin.flatLayout.get())
         }
@@ -105,15 +113,33 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
 
 private val NOT_IN_RESOURCE_NAMES = Regex("[^a-z0-9_]")
 
+/** A segment of a module path, as [defaultResourcePrefix] drops them: a run of letters, digits and `_`. */
+private val PATH_SEGMENT = Regex("[A-Za-z0-9_]+")
+
 /**
- * The resource prefix of the module at [projectPath]: each segment lowercased, with every character other than `a`-`z`,
- * a digit or `_` replaced by `_`, the segments joined by `_` and followed by `_`. `:feature:chat-history:ui` ->
- * `feature_chat_history_ui_`. The root project, whose path has no segments, has none.
+ * The resource prefix of the module at [projectPath]: each part of the path lowercased, with every character other
+ * than `a`-`z`, a digit or `_` replaced by `_`, the parts joined by `_` and followed by `_`.
+ * `:feature:chat-history:ui` -> `feature_chat_history_ui_`. The root project, whose path has no parts, has none.
+ *
+ * Segments of the path in [droppedSegments], compared without case, are left out first: from the end, while the last
+ * segment is one of them and more than one is left. A segment is a run of letters, digits and `_`, so with `ui` and
+ * `sky`, `:feature:chat:ui-sky` -> `feature_chat_`. What remains of the path gives the prefix as above, so with
+ * nothing to drop the prefix is the same as without [droppedSegments].
  */
-internal fun defaultResourcePrefix(projectPath: String): String? {
-    val segments = projectPath.split(':').filter(String::isNotEmpty)
-    if (segments.isEmpty()) return null
-    return segments.joinToString("_", postfix = "_") { it.lowercase().replace(NOT_IN_RESOURCE_NAMES, "_") }
+internal fun defaultResourcePrefix(projectPath: String, droppedSegments: List<String> = emptyList()): String? {
+    val parts = withoutDroppedSegments(projectPath, droppedSegments).split(':').filter(String::isNotEmpty)
+    if (parts.isEmpty()) return null
+    return parts.joinToString("_", postfix = "_") { it.lowercase().replace(NOT_IN_RESOURCE_NAMES, "_") }
+}
+
+/** [projectPath] up to the end of its last segment that is not in [dropped], or up to its first segment. */
+private fun withoutDroppedSegments(projectPath: String, dropped: List<String>): String {
+    val droppedLowercase = dropped.map(String::lowercase).toSet()
+    val segments = PATH_SEGMENT.findAll(projectPath).toList()
+    var kept = segments.size
+    while (kept > 1 && segments[kept - 1].value.lowercase() in droppedLowercase) kept--
+    if (kept == segments.size) return projectPath
+    return projectPath.substring(0, segments[kept - 1].range.last + 1)
 }
 
 private const val ANDROID_TEST = "androidTest"

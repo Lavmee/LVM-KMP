@@ -22,7 +22,8 @@ androidComponents.finalizeDsl { android ->
     println(
         "lvm-dsl desugaring=" + android.compileOptions.isCoreLibraryDesugaringEnabled +
             " consumerProguardFiles=" + config.consumerProguardFiles.map { it.name } +
-            " animationsDisabled=" + android.testOptions.animationsDisabled,
+            " animationsDisabled=" + android.testOptions.animationsDisabled +
+            " excludes=" + android.packaging.resources.excludes.filter { it in setOf("/META-INF/INDEX.LIST", "/META-INF/DEPENDENCIES") }.sorted(),
     )
 }
 androidComponents.onVariants { variant ->

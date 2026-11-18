@@ -17,6 +17,7 @@ object LvmKeys {
     const val KOTLIN_EXPLICIT_API: String = "kotlin.explicitApi"
     const val KOTLIN_TEST_DEPENDENCIES: String = "kotlin.testDependencies"
     const val KOTLIN_FLAT_LAYOUT: String = "kotlin.flatLayout"
+    const val KOTLIN_JVM_DEFAULT: String = "kotlin.jvmDefault"
     const val IOS_ARCHITECTURES: String = "ios.architectures"
     const val QUALITY_CONFIG: String = "quality.config"
     const val QUALITY_SOURCE: String = "quality.source"
@@ -51,6 +52,7 @@ object LvmKeys {
     const val LIBRARY_DESUGARING: String = "library.desugaring"
     const val LIBRARY_CONSUMER_PROGUARD_FILES: String = "library.consumerProguardFiles"
     const val LIBRARY_RESOURCE_PREFIX: String = "library.resourcePrefix"
+    const val LIBRARY_RESOURCE_PREFIX_DROPPED_SEGMENTS: String = "library.resourcePrefixDroppedSegments"
     const val LIBRARY_SKIP_EMPTY_ANDROID_TEST: String = "library.skipEmptyAndroidTest"
 
     fun property(key: String): String = PREFIX + key

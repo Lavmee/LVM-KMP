@@ -18,4 +18,16 @@ class DefaultResourcePrefixTest {
     fun `the root project has no resource prefix`() {
         assertNull(defaultResourcePrefix(":"))
     }
+
+    @Test
+    fun `drops trailing segments in the list and keeps at least one`() {
+        val dropped = listOf("ui", "sky", "tweety")
+
+        assertEquals("feature_chat_", defaultResourcePrefix(":feature:chat:ui-sky", dropped))
+        assertEquals("feature_chat_", defaultResourcePrefix(":feature:chat:ui", dropped))
+        assertEquals("core_", defaultResourcePrefix(":core:ui", dropped))
+        assertEquals("core_", defaultResourcePrefix(":core:ui:tweety", dropped))
+        assertEquals("feature_account_sign_out_", defaultResourcePrefix(":feature:account-sign-out:ui", dropped))
+        assertEquals("core_designsystem_", defaultResourcePrefix(":core:designsystem", dropped))
+    }
 }
