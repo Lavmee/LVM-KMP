@@ -8,7 +8,13 @@ rust-version = "1.96"
 description = "Terminal app for Gradle builds that use LVM's convention plugins"
 license = "Apache-2.0"
 repository = "https://github.com/Lavmee/LVM-KMP"
-publish = false
+homepage = "https://github.com/Lavmee/LVM-KMP"
+documentation = "https://github.com/Lavmee/LVM-KMP/blob/main/docs/tui.md"
+readme = "README.md"
+keywords = ["gradle", "kotlin", "multiplatform", "android", "tui"]
+categories = ["command-line-utilities", "development-tools::build-utils"]
+# The package for crates.io: embedded/ and LICENSE come from embed-files.sh, the tests stay in the repository.
+include = ["/src/**", "/build.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE", "/embedded/**"]
 
 # The command is `lvm`; the crate keeps the name of its folder.
 [[bin]]

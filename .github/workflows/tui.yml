@@ -80,6 +80,10 @@ jobs:
         with:
           manifest-path: tui/Cargo.toml
 
+      # The package for crates.io holds only tui/: this builds the crate from it, as cargo install lvm-tui does.
+      - name: Package
+        run: ./embed-files.sh && cargo package --locked --allow-dirty
+
   test:
     strategy:
       fail-fast: false

@@ -1,7 +1,7 @@
 name: Release
 
 # A v* tag publishes both builds to Maven Central, which can't be undone, then creates the GitHub Release with the lvm
-# command for each platform. RELEASING.md describes the steps.
+# command for each platform and publishes the lvm-tui crate to crates.io. RELEASING.md describes the steps.
 on:
   push:
     tags: ['v*']
@@ -173,3 +173,25 @@ jobs:
           --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
+
+  crates:
+    # After both builds are on Maven Central, since lvm new starts builds on the LVM release of the crate's version.
+    needs: [libraries, blueprint, tui]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tui
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # embed-files.sh copies what the crate embeds from outside tui/; --allow-dirty takes those untracked copies.
+      - name: Publish lvm-tui to crates.io
+        run: ./embed-files.sh && cargo publish --locked --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
