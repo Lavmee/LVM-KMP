@@ -640,7 +640,12 @@ fn a_jvm_app_s_output_is_its_log() {
     until_finished(&mut app, &events);
 
     let messages: Vec<_> = app.run.log.iter().map(|l| (l.level, l.tag.as_str(), l.message.as_str())).collect();
-    assert_eq!(messages, [(Level::Info, "App", "started by :core:data:run"), (Level::Error, "App", "crashed")]);
+    assert_eq!(
+        messages,
+        [(Level::Info, "App", "started by :core:data:run"), (Level::Error, "App", "crashed")],
+        "the run ended with {:?}",
+        app.run.ended
+    );
     assert_eq!(app.run.source.as_deref(), Some("output of :core:data:run"));
     assert_eq!(app.run.ended.as_deref(), Some("The app exited"));
 }

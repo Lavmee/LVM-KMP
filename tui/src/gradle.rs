@@ -173,14 +173,15 @@ fn spawn<E: From<GradleEvent> + Send + 'static>(
         args.push("--console=plain".to_owned());
     }
     let started = Instant::now();
-    let child = Command::new(executable)
-        .args(&args)
-        .envs(job.env.iter().map(|(name, value)| (name, value)))
-        .current_dir(root)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn();
+    let child = start(
+        Command::new(executable)
+            .args(&args)
+            .envs(job.env.iter().map(|(name, value)| (name, value)))
+            .current_dir(root)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    );
     let send = move |event: GradleEvent| {
         let _ = events.send(event.into());
     };
@@ -219,6 +220,21 @@ fn spawn<E: From<GradleEvent> + Send + 'static>(
         }
         send(GradleEvent::Finished { job: job.id, outcome, elapsed: started.elapsed() });
     });
+}
+
+/// Starts [command], trying again for a moment while the OS reports its file as busy. Linux refuses to run a file that
+/// another process has open for writing, as a script that was just written is while another thread starts a process.
+fn start(command: &mut Command) -> std::io::Result<Child> {
+    let mut attempts = 0;
+    loop {
+        match command.spawn() {
+            Err(error) if error.kind() == std::io::ErrorKind::ExecutableFileBusy && attempts < 50 => {
+                attempts += 1;
+                thread::sleep(Duration::from_millis(20));
+            }
+            result => return result,
+        }
+    }
 }
 
 /// Waits for [child], killing it once [cancel] is set. The Gradle daemon cancels the build when its client goes away.
