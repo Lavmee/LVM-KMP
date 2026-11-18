@@ -42,5 +42,9 @@ gradlePlugin {
             id = "tech.annexflow.lvm.android.library"
             implementationClass = "tech.annexflow.lvm.blueprint.android.LvmAndroidLibraryPlugin"
         }
+        register("lvmAndroidTest") {
+            id = "tech.annexflow.lvm.android.test"
+            implementationClass = "tech.annexflow.lvm.blueprint.android.LvmAndroidTestPlugin"
+        }
     }
 }

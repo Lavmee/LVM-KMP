@@ -324,7 +324,7 @@ pub fn compile_task(module: &Module) -> Option<String> {
     ];
     let name = if module.tasks.is_empty() {
         // No report lists the tasks: the plugins and targets tell which exist.
-        let android = module.has_plugin("android.application") || module.has_plugin("android.library");
+        let android = ["android.application", "android.library", "android.test"].iter().any(|p| module.has_plugin(p));
         let target = |t: &str| module.targets.iter().any(|x| x == t);
         if android {
             "compileDebugKotlin"
@@ -334,6 +334,8 @@ pub fn compile_task(module: &Module) -> Option<String> {
             "compileAndroidMain"
         } else if target("ios") {
             "compileKotlinIosSimulatorArm64"
+        } else if module.has_plugin("jvm") {
+            "compileKotlin"
         } else {
             return None;
         }
