@@ -1,8 +1,9 @@
 ---
 source: tests/ui.rs
+assertion_line: 490
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Library                            lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Library   8 Compose                lvm-tui Consumer"
 "┌ Published ─────┐┌ :core:data (run r for its coordinates) ───────────────────┐┌ Signing and upload ───────────────────┐"
 "│> :core:data    ││POM                        Value                  Source   ││mavenCentralUsername        ~/.gradle  │"
 "│                ││description                Data                   property ││mavenCentralPassword        ~/.gradle  │"

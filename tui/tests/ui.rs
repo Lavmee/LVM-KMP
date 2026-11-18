@@ -479,7 +479,7 @@ fn the_library_checks_the_abi_and_shows_what_changed() {
     fs::write(home.path().join("gradle.properties"), "mavenCentralUsername=me\nmavenCentralPassword=secret\n").unwrap();
     app.library.gradle_home = Some(home.path().to_owned());
 
-    assert_eq!(app.tabs().last(), Some(&Tab::Library));
+    assert_eq!(app.tabs().get(6), Some(&Tab::Library));
     press(&mut app, "7");
     assert_eq!(app.tab, Tab::Library);
     press(&mut app, "c");
@@ -505,8 +505,8 @@ fn the_library_tab_exists_only_where_a_module_publishes() {
     let dir = consumer();
     let mut app = app(dir.path());
     assert!(!app.tabs().contains(&Tab::Library));
-    press(&mut app, "7");
-    assert_eq!(app.tab, Tab::Overview);
+    press(&mut app, "8");
+    assert_eq!(app.tab, Tab::Overview, "7 is the last tab, Compose");
 }
 
 /// An emulator that runs, an AVD that doesn't, and a simulator.
@@ -639,4 +639,75 @@ fn a_jvm_app_s_output_is_its_log() {
     assert_eq!(messages, [(Level::Info, "App", "started by :core:data:run"), (Level::Error, "App", "crashed")]);
     assert_eq!(app.run.source.as_deref(), Some("output of :core:data:run"));
     assert_eq!(app.run.ended.as_deref(), Some("The app exited"));
+}
+
+const COMPOSE_CLASSES: &str = "stable class com.example.shared.Item {
+  stable val title: String
+  <runtime stability> = Stable
+}
+unstable class com.example.shared.FeedState {
+  unstable var items: MutableList<Item>
+  <runtime stability> = Unstable
+}
+";
+
+const COMPOSE_COMPOSABLES: &str = r#"restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun com.example.shared.Feed(
+  state: FeedState
+  stable modifier: Modifier? = @static <expression>
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun com.example.shared.Row(
+  item: Item
+)
+"#;
+
+const COMPOSE_METRICS: &str = r#"{"totalComposables": 2, "restartableComposables": 2, "skippableComposables": 2,
+  "totalClasses": 2, "inferredUnstableClasses": 1, "inferredUncertainClasses": 0, "featureFlags": {"StrongSkipping": true}}"#;
+
+/// Writes the Compose reports of `:shared` as the compiler would, and the source they describe.
+fn compose_reports(root: &Path) {
+    let reports = root.join("shared/build/compose-reports");
+    fs::create_dir_all(&reports).unwrap();
+    fs::write(reports.join("shared-classes.txt"), COMPOSE_CLASSES).unwrap();
+    fs::write(reports.join("shared-composables.txt"), COMPOSE_COMPOSABLES).unwrap();
+    let metrics = root.join("shared/build/compose-metrics/jvm/main");
+    fs::create_dir_all(&metrics).unwrap();
+    fs::write(metrics.join("shared-module.json"), COMPOSE_METRICS).unwrap();
+    fs::write(
+        root.join("shared/src/Feed.kt"),
+        "package com.example.shared\n\nclass FeedState(var items: MutableList<Item>)\n\nclass Item(val title: String)\n\n@Composable\nfun Feed(state: FeedState, modifier: Modifier = Modifier) {}\n",
+    )
+    .unwrap();
+}
+
+#[test]
+fn the_compose_tab_shows_what_the_reports_say_and_opens_it() {
+    let dir = consumer();
+    compose_reports(dir.path());
+    let mut app = app(dir.path());
+    press(&mut app, "7j");
+    assert_eq!(app.tab, Tab::Compose);
+    assert_snapshot!("compose_with_findings", render(&mut app));
+
+    press(&mut app, "lj\n");
+    let editor = app.editor.clone().expect("the declaration to open");
+    assert_eq!((editor.file, editor.line), (dir.path().join("shared/src/Feed.kt"), Some(8)));
+}
+
+#[cfg(unix)]
+#[test]
+fn compose_reports_come_from_one_compilation_built_again() {
+    let dir = consumer();
+    let script = "echo \"$*\"\nmkdir -p shared/build/compose-reports\nprintf 'unstable class com.example.shared.A {\\n}\\n' > shared/build/compose-reports/shared-classes.txt";
+    let (mut app, events) = app_with_gradle(dir.path(), script);
+    press(&mut app, "7");
+    assert!(app.compose.report.is_empty());
+    assert_snapshot!("compose_without_reports", render(&mut app));
+    press(&mut app, "jc");
+    until_finished(&mut app, &events);
+
+    assert_eq!(
+        app.runs[0].lines[0],
+        ":shared:compileKotlinJvm --rerun -Plvm.compose.reports=true -Plvm.compose.metrics=true --console=plain"
+    );
+    assert_eq!(app.compose.report.classes.len(), 1);
 }

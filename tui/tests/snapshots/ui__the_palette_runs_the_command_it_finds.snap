@@ -1,8 +1,9 @@
 ---
 source: tests/ui.rs
+assertion_line: 147
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates                                        lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                            lvm-tui Consumer"
 "┌ Build ───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐"
 "│Root      /work/consumer                                                                                              │"
 "│LVM       0.3.2  from settings.gradle.kts                                                                             │"
@@ -19,7 +20,7 @@ expression: render(&mut app)
 "┌ Settings plugin ──────────│> modul_                                                      │───────────────────────────┐"
 "│catalog         true       │                                                              │      Targets              │"
 "│catalogName     lvmLibs    │Show the modules                            2                 │                      files│"
-"│catalogVersion  0.3.2      │Show the published modules: POM, signing, ABI7                │      jvm             files│"
+"│catalogVersion  0.3.2      │Show the published modules: POM, signing, ABI                 │      jvm             files│"
 "│repositories    true       │Create a module                             n                 │      android ios jvm files│"
 "│                           │Add an LVM library to the module            d                 │                           │"
 "│from            build files│Move the module's sources to the flat layoutm                 │                           │"

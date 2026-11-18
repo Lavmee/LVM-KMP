@@ -1,5 +1,6 @@
 //! Draws the app's state. Nothing here changes it, except the scroll positions that ratatui's stateful widgets keep.
 
+mod compose;
 mod dialog;
 mod doctor;
 pub(crate) mod form;
@@ -36,6 +37,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         Tab::Run => run::draw(frame, app, body),
         Tab::Updates => updates::draw(frame, app, body),
         Tab::Library => library::draw(frame, app, body),
+        Tab::Compose => compose::draw(frame, app, body),
         Tab::Doctor => doctor::draw(frame, app, body),
     }
     draw_status(frame, app, status);
@@ -94,6 +96,9 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
                     Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
                     Tab::Updates => " j k release   u upgrade   f ask Maven Central again   ? keys",
                     Tab::Library => " c check ABI   u update dump   p publish to Maven local   e edit POM   ? keys",
+                    Tab::Compose => {
+                        " c compile with reports   enter open the declaration   h l modules/findings   ? keys"
+                    }
                 };
                 spans.push(hint.dim());
             }
@@ -104,7 +109,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_help(frame: &mut Frame) {
     let rows: Vec<Line> = [
-        ("1-7, tab", "switch tabs"),
+        ("1-8, tab", "switch tabs"),
         ("r", "run lvmReport, then read the reports"),
         ("R", "read the build files again"),
         ("ctrl-p, :", "command palette"),
@@ -141,6 +146,7 @@ fn draw_help(frame: &mut Frame) {
 fn draw_palette(frame: &mut Frame, app: &App) {
     let Some(palette) = &app.palette else { return };
     let matches = palette.matches();
+    let tabs = app.tabs();
     let area = centered(frame.area(), 64, matches.len().max(1) as u16 + 4);
     frame.render_widget(Clear, area);
     let block = Block::bordered().title(" Commands ");
@@ -151,7 +157,12 @@ fn draw_palette(frame: &mut Frame, app: &App) {
     let items: Vec<ListItem> = matches
         .iter()
         .map(|action: &Action| {
-            ListItem::new(Line::from(vec![Span::raw(format!("{:<44}", action.label())), Span::raw(action.key()).dim()]))
+            // A tab's key is its place among the tabs this build has.
+            let key = match action.tab() {
+                Some(tab) => tabs.iter().position(|t| *t == tab).map(|i| (i + 1).to_string()).unwrap_or_default(),
+                None => action.key().to_owned(),
+            };
+            ListItem::new(Line::from(vec![Span::raw(format!("{:<44}", action.label())), Span::raw(key).dim()]))
         })
         .collect();
     let mut state = ListState::default().with_selected((!matches.is_empty()).then_some(palette.selected));

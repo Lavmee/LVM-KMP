@@ -1,8 +1,9 @@
 ---
 source: tests/ui.rs
+assertion_line: 214
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates                                        lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                            lvm-tui Consumer"
 "┌ Doctor: 1 error(s) of 1 finding(s) ──────────────────────────────────────────────────────────────────────────────────┐"
 "│error   flat-layout              fix  core/data/build.gradle.kts                                                      │"
 "│                                                                                                                      │"

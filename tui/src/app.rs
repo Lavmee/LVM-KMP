@@ -8,6 +8,7 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModif
 use ratatui::widgets::{ListState, TableState};
 use serde_json::Value;
 
+use crate::compose_tab::ComposeView;
 use crate::doctor::{self, Environment, Finding, Fix};
 use crate::edit::ChangeSet;
 use crate::event::Message;
@@ -34,11 +35,12 @@ pub enum Tab {
     Doctor,
     Updates,
     Library,
+    Compose,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 7] =
-        [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Run, Tab::Doctor, Tab::Updates, Tab::Library];
+    pub const ALL: [Tab; 8] =
+        [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Run, Tab::Doctor, Tab::Updates, Tab::Library, Tab::Compose];
 
     pub fn title(self) -> &'static str {
         match self {
@@ -49,6 +51,7 @@ impl Tab {
             Self::Doctor => "Doctor",
             Self::Updates => "Updates",
             Self::Library => "Library",
+            Self::Compose => "Compose",
         }
     }
 
@@ -61,6 +64,7 @@ impl Tab {
             Self::Doctor => "doctor",
             Self::Updates => "updates",
             Self::Library => "library",
+            Self::Compose => "compose",
         }
     }
 }
@@ -78,6 +82,7 @@ pub enum Action {
     ShowDoctor,
     ShowUpdates,
     ShowLibrary,
+    ShowCompose,
     UpgradeLvm,
     RunCommand,
     RerunFailedTests,
@@ -95,7 +100,22 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 24] = [
+    /// The tab the action shows, whose key depends on the tabs of the build.
+    pub fn tab(self) -> Option<Tab> {
+        match self {
+            Self::ShowOverview => Some(Tab::Overview),
+            Self::ShowModules => Some(Tab::Modules),
+            Self::ShowTasks => Some(Tab::Tasks),
+            Self::ShowRun => Some(Tab::Run),
+            Self::ShowDoctor => Some(Tab::Doctor),
+            Self::ShowUpdates => Some(Tab::Updates),
+            Self::ShowLibrary => Some(Tab::Library),
+            Self::ShowCompose => Some(Tab::Compose),
+            _ => None,
+        }
+    }
+
+    pub const ALL: [Action; 25] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
@@ -106,6 +126,7 @@ impl Action {
         Action::ShowDoctor,
         Action::ShowUpdates,
         Action::ShowLibrary,
+        Action::ShowCompose,
         Action::UpgradeLvm,
         Action::RunCommand,
         Action::RerunFailedTests,
@@ -134,6 +155,7 @@ impl Action {
             Self::ShowDoctor => "Show the doctor's findings",
             Self::ShowUpdates => "Show LVM's releases",
             Self::ShowLibrary => "Show the published modules: POM, signing, ABI",
+            Self::ShowCompose => "Show the Compose compiler's reports",
             Self::UpgradeLvm => "Upgrade LVM to the selected release",
             Self::RunCommand => "Run a Gradle command",
             Self::RerunFailedTests => "Run the failed tests again",
@@ -163,6 +185,7 @@ impl Action {
             Self::ShowDoctor => "5",
             Self::ShowUpdates => "6",
             Self::ShowLibrary => "7",
+            Self::ShowCompose => "8",
             Self::UpgradeLvm => "u",
             Self::RunCommand => "c",
             Self::RerunFailedTests => "a",
@@ -289,6 +312,7 @@ pub struct App {
     pub status: Option<String>,
     pub updates: UpdatesView,
     pub library: LibraryView,
+    pub compose: ComposeView,
     pub run: RunView,
     /// Whether the Updates tab asks Maven Central; tests turn it off and send the answers themselves.
     pub fetch_releases: bool,
@@ -331,6 +355,7 @@ impl App {
             status: None,
             updates: UpdatesView::default(),
             library: LibraryView::default(),
+            compose: ComposeView::default(),
             run: RunView { remembered: state.device.clone(), ..RunView::default() },
             fetch_releases: true,
             runs: Vec::new(),
@@ -348,10 +373,18 @@ impl App {
         app
     }
 
-    /// The tabs of this build: Library only where a module publishes.
+    /// The tabs of this build: Library only where a module publishes, Compose only where one applies Compose.
     pub fn tabs(&self) -> Vec<Tab> {
         let publishes = !self.published_modules().is_empty();
-        Tab::ALL.into_iter().filter(|tab| *tab != Tab::Library || publishes).collect()
+        let compose = !self.compose_modules().is_empty();
+        Tab::ALL
+            .into_iter()
+            .filter(|tab| match tab {
+                Tab::Library => publishes,
+                Tab::Compose => compose,
+                _ => true,
+            })
+            .collect()
     }
 
     pub fn show_tab(&mut self, tab: Tab) {
@@ -362,6 +395,7 @@ impl App {
         match tab {
             Tab::Updates => self.open_updates(),
             Tab::Library => self.refresh_library(),
+            Tab::Compose => self.refresh_compose(),
             Tab::Run => self.open_run(),
             _ => {}
         }
@@ -425,6 +459,7 @@ impl App {
             Action::ShowDoctor => self.show_tab(Tab::Doctor),
             Action::ShowUpdates => self.show_tab(Tab::Updates),
             Action::ShowLibrary => self.show_tab(Tab::Library),
+            Action::ShowCompose => self.show_tab(Tab::Compose),
             Action::UpgradeLvm => {
                 self.tab = Tab::Updates;
                 self.open_updates();
@@ -544,6 +579,7 @@ impl App {
             _ if self.tab == Tab::Doctor => self.on_doctor_key(key),
             _ if self.tab == Tab::Updates => self.on_updates_key(key),
             _ if self.tab == Tab::Library => self.on_library_key(key),
+            _ if self.tab == Tab::Compose => self.on_compose_key(key),
             _ => {}
         }
     }
@@ -958,6 +994,7 @@ impl App {
                 self.on_library_job(job, &outcome);
                 self.on_run_finished(job, &outcome);
                 self.status = Some(self.describe_outcome(job, &outcome, elapsed));
+                self.on_compose_job(job, &outcome);
             }
         }
     }

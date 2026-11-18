@@ -3,6 +3,8 @@
 pub mod app;
 pub mod applog;
 pub mod check;
+pub mod compose;
+pub mod compose_tab;
 pub mod devices;
 pub mod doctor;
 pub mod edit;
