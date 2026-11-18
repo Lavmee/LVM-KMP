@@ -1,8 +1,8 @@
 public final class tech/annexflow/lvm/decompose/fetcher/CoroutineScopeOwnersKt {
-	public static final fun fetcherResultState (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/StateFlow;
-	public static synthetic fun fetcherResultState$default (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/StateFlow;
-	public static final fun fetcherState (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Ljava/lang/Object;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/StateFlow;
-	public static synthetic fun fetcherState$default (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Ljava/lang/Object;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/StateFlow;
+	public static final fun fetcherResultState (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+	public static synthetic fun fetcherResultState$default (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+	public static final fun fetcherState (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Ljava/lang/Object;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+	public static synthetic fun fetcherState$default (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Ljava/lang/Object;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
 }
 
 public abstract interface class tech/annexflow/lvm/decompose/fetcher/Fetcher {
@@ -22,6 +22,10 @@ public final class tech/annexflow/lvm/decompose/fetcher/FetcherCacheKt {
 public final class tech/annexflow/lvm/decompose/fetcher/FetcherKt {
 	public static final fun Fetcher (Lio/ktor/client/HttpClient;)Ltech/annexflow/lvm/decompose/fetcher/Fetcher;
 	public static final fun getRetryPolicy (Ltech/annexflow/lvm/decompose/fetcher/Fetcher$Companion;)Lcom/github/michaelbull/retry/policy/RetryPolicy;
+}
+
+public abstract interface class tech/annexflow/lvm/decompose/fetcher/FetcherStateFlow : kotlinx/coroutines/flow/StateFlow {
+	public abstract fun refresh (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class tech/annexflow/lvm/decompose/fetcher/LocalFetcherKt {

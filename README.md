@@ -47,7 +47,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-decompose` | `AppComponentContext` on top of [Decompose](https://github.com/arkivanov/Decompose): component locals, a coroutine scope per component, instances shared by the component tree, `EventBus`, a context for previews and tests, state keeping and paging |
 | `lvm-decompose-permissions` | moko-permissions' `PermissionsController` for components, kept across activity recreation on Android. Android and iOS only |
 | `lvm-decompose-compose` | Back handling, stack animations and a slot bottom sheet for Compose |
-| `lvm-decompose-fetcher` | `Fetcher`: network reads for components through the app's Ktor `HttpClient`, with a file cache that serves the last responses offline and states that retry a read |
+| `lvm-decompose-fetcher` | `Fetcher`: network reads for components through the app's Ktor `HttpClient`, with a file cache that serves the last responses offline and states that retry a read and can be refreshed |
 | `lvm-main-context` | `@MainContext`: calls to the annotated function from coroutines run on the main thread |
 | `lvm-bom` | BOM for projects that don't use the version catalog |
 | `lvm-versions` | Version catalog with every `lvm-*` artifact and the tested AGP, Kotlin, Compose and detekt versions |
@@ -68,7 +68,7 @@ Every component tree starts from a root context: `retainedAppComponent(logger) {
 
 On Android, back gestures, predictive back included, reach Compose through Google's `androidx.navigationevent`. `lvm-decompose-compose` asks for the version that androidx.activity depends on, so an app keeps the version that its own androidx.activity brings. Components get back through essenty's `BackHandler`, as in Decompose, and `lvm-decompose` depends on androidx.activity. On JVM and iOS, Compose Multiplatform brings JetBrains' build of navigationevent. The versions LVM is tested with are those in `lvm-versions`.
 
-`lvm-decompose-fetcher` reads data for components through the app's Ktor `HttpClient`. `installFetcherCache(directory, isOffline)` in the client's configuration keeps responses in a directory, for example `Path(appDirectories.cache, "fetcher")`, and serves them while `isOffline()` returns `true`. The root provides `Fetcher(httpClient)` with `provideLocals(LocalFetcher provides ...)`, and a component reads it as `fetcher`: `fetcherResultState { fetcher.get(url).body<Rows>() }` retries the read and holds its result as a `Loadable`.
+`lvm-decompose-fetcher` reads data for components through the app's Ktor `HttpClient`. `installFetcherCache(directory, isOffline)` in the client's configuration keeps responses in a directory, for example `Path(appDirectories.cache, "fetcher")`, and serves them while `isOffline()` returns `true`. The root provides `Fetcher(httpClient)` with `provideLocals(LocalFetcher provides ...)`, and a component reads it as `fetcher`: `fetcherResultState { fetcher.get(url).body<Rows>() }` retries the read and holds its result as a `Loadable`. The state is a `FetcherStateFlow`, and its `refresh()` reads again: the current value stays until the new result replaces it, so a pull-to-refresh keeps the data on screen. The state also refreshes on every emission of the flow passed as `refreshOn`, and on every emission of `retryOn` while it is `Failed`. Pass events to `retryOn`, such as the connection coming back, not a state such as "is connected".
 
 ## Getting started
 
