@@ -40,6 +40,7 @@ class LvmAndroidTestPlugin : Plugin<Project> {
         project.extensions.configure(TestExtension::class.java) {
             setJavaVersion(buildWideJvmTarget)
             testOptions.animationsDisabled = true
+            excludeDuplicateMetadata()
         }
 
         // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.

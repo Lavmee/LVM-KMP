@@ -23,7 +23,7 @@ class LvmAndroidLibraryPluginTest {
     }
 
     @Test
-    fun `uses default SDK levels, derives the namespace and the resource prefix and sets up tests`() {
+    fun `uses default SDK levels, derives the namespace and the resource prefix and sets up tests and packaging`() {
         val output = libraryFixture(dir, PRINT_LIBRARY_DSL).build(":core:ui:help").output
 
         assertContains(
@@ -31,7 +31,11 @@ class LvmAndroidLibraryPluginTest {
             "lvm-dsl namespace=com.example.core.ui compileSdk=37 minSdk=24 testTargetSdk=37 lintTargetSdk=37 " +
                 "runner=androidx.test.runner.AndroidJUnitRunner resourcePrefix=core_ui_",
         )
-        assertContains(output, "lvm-dsl desugaring=true consumerProguardFiles=[] animationsDisabled=true")
+        assertContains(
+            output,
+            "lvm-dsl desugaring=true consumerProguardFiles=[] animationsDisabled=true " +
+                "excludes=[/META-INF/DEPENDENCIES, /META-INF/INDEX.LIST]",
+        )
         assertContains(output, "lvm-variant debug androidTest=false")
     }
 
@@ -50,7 +54,7 @@ class LvmAndroidLibraryPluginTest {
             """ + PRINT_LIBRARY_DSL,
             settingsLvm = "catalog = false\n" +
                 "android { minSdk = 26; targetSdk = 35; testInstrumentationRunner = \"com.example.SettingsRunner\" }\n" +
-                "library { desugaring = false; resourcePrefix = false }",
+                "library { desugaring = false; resourcePrefix = false; resourcePrefixDroppedSegments = listOf(\"ui\") }",
         )
 
         val output = fixture.build(
@@ -60,7 +64,7 @@ class LvmAndroidLibraryPluginTest {
             "-Plvm.library.skipEmptyAndroidTest=false",
         ).output
 
-        assertContains(output, "minSdk=26 testTargetSdk=36 lintTargetSdk=36 runner=com.example.PropertyRunner resourcePrefix=core_ui_")
+        assertContains(output, "minSdk=26 testTargetSdk=36 lintTargetSdk=36 runner=com.example.PropertyRunner resourcePrefix=core_")
         assertContains(output, "lvm-dsl desugaring=true")
         assertContains(output, "lvm-variant debug androidTest=false")
     }
@@ -214,6 +218,20 @@ class LvmAndroidLibraryPluginTest {
         // AGP adds arguments of its own after lvm's.
         assertContains(compile, "lvm-kotlin compileDebugKotlin warningsAsErrors=true optIn=[kotlin.ExperimentalStdlibApi] args=[-Xsuppress-version-warnings")
         assertContains(classpath, "org.jetbrains.kotlin:kotlin-test-junit:")
+    }
+
+    @Test
+    fun `jvmDefault from settings reaches the compiler, and Kotlin's own default stays while it is unset`() {
+        val fixture = libraryFixture(dir, "")
+        fixture.file("core/ui/src/main/kotlin/Greeter.kt", "interface Greeter { fun greet(): String = \"hello\" }")
+        val defaultImpls = dir.libraryClass("Greeter\$DefaultImpls")
+
+        fixture.build(":core:ui:compileDebugKotlin")
+        assertTrue(defaultImpls.isFile)
+
+        fixture.file("settings.gradle.kts", librarySettings("catalog = false\nkotlin { jvmDefault = \"no-compatibility\" }"))
+        fixture.build(":core:ui:compileDebugKotlin")
+        assertFalse(defaultImpls.exists())
     }
 
     @Test

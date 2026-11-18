@@ -74,6 +74,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.KOTLIN_EXPLICIT_API, kotlin.explicitApi)
         scalar(LvmKeys.KOTLIN_TEST_DEPENDENCIES, kotlin.testDependencies)
         scalar(LvmKeys.KOTLIN_FLAT_LAYOUT, kotlin.flatLayout)
+        scalar(LvmKeys.KOTLIN_JVM_DEFAULT, kotlin.jvmDefault)
         list(LvmKeys.IOS_ARCHITECTURES, ios.architectures)
         list(LvmKeys.QUALITY_CONFIG, quality.config)
         list(LvmKeys.QUALITY_SOURCE, quality.source)
@@ -108,6 +109,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.LIBRARY_DESUGARING, library.desugaring)
         list(LvmKeys.LIBRARY_CONSUMER_PROGUARD_FILES, library.consumerProguardFiles)
         scalar(LvmKeys.LIBRARY_RESOURCE_PREFIX, library.resourcePrefix)
+        list(LvmKeys.LIBRARY_RESOURCE_PREFIX_DROPPED_SEGMENTS, library.resourcePrefixDroppedSegments)
         scalar(LvmKeys.LIBRARY_SKIP_EMPTY_ANDROID_TEST, library.skipEmptyAndroidTest)
         return result
     }
@@ -138,6 +140,9 @@ abstract class KotlinDefaults {
     abstract val explicitApi: Property<Boolean>
     abstract val testDependencies: Property<Boolean>
     abstract val flatLayout: Property<Boolean>
+
+    /** `enable`, `no-compatibility` or `disable`, as Kotlin's `-jvm-default`. */
+    abstract val jvmDefault: Property<String>
 
     init {
         startWithoutValue(optIns, freeCompilerArgs)
@@ -259,9 +264,12 @@ abstract class LibraryDefaults {
     /** Module-relative paths, before a module's own. */
     abstract val consumerProguardFiles: ListProperty<String>
     abstract val resourcePrefix: Property<Boolean>
+
+    /** Segments that the resource prefix leaves out at the end of the module path, such as `ui`. */
+    abstract val resourcePrefixDroppedSegments: ListProperty<String>
     abstract val skipEmptyAndroidTest: Property<Boolean>
 
     init {
-        startWithoutValue(consumerProguardFiles)
+        startWithoutValue(consumerProguardFiles, resourcePrefixDroppedSegments)
     }
 }

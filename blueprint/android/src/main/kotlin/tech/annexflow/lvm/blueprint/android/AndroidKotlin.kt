@@ -2,11 +2,14 @@ package tech.annexflow.lvm.blueprint.android
 
 import com.android.build.api.variant.AndroidComponentsExtension
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
+import tech.annexflow.lvm.blueprint.common.LvmValueParsing
 import tech.annexflow.lvm.blueprint.common.reportTool
 
 /**
@@ -22,9 +25,14 @@ internal fun Project.configureKotlin(section: KotlinSection, values: KotlinValue
             allWarningsAsErrors.set(section.warningsAsErrors)
             optIn.addAll(optIns)
             freeCompilerArgs.addAll(freeArgs)
+            jvmDefault.convention(section.jvmDefaultMode())
         }
     }
 }
+
+/** `lvm { kotlin { jvmDefault } }` as Kotlin's mode, absent while unset, so Kotlin's own default applies. */
+private fun KotlinSection.jvmDefaultMode(): Provider<JvmDefaultMode> =
+    jvmDefault.map { mode -> JvmDefaultMode.entries.single { it.compilerArgument == LvmValueParsing.jvmDefault(mode) } }
 
 /** Adds kotlin-test-junit to unit tests, which run on JUnit 4: kotlin-test alone has no `@Test` for the JVM. */
 internal fun Project.addKotlinTestToUnitTests(section: KotlinSection) {

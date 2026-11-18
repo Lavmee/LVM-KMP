@@ -44,6 +44,7 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     section.explicitApi.convention(values.explicitApi)
     section.testDependencies.convention(values.testDependencies)
     section.flatLayout.convention(values.flatLayout)
+    section.jvmDefault.convention(values.jvmDefault)
 
     val layers = LvmValues(this)
     layers.report(LvmKeys.KOTLIN_WARNINGS_AS_ERRORS, section.warningsAsErrors, values.warningsAsErrors)
@@ -57,6 +58,7 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     layers.report(LvmKeys.KOTLIN_EXPLICIT_API, section.explicitApi, values.explicitApi)
     layers.report(LvmKeys.KOTLIN_TEST_DEPENDENCIES, section.testDependencies, values.testDependencies)
     layers.report(LvmKeys.KOTLIN_FLAT_LAYOUT, section.flatLayout, values.flatLayout)
+    layers.report(LvmKeys.KOTLIN_JVM_DEFAULT, section.jvmDefault, values.jvmDefault)
 }
 
 /** The namespace of a module that sets none: its group followed by its path. Reading it fails without a group. */
