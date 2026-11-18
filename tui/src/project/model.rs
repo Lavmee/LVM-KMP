@@ -399,9 +399,10 @@ fn sections(plugins: &[String], script: &ModuleScript) -> BTreeSet<&'static str>
     let mut sections = BTreeSet::new();
     for plugin in plugins {
         let added: &[&str] = match plugin.trim_start_matches("tech.annexflow.lvm.") {
-            "multiplatform" => &["jvm", "kotlin"],
+            "multiplatform" | "jvm" => &["jvm", "kotlin"],
             "android.application" => &["android", "jvm", "kotlin", "application"],
             "android.library" => &["android", "jvm", "kotlin", "library"],
+            "android.test" => &["android", "jvm", "kotlin"],
             "quality" => &["jvm", "kotlin", "quality"],
             "compose" => &["compose"],
             "publish" => &["publish"],

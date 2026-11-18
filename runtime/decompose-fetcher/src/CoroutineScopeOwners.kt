@@ -8,14 +8,17 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import tech.annexflow.lvm.core.Loadable
 import tech.annexflow.lvm.coroutines.runSuspendCatching
+import tech.annexflow.lvm.decompose.AppComponentContext
 import tech.annexflow.lvm.decompose.CoroutineScopeOwner
 
 /**
  * A [FetcherStateFlow] that starts with [initialValue] and then holds the result of [block], or [onError] of the last
  * failure. It loads when it is created, on [FetcherStateFlow.refresh] and on every emission of [refreshOn].
  *
- * [block] runs on `Dispatchers.IO` in `componentScope`, and [retryPolicy] retries it; by default ten times, a second
- * apart. A refresh keeps the value until its load is done, then sets the result or [onError] of the failure.
+ * [block] runs on `Dispatchers.IO` in `componentScope`, and [retryPolicy] retries it; by default with
+ * [Fetcher.retryPolicy], ten times, a second apart. In a component, which is an [AppComponentContext], the call
+ * resolves to [AppComponentContext.fetcherState] instead, whose default is the tree's [LocalFetcherRetryPolicy]. A
+ * refresh keeps the value until its load is done, then sets the result or [onError] of the failure.
  * Cancellation, for example when the component is destroyed or a newer refresh replaces the load, is not a failure:
  * [onError] is not called.
  *
@@ -28,19 +31,13 @@ public fun <T> CoroutineScopeOwner.fetcherState(
     onError: (Throwable) -> T = { initialValue },
     refreshOn: Flow<*> = emptyFlow<Nothing>(),
     block: suspend () -> T,
-): FetcherStateFlow<T> {
-    val state = FetcherStateFlowImpl(initialValue = initialValue, owner = this) {
-        runSuspendCatching { retry(retryPolicy) { block() } }.getOrElse(onError)
-    }
-    launchIO { state.refresh() }
-    refreshOnEach(trigger = refreshOn, state = state) { true }
-    return state
-}
+): FetcherStateFlow<T> = newFetcherState(initialValue, retryPolicy, onError, refreshOn, block)
 
 /**
  * A [FetcherStateFlow] of [block]'s result as a [Loadable]: [Loadable.Loading], then [Loadable.Loaded] or
  * [Loadable.Failed]. A refresh keeps the current state until its load is done, so the state doesn't go back to
- * [Loadable.Loading]. See [fetcherState] for [retryPolicy] and [refreshOn].
+ * [Loadable.Loading]. See [fetcherState] for [retryPolicy] and [refreshOn]; in a component, the call resolves to
+ * [AppComponentContext.fetcherResultState], whose default policy is the tree's [LocalFetcherRetryPolicy].
  *
  * [retryOn] refreshes the state on each emission while the state is [Loadable.Failed]; an emission while it is
  * [Loadable.Loading] or [Loadable.Loaded] does nothing. It must emit events that can make a failed load succeed, such
@@ -55,8 +52,32 @@ public fun <T> CoroutineScopeOwner.fetcherResultState(
     refreshOn: Flow<*> = emptyFlow<Nothing>(),
     retryOn: Flow<*> = emptyFlow<Nothing>(),
     block: suspend () -> T,
+): FetcherStateFlow<Loadable<T>> = newFetcherResultState(retryPolicy, refreshOn, retryOn, block)
+
+/** [fetcherState] of both receivers, with a policy that the caller resolved. */
+internal fun <T> CoroutineScopeOwner.newFetcherState(
+    initialValue: T,
+    retryPolicy: RetryPolicy<Throwable>,
+    onError: (Throwable) -> T,
+    refreshOn: Flow<*>,
+    block: suspend () -> T,
+): FetcherStateFlow<T> {
+    val state = FetcherStateFlowImpl(initialValue = initialValue, owner = this) {
+        runSuspendCatching { retry(retryPolicy) { block() } }.getOrElse(onError)
+    }
+    launchIO { state.refresh() }
+    refreshOnEach(trigger = refreshOn, state = state) { true }
+    return state
+}
+
+/** [fetcherResultState] of both receivers, with a policy that the caller resolved. */
+internal fun <T> CoroutineScopeOwner.newFetcherResultState(
+    retryPolicy: RetryPolicy<Throwable>,
+    refreshOn: Flow<*>,
+    retryOn: Flow<*>,
+    block: suspend () -> T,
 ): FetcherStateFlow<Loadable<T>> {
-    val state = fetcherState<Loadable<T>>(
+    val state = newFetcherState<Loadable<T>>(
         initialValue = Loadable.Loading,
         retryPolicy = retryPolicy,
         onError = { error -> Loadable.Failed(error) },

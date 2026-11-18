@@ -18,6 +18,7 @@ public abstract class tech/annexflow/lvm/blueprint/android/LibrarySection {
 	public abstract fun getConsumerProguardFiles ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getDesugaring ()Lorg/gradle/api/provider/Property;
 	public abstract fun getResourcePrefix ()Lorg/gradle/api/provider/Property;
+	public abstract fun getResourcePrefixDroppedSegments ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getSkipEmptyAndroidTest ()Lorg/gradle/api/provider/Property;
 }
 
@@ -33,6 +34,12 @@ public final class tech/annexflow/lvm/blueprint/android/LvmAndroidApplicationPlu
 }
 
 public final class tech/annexflow/lvm/blueprint/android/LvmAndroidLibraryPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public final class tech/annexflow/lvm/blueprint/android/LvmAndroidTestPlugin : org/gradle/api/Plugin {
 	public fun <init> ()V
 	public synthetic fun apply (Ljava/lang/Object;)V
 	public fun apply (Lorg/gradle/api/Project;)V

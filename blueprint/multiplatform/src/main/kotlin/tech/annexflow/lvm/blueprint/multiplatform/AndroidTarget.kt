@@ -9,6 +9,7 @@ import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import tech.annexflow.lvm.blueprint.common.AndroidSection
 import tech.annexflow.lvm.blueprint.common.JvmSection
+import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 import tech.annexflow.lvm.blueprint.common.reportAndroidValues
 import tech.annexflow.lvm.blueprint.common.reportTool
@@ -19,7 +20,7 @@ internal fun Project.configureAndroidTarget(
     kotlin: KotlinMultiplatformExtension,
     section: AndroidSection,
     jvm: JvmSection,
-    flatLayout: Provider<Boolean>,
+    kotlinSection: KotlinSection,
     spec: AndroidTargetSpec,
 ) {
     pluginManager.apply("com.android.kotlin.multiplatform.library")
@@ -38,11 +39,13 @@ internal fun Project.configureAndroidTarget(
 
     val hostTests = spec.hostTests.get()
     val jvmTarget = jvm.kotlinJvmTarget()
+    val jvmDefault = kotlinSection.jvmDefaultMode()
     val target = (kotlin as ExtensionAware).extensions.getByType(KotlinMultiplatformAndroidLibraryTarget::class.java)
     if (hostTests) target.withHostTest { }
-    // A convention, like the one of JVM targets, so kotlin { android { compilerOptions { jvmTarget = ... } } } wins.
+    // Conventions, like those of JVM targets, so kotlin { android { compilerOptions { jvmTarget = ... } } } wins.
     target.compilerOptions.jvmTarget.convention(jvmTarget)
-    configureJavaSources(androidComponents, target, flatLayout)
+    target.compilerOptions.jvmDefault.convention(jvmDefault)
+    configureJavaSources(androidComponents, target, kotlinSection.flatLayout)
 
     // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.
     // Values set with native DSL, preview levels included, win: lvm fills in only what is still unset.

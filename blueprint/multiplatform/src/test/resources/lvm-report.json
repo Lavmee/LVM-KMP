@@ -55,6 +55,10 @@
       "value": [],
       "source": "default"
     },
+    "kotlin.jvmDefault": {
+      "value": null,
+      "source": "default"
+    },
     "kotlin.optIns": {
       "value": [
         "kotlin.ExperimentalStdlibApi",

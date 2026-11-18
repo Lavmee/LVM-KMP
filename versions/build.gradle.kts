@@ -28,10 +28,11 @@ catalog {
             "storage",
             "bom",
         ).forEach { name -> library("lvm-$name", lvmGroup, "lvm-$name").versionRef("lvm") }
-        listOf("multiplatform", "quality", "main-context", "compose", "publish").forEach { name ->
+        listOf("multiplatform", "jvm", "quality", "main-context", "compose", "publish").forEach { name ->
             plugin("blueprint-$name", "tech.annexflow.lvm.$name").versionRef("lvm")
         }
         plugin("blueprint-android-application", "tech.annexflow.lvm.android.application").versionRef("lvm")
         plugin("blueprint-android-library", "tech.annexflow.lvm.android.library").versionRef("lvm")
+        plugin("blueprint-android-test", "tech.annexflow.lvm.android.test").versionRef("lvm")
     }
 }

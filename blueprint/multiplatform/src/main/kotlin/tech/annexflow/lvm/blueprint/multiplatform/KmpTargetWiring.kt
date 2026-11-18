@@ -5,6 +5,7 @@ import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import tech.annexflow.lvm.blueprint.common.AndroidSection
 import tech.annexflow.lvm.blueprint.common.JvmSection
+import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.LvmDefaults
 import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
@@ -16,7 +17,7 @@ internal class KmpTargetWiring(
     private val kotlin: KotlinMultiplatformExtension,
     private val androidSection: AndroidSection,
     private val jvmSection: JvmSection,
-    private val flatLayout: Provider<Boolean>,
+    private val kotlinSection: KotlinSection,
     private val values: LvmValues,
 ) : TargetWiring {
 
@@ -30,7 +31,7 @@ internal class KmpTargetWiring(
         values.report(LvmKeys.ANDROID_HOST_TESTS, spec.hostTests, defaultHostTests)
         val details = spec.hostTests.map { hostTests -> mapOf("hostTests" to hostTests) }
         project.lvmReport { targets.put("android", details) }
-        project.configureAndroidTarget(kotlin, androidSection, jvmSection, flatLayout, spec)
+        project.configureAndroidTarget(kotlin, androidSection, jvmSection, kotlinSection, spec)
     }
 
     override fun ios(spec: IosTargetSpec) {

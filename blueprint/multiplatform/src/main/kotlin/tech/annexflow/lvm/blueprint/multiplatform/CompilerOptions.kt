@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.multiplatform
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
+import tech.annexflow.lvm.blueprint.common.LvmValueParsing
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension, section: KotlinSection, values: KotlinValues) {
@@ -37,16 +39,19 @@ internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension
 }
 
 /**
- * Makes the lvm JVM target the convention of every JVM target's compiler options, which KGP passes on to the target's
- * compile tasks, and of the Java compile tasks of those targets. The Android target gets the same convention in
- * AndroidTarget.kt. The KMP top-level options can't carry jvmTarget, because they are common options.
+ * Makes the lvm JVM target and `jvmDefault` the conventions of every JVM target's compiler options, which KGP passes on
+ * to the target's compile tasks, and the JVM target that of the Java compile tasks of those targets. The Android
+ * target gets the same conventions in AndroidTarget.kt. The KMP top-level options can't carry them, because they are
+ * common options.
  *
  * Being conventions, they lose to a value set with native DSL, such as `kotlin { jvm { compilerOptions { jvmTarget = ... } } }`.
  */
-internal fun configureJvmTarget(kotlin: KotlinMultiplatformExtension, section: JvmSection) {
+internal fun configureJvmTarget(kotlin: KotlinMultiplatformExtension, section: JvmSection, kotlinSection: KotlinSection) {
     val jvmTarget = section.kotlinJvmTarget()
+    val jvmDefault = kotlinSection.jvmDefaultMode()
     kotlin.targets.withType(KotlinJvmTarget::class.java).configureEach {
         compilerOptions.jvmTarget.convention(jvmTarget)
+        compilerOptions.jvmDefault.convention(jvmDefault)
 
         // Java sources would otherwise keep the JDK's target, which KGP rejects when it differs from Kotlin's.
         // They follow the target's jvmTarget, so a native value applies to them too.
@@ -58,6 +63,10 @@ internal fun configureJvmTarget(kotlin: KotlinMultiplatformExtension, section: J
 }
 
 internal fun JvmSection.kotlinJvmTarget(): Provider<JvmTarget> = target.map { JvmTarget.fromTarget(it.toString()) }
+
+/** `lvm { kotlin { jvmDefault } }` as Kotlin's mode, absent while unset, so Kotlin's own default applies. */
+internal fun KotlinSection.jvmDefaultMode(): Provider<JvmDefaultMode> =
+    jvmDefault.map { mode -> JvmDefaultMode.entries.single { it.compilerArgument == LvmValueParsing.jvmDefault(mode) } }
 
 internal fun Project.configureTestDependencies(section: KotlinSection) {
     val kotlinTest = dependencies.create("org.jetbrains.kotlin:kotlin-test:${getKotlinPluginVersion()}")

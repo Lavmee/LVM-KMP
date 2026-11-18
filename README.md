@@ -25,9 +25,11 @@ All artifacts are published to Maven Central under the `tech.annexflow.lvm` grou
 |---|---|
 | `tech.annexflow.lvm.settings` | Settings plugin: the `lvmLibs` version catalog, repositories and build-wide defaults |
 | `tech.annexflow.lvm.multiplatform` | Kotlin Multiplatform targets, source sets and compiler options |
+| `tech.annexflow.lvm.jvm` | Kotlin/JVM: Java version, compiler options, `kotlin-test` and the flat layout |
 | `tech.annexflow.lvm.compose` | The Compose compiler, and Compose Multiplatform in Kotlin Multiplatform modules |
 | `tech.annexflow.lvm.android.application` | Android application: SDK levels, Java version, release minification and desugaring |
 | `tech.annexflow.lvm.android.library` | Android library without Kotlin Multiplatform: SDK levels, Java version, flavor source sets, desugaring and consumer keep rules |
+| `tech.annexflow.lvm.android.test` | Android test module, such as a macrobenchmark or a baseline profile generator: SDK levels, Java version and the runner of its tests |
 | `tech.annexflow.lvm.publish` | Maven Central publishing and ABI validation |
 | `tech.annexflow.lvm.quality` | detekt |
 | `tech.annexflow.lvm.main-context` | The `@MainContext` compiler plugin; see [Main context](#main-context) |
@@ -73,6 +75,8 @@ On Android, back gestures, predictive back included, reach Compose through Googl
 
 `lvm-decompose-fetcher` reads data for components through the app's Ktor `HttpClient`. `installFetcherCache(directory, isOffline)` in the client's configuration keeps responses in a directory, for example `Path(appDirectories.cache, "fetcher")`, and serves them while `isOffline()` returns `true`. The root provides `Fetcher(httpClient)` with `provideLocals(LocalFetcher provides ...)`, and a component reads it as `fetcher`: `fetcherResultState { fetcher.get(url).body<Rows>() }` retries the read and holds its result as a `Loadable`. The state is a `FetcherStateFlow`, and its `refresh()` reads again: the current value stays until the new result replaces it, so a pull-to-refresh keeps the data on screen. The state also refreshes on every emission of the flow passed as `refreshOn`, and on every emission of `retryOn` while it is `Failed`. Pass events to `retryOn`, such as the connection coming back, not a state such as "is connected".
 
+A failed read is retried with `Fetcher.retryPolicy` by default: ten attempts, a second apart. An app sets its own policy once, at the root of its component tree, next to the fetcher: `provideLocals(LocalFetcher provides Fetcher(httpClient), LocalFetcherRetryPolicy provides policy)`, with a policy of kotlin-retry such as `stopAtAttempts<Throwable>(4) + equalJitterBackoff(min = 1_000, max = 30_000)`. A parent can give its subtree another policy the same way, and a `retryPolicy` argument wins over both. Previews and tests get `Fetcher.retryPolicy` without setup. The policy of the tree reaches every call in a component, because a component is an `AppComponentContext`: `fetcherState` and `fetcherResultState` have overloads on `AppComponentContext` that read `LocalFetcherRetryPolicy`, and Kotlin picks them over those on `CoroutineScopeOwner` for their more specific receiver. Code whose receiver is only a `CoroutineScopeOwner` gets `Fetcher.retryPolicy`.
+
 ## Getting started
 
 ### 1. Apply the settings plugin
@@ -104,23 +108,27 @@ plugins {
     alias(lvmLibs.plugins.android.application) apply false
     alias(lvmLibs.plugins.android.library) apply false
     alias(lvmLibs.plugins.android.kmp.library) apply false
+    alias(lvmLibs.plugins.android.test) apply false
     alias(lvmLibs.plugins.kotlin.multiplatform) apply false
+    alias(lvmLibs.plugins.kotlin.jvm) apply false
     alias(lvmLibs.plugins.kotlin.compose) apply false
     alias(lvmLibs.plugins.compose.multiplatform) apply false
     alias(lvmLibs.plugins.detekt) apply false
     alias(lvmLibs.plugins.vanniktech.mavenPublish) apply false
 
     alias(lvmLibs.plugins.blueprint.multiplatform) apply false
+    alias(lvmLibs.plugins.blueprint.jvm) apply false
     alias(lvmLibs.plugins.blueprint.compose) apply false
     alias(lvmLibs.plugins.blueprint.android.application) apply false
     alias(lvmLibs.plugins.blueprint.android.library) apply false
+    alias(lvmLibs.plugins.blueprint.android.test) apply false
     alias(lvmLibs.plugins.blueprint.publish) apply false
     alias(lvmLibs.plugins.blueprint.quality) apply false
     alias(lvmLibs.plugins.blueprint.main.context) apply false
 }
 ```
 
-`compose.multiplatform` is needed only by Kotlin Multiplatform modules that apply `tech.annexflow.lvm.compose`. A build whose Compose code is only in Android modules without Kotlin Multiplatform, such as an app on Jetpack Compose, leaves it out.
+`compose.multiplatform` is needed only by Kotlin Multiplatform modules that apply `tech.annexflow.lvm.compose`. A build whose Compose code is only in Android modules without Kotlin Multiplatform, such as an app on Jetpack Compose, leaves it out. List only the plugins your modules use: a build without Kotlin/JVM modules leaves out `kotlin.jvm` and `blueprint.jvm`, and one without test modules leaves out `android.test` and `blueprint.android.test`.
 
 ### 3. Apply plugins in a module
 
@@ -157,7 +165,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles` and `library.consumerProguardFiles` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing.
 
 ```kotlin
 // settings.gradle.kts
@@ -187,6 +195,21 @@ lvm {
 Every automatic behavior can be switched off, including the dependencies blueprint adds and the catalog and repositories added by the settings plugin. Anything `lvm { }` doesn't cover is configured with the regular `android { }` and `kotlin { }` blocks. For the Android target of a library, `kotlin { android { } }` is available only when the module also lists the AGP plugin; see [Android](#android).
 
 Your own convention plugins can read the build-wide values and configure the `lvm { }` sections of a module; see [Build logic](docs/build-logic.md).
+
+### Kotlin and JVM
+
+`lvm { jvm { } }` and `lvm { kotlin { } }` hold the values that every plugin with Kotlin code uses: the multiplatform plugin, the JVM plugin and the Android plugins.
+
+| Setting | Default | Effect |
+|---|---|---|
+| `jvm.target` | `21` | Bytecode version of JVM and Android compilations, for Kotlin and Java |
+| `kotlin.warningsAsErrors` | `false` | Turns compiler warnings into errors |
+| `kotlin.optIns` | empty | Opt-ins of every compilation, such as `kotlin.time.ExperimentalTime` |
+| `kotlin.freeCompilerArgs` | empty | Further arguments of the Kotlin compiler |
+| `kotlin.explicitApi` | `false` | Strict explicit API mode for the main code of libraries and Kotlin/JVM modules; tests keep default visibility |
+| `kotlin.testDependencies` | `true` | Adds `kotlin-test` to tests: to `commonTest` in Kotlin Multiplatform modules, and to the unit tests of Android and Kotlin/JVM modules |
+| `kotlin.flatLayout` | `false` | The flat source layout; see [Source layout](#source-layout) |
+| `kotlin.jvmDefault` | unset | How Kotlin compiles interface functions with a body for JVM and Android, as its `-jvm-default`: `enable`, `no-compatibility` or `disable`. While it is unset, Kotlin's own default applies |
 
 ### Source layout
 
@@ -237,6 +260,7 @@ Each module's report is `build/lvm/report/<path>/project.json`, where `<path>` i
 
 - **Applications** use `tech.annexflow.lvm.android.application`; see [Applications](#applications).
 - **Android libraries without Kotlin Multiplatform**, for example ones with product flavors, use `tech.annexflow.lvm.android.library`; see [Android libraries](#android-libraries).
+- **Test modules**, such as macrobenchmarks and baseline profile generators, use `tech.annexflow.lvm.android.test`; see [Test modules](#test-modules).
 - **Kotlin Multiplatform libraries** get their Android target from `lvm { targets { android() } }`, which applies `com.android.kotlin.multiplatform.library`. This requires AGP 9.4 or newer.
   The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "..." } }`.
   Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
@@ -278,7 +302,7 @@ Compose code needs the Compose compiler, which `tech.annexflow.lvm.compose` appl
 
 ### Android libraries
 
-`tech.annexflow.lvm.android.library` sets up an Android library that doesn't use Kotlin Multiplatform, such as a library with product flavors, which `com.android.kotlin.multiplatform.library` doesn't have. It applies AGP's `com.android.library` with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of instrumented tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, adds `kotlin-test-junit` to unit tests and turns off animations in instrumented tests. Strict explicit API mode follows `kotlin.explicitApi`, as in Kotlin Multiplatform libraries, and covers the main code of every variant. From `lvm { library { } }` it sets core library desugaring, the keep rules that ship in the AAR and a resource prefix, and it turns off the instrumented tests of a module that has no `androidTest` sources.
+`tech.annexflow.lvm.android.library` sets up an Android library that doesn't use Kotlin Multiplatform, such as a library with product flavors, which `com.android.kotlin.multiplatform.library` doesn't have. It applies AGP's `com.android.library` with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of instrumented tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, adds `kotlin-test-junit` to unit tests and turns off animations in instrumented tests. Strict explicit API mode follows `kotlin.explicitApi`, as in Kotlin Multiplatform libraries, and covers the main code of every variant. From `lvm { library { } }` it sets core library desugaring, the keep rules that ship in the AAR and a resource prefix, and it turns off the instrumented tests of a module that has no `androidTest` sources. Like an application, it leaves `/META-INF/INDEX.LIST` and `/META-INF/DEPENDENCIES` out of the APK of instrumented tests.
 
 ```kotlin
 // core/ui/build.gradle.kts
@@ -307,6 +331,7 @@ Flavors are declared with the native `android { }` DSL, and their dependency con
 | `library.desugaring` | `true` | Core library desugaring, with `desugar_jdk_libs` in `coreLibraryDesugaring`. An application that uses the library needs desugaring too |
 | `library.consumerProguardFiles` | `consumer-rules.pro` | Keep rules that ship in the AAR, relative to the module; files that don't exist are skipped |
 | `library.resourcePrefix` | `true` | Sets `resourcePrefix` to the module path: `:core:ui` gives `core_ui_`, `:feature:chat-history:ui` gives `feature_chat_history_ui_` |
+| `library.resourcePrefixDroppedSegments` | empty | Segments that the resource prefix leaves out at the end of the module path; see below |
 | `library.skipEmptyAndroidTest` | `true` | Turns off instrumented tests in a module without `androidTest/`, `androidTest@<name>/` or `src/androidTest*/` |
 
 ```kotlin
@@ -319,9 +344,48 @@ lvm {
 }
 ```
 
-Values set with the native `android { }` DSL win, as in applications: lvm fills in the SDK levels, the namespace, the targets of tests and lint, the runner, the keep rules and the resource prefix only where the build script left them unset, and turns on desugaring only where it is off. The Java version works as in applications. AGP uses `resourcePrefix` only for lint's `ResourceName` check, which then expects every resource name to start with it; a module sets a prefix of its own with `android { resourcePrefix = "..." }`. Instrumented tests are turned off for the whole module or not at all: one `androidTest` directory keeps them for every variant.
+Values set with the native `android { }` DSL win, as in applications: lvm fills in the SDK levels, the namespace, the targets of tests and lint, the runner, the keep rules and the resource prefix only where the build script left them unset, and turns on desugaring only where it is off. The Java version works as in applications. AGP uses `resourcePrefix` only for lint's `ResourceName` check, which then expects every resource name to start with it; a module sets a prefix of its own with `android { resourcePrefix = "..." }`. With `library.resourcePrefixDroppedSegments`, modules share the prefix of their feature: segments in the list are left out at the end of the module path while more than one segment is left, where a segment is a run of letters, digits and `_`, compared without case. With `ui`, `sky` and `tweety`, `:feature:chat:ui-sky` and `:feature:chat:ui` give `feature_chat_`, `:core:ui:tweety` gives `core_`, and `:core:designsystem` keeps `core_designsystem_`. The rest of the path gives the prefix as without the list. Instrumented tests are turned off for the whole module or not at all: one `androidTest` directory keeps them for every variant.
 
 [`samples/android-library`](samples/android-library) is a library with a `tier` dimension, which [`samples/android-app`](samples/android-app) uses.
+
+### Test modules
+
+`tech.annexflow.lvm.android.test` sets up a module of AGP's `com.android.test`, whose code tests an app from outside of it, such as a macrobenchmark or a baseline profile generator. It applies the plugin with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of the tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, turns off animations and leaves `/META-INF/INDEX.LIST` and `/META-INF/DEPENDENCIES` out of the APK. The module names the app it tests natively, with `targetProjectPath`.
+
+```kotlin
+// benchmark/build.gradle.kts
+plugins {
+    alias(lvmLibs.plugins.blueprint.android.test)
+}
+
+android {
+    targetProjectPath = ":app"
+}
+```
+
+| Setting | Default | Effect |
+|---|---|---|
+| `android.targetSdk` | `37` | Target SDK level. `compileSdk`, `minSdk` and `namespace` work as for libraries |
+| `android.testInstrumentationRunner` | `androidx.test.runner.AndroidJUnitRunner` | Runner of the module's tests |
+
+Values set with the native `android { }` DSL win, and the Java version works as in applications. With the flat layout, the module's code is in `src/`, and in `src@<name>/` for a build type; see [Source layout](#source-layout). The module's code is all test code, so it gets no unit tests, no `kotlin-test` and no explicit API mode. Core library desugaring stays off: the module's APK only drives the app, which has desugaring of its own, and a module whose code calls Java APIs newer than its `minSdk` turns it on with `android { compileOptions { isCoreLibraryDesugaringEnabled = true } }` and adds `desugar_jdk_libs` to `coreLibraryDesugaring` itself.
+
+## Kotlin/JVM
+
+`tech.annexflow.lvm.jvm` sets up a Kotlin/JVM module, such as a KSP processor or a compiler plugin. It applies `org.jetbrains.kotlin.jvm`, sets the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, with strict explicit API mode for main code while `kotlin.explicitApi` is on, and adds `kotlin-test` to unit tests. [Kotlin and JVM](#kotlin-and-jvm) lists the values it uses.
+
+```kotlin
+// processor/build.gradle.kts
+plugins {
+    alias(lvmLibs.plugins.blueprint.jvm)
+}
+```
+
+The flat layout, which `kotlin.flatLayout` turns on as in other modules, holds `main` in `src/` and `test` in `test/`, Kotlin and Java alike, test fixtures in `testFixtures/` and any other source set in `src@<name>/`, such as `src@integrationTest/`. Resources keep their conventional directories, `src/main/resources` and `src/test/resources`, as in the other plugins. With the flat layout, the module fails while it still has `src/<sourceSet>/kotlin` or `src/<sourceSet>/java`.
+
+The Java version works as in Android modules: the plugin sets `java { sourceCompatibility; targetCompatibility }` to the build-wide `jvm.target` when it is applied, so a `java { }` block in the build script replaces it, and a module's own `lvm { jvm { target } }` applies over both. Kotlin's `jvmTarget` follows the Java version, and Java compiles with `options.release` of Kotlin's `jvmTarget`, so `kotlin { compilerOptions { jvmTarget = ... } }` in the build script sets both.
+
+Unit tests run on JUnit 4, Gradle's default and the framework of Android unit tests. The plugin adds `kotlin-test`, and Kotlin picks the variant for the framework of the `test` task: `kotlin-test-junit` brings JUnit 4, which is all Gradle needs to run the tests. JUnit 5 and newer run on the JUnit Platform, which also needs `junit-platform-launcher` at the version of the module's JUnit engine, a version that only the module can choose. A module on the JUnit Platform calls `tasks.test { useJUnitPlatform() }`, which makes Kotlin pick `kotlin-test-junit5`, and declares the launcher. [`compiler/main-context-compiler`](compiler/main-context-compiler) is such a module.
 
 ## Compose
 
@@ -419,7 +483,7 @@ suspend fun open(id: Id) {
 }
 ```
 
-The plugin works the same in Android modules without Kotlin Multiplatform, such as those of `tech.annexflow.lvm.android.library`, and in Kotlin/JVM modules.
+The plugin works the same in Android modules without Kotlin Multiplatform, such as those of `tech.annexflow.lvm.android.library`, and in Kotlin/JVM modules, such as those of `tech.annexflow.lvm.jvm`.
 
 The plugin adds `lvm-main-context`, which holds the annotation, and runs the compiler plugin `lvm-main-context-compiler` of the same version. The compiler plugin moves each call, together with its receiver and arguments, into `withContext(Dispatchers.Main.immediate)`. A call made on the main thread runs at once.
 

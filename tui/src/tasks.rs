@@ -136,6 +136,9 @@ fn plugin_tasks(module: &Module) -> Vec<String> {
     if module.has_plugin("android.library") {
         tasks.push("testDebugUnitTest");
     }
+    if module.has_plugin("jvm") {
+        tasks.push("test");
+    }
     if module.has_plugin("quality") {
         tasks.push("detekt");
     }

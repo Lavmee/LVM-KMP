@@ -26,10 +26,10 @@ class AndroidValues internal constructor(values: LvmValues) {
     val compileSdk: Provider<Int> = values.int(LvmKeys.ANDROID_COMPILE_SDK, LvmDefaults.ANDROID_COMPILE_SDK)
     val minSdk: Provider<Int> = values.int(LvmKeys.ANDROID_MIN_SDK, LvmDefaults.ANDROID_MIN_SDK)
 
-    /** Target SDK level of applications, and of the instrumented tests and lint of Android libraries. */
+    /** Target SDK level of applications and test modules, and of the instrumented tests and lint of Android libraries. */
     val targetSdk: Provider<Int> = values.int(LvmKeys.ANDROID_TARGET_SDK, LvmDefaults.ANDROID_TARGET_SDK)
 
-    /** Runner of instrumented tests in applications and Android libraries. */
+    /** Runner of instrumented tests in applications, Android libraries and test modules. */
     val testInstrumentationRunner: Provider<String> = values.raw(LvmKeys.ANDROID_TEST_INSTRUMENTATION_RUNNER)
         .orElse(LvmDefaults.ANDROID_TEST_INSTRUMENTATION_RUNNER)
 
@@ -64,4 +64,10 @@ class KotlinValues internal constructor(values: LvmValues) {
 
     /** Whether modules use the flat source layout: `src`, `test`, `src@<name>` and `test@<name>`. */
     val flatLayout: Provider<Boolean> = values.boolean(LvmKeys.KOTLIN_FLAT_LAYOUT, LvmDefaults.KOTLIN_FLAT_LAYOUT)
+
+    /**
+     * How Kotlin compiles interface functions with a body for JVM and Android: `enable`, `no-compatibility` or
+     * `disable`. Absent unless set, so Kotlin's own default applies.
+     */
+    val jvmDefault: Provider<String> = values.raw(LvmKeys.KOTLIN_JVM_DEFAULT).map(LvmValueParsing::jvmDefault)
 }

@@ -5,6 +5,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.io.TempDir
 import tech.annexflow.lvm.blueprint.testing.GradleFixture
@@ -122,6 +124,18 @@ class AndroidTargetTest {
 
         fixture.build(":lib:compileAndroidMain", "-Plvm.jvm.target=17")
         assertEquals(61, classFileMajorVersion(helloClass))
+    }
+
+    @Test
+    fun `jvmDefault reaches the Android target`() {
+        val fixture = kmpFixture(dir, module("kotlin { jvmDefault = \"no-compatibility\" }"), withAgp = true)
+        fixture.writeLocalProperties()
+        fixture.file("lib/src/commonMain/kotlin/Greeter.kt", "interface Greeter { fun greet(): String = \"hello\" }")
+
+        fixture.build(":lib:compileAndroidMain")
+
+        assertTrue(dir.resolve("lib/build/classes/kotlin/android/main/Greeter.class").isFile)
+        assertFalse(dir.resolve("lib/build/classes/kotlin/android/main/Greeter\$DefaultImpls.class").exists())
     }
 
     @Test

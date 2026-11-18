@@ -34,7 +34,7 @@ Every value has a default. A build changes it in four places, weakest first:
 3. An `lvm.*` Gradle property, such as `lvm.android.minSdk=26` in `gradle.properties` or `-Plvm.android.minSdk=26`.
 4. `lvm { }` in the module's build script.
 
-A stronger scalar value replaces a weaker one. For lists, a module's value is appended to the build-wide list for `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles` and `library.consumerProguardFiles`, and replaces it for `ios.architectures`, `quality.source` and `mainContext.platforms`. A list as a Gradle property is comma-separated.
+A stronger scalar value replaces a weaker one. For lists, a module's value is appended to the build-wide list for `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments`, and replaces it for `ios.architectures`, `quality.source` and `mainContext.platforms`. A list as a Gradle property is comma-separated.
 
 Set a value in the narrowest place that covers what the user asked for: one module's value in its own `lvm { }`, a value for every module in the `lvm { }` block of `settings.gradle.kts`, and a value that changes per machine or per CI run as a Gradle property. Values set with the native `android { }` and `kotlin { }` DSL win over `lvm { }`, so use them only for what `lvm { }` doesn't cover.
 
@@ -46,14 +46,16 @@ The root `build.gradle.kts` declares every plugin that any module applies, with 
 |---|---|---|
 | `tech.annexflow.lvm.settings` | (settings script, with a version) | The `lvmLibs` catalog, the repositories and the build-wide `lvm { }` |
 | `tech.annexflow.lvm.multiplatform` | `lvmLibs.plugins.blueprint.multiplatform` | Kotlin Multiplatform: the targets of `lvm { targets { } }`, source sets and compiler options |
+| `tech.annexflow.lvm.jvm` | `lvmLibs.plugins.blueprint.jvm` | A Kotlin/JVM module, such as a KSP processor: the Java version, compiler options and `kotlin-test` |
 | `tech.annexflow.lvm.android.application` | `lvmLibs.plugins.blueprint.android.application` | An Android application |
 | `tech.annexflow.lvm.android.library` | `lvmLibs.plugins.blueprint.android.library` | An Android library without Kotlin Multiplatform, such as one with product flavors |
+| `tech.annexflow.lvm.android.test` | `lvmLibs.plugins.blueprint.android.test` | An Android test module of `com.android.test`, such as a macrobenchmark or a baseline profile generator |
 | `tech.annexflow.lvm.compose` | `lvmLibs.plugins.blueprint.compose` | The Compose compiler, and Compose Multiplatform in a Kotlin Multiplatform module |
 | `tech.annexflow.lvm.quality` | `lvmLibs.plugins.blueprint.quality` | detekt |
 | `tech.annexflow.lvm.publish` | `lvmLibs.plugins.blueprint.publish` | Publishing to Maven Central, the POM and ABI validation |
 | `tech.annexflow.lvm.main-context` | `lvmLibs.plugins.blueprint.main.context` | The `@MainContext` compiler plugin |
 
-The other plugins of the root project come from the same catalog: `lvmLibs.plugins.android.application`, `android.library`, `android.kmp.library`, `kotlin.multiplatform`, `kotlin.compose`, `compose.multiplatform`, `detekt` and `vanniktech.mavenPublish`. A build can rename the catalog with `catalogName`; `options.catalogName` of `lvm report` has the name.
+The other plugins of the root project come from the same catalog: `lvmLibs.plugins.android.application`, `android.library`, `android.kmp.library`, `android.test`, `kotlin.multiplatform`, `kotlin.jvm`, `kotlin.compose`, `compose.multiplatform`, `detekt` and `vanniktech.mavenPublish`. A build can rename the catalog with `catalogName`; `options.catalogName` of `lvm report` has the name.
 
 ## Libraries and versions
 
@@ -65,9 +67,9 @@ A module uses the standard layout, `src/commonMain/kotlin/...`, unless `kotlin.f
 
 | Directory | Source set |
 |---|---|
-| `src/` | `commonMain`, or `main` in an Android module |
-| `test/` | `commonTest`, or the unit tests of an Android module |
-| `src@<name>/` | `<name>Main`, such as `src@jvm/`, `src@ios/` or `src@android/`; or a build type, flavor or variant, such as `src@debug/` |
+| `src/` | `commonMain`, or `main` in an Android or Kotlin/JVM module |
+| `test/` | `commonTest`, or the unit tests of an Android or Kotlin/JVM module |
+| `src@<name>/` | `<name>Main`, such as `src@jvm/`, `src@ios/` or `src@android/`; a build type, flavor or variant, such as `src@debug/`; or another source set of a Kotlin/JVM module, such as `src@integrationTest/` |
 | `test@<name>/` | `<name>Test`, such as `test@jvm/` |
 | `androidTest/`, `androidTest@<name>/` | Instrumented tests of an Android module |
 
@@ -85,4 +87,4 @@ After you change build scripts, `gradle.properties` or the layout, check the bui
 
 ## More
 
-[reference.md](reference.md) covers Android applications and libraries, Compose, publishing, main context and the supported versions. For anything else, read LVM's README at the build's own version, `https://github.com/Lavmee/LVM-KMP/blob/v<version>/README.md`, with the version from `lvm report`; a build that tracks LVM's sources uses `main`.
+[reference.md](reference.md) covers Android applications, libraries and test modules, Kotlin/JVM modules, Compose, publishing, main context and the supported versions. For anything else, read LVM's README at the build's own version, `https://github.com/Lavmee/LVM-KMP/blob/v<version>/README.md`, with the version from `lvm report`; a build that tracks LVM's sources uses `main`.

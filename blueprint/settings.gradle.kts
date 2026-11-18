@@ -28,6 +28,7 @@ rootProject.name = "blueprint"
 include(":common")
 include(":settings")
 include(":multiplatform")
+include(":jvm")
 include(":quality")
 include(":main-context")
 include(":compose")
