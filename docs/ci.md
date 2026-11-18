@@ -20,7 +20,7 @@ The release workflow never runs on the self-hosted runner, because it uses the M
 ## Setting up the runner
 
 1. Create a standard macOS user for the runner. It holds none of the owner's SSH keys, GitHub tokens or `~/.gradle/gradle.properties` secrets.
-2. As that user, install Xcode and the Android SDK. Set `ANDROID_HOME` in the `.env` file of the runner directory, since a self-hosted runner doesn't set it.
+2. As that user, install Xcode and the Android SDK. The jobs find the SDK in `~/Library/Android/sdk`, where Android Studio installs it. For another location, set `ANDROID_HOME` in the `.env` file of the runner directory.
 3. Register the runner for this repository, as [Adding self-hosted runners](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners) describes. It needs the labels `self-hosted`, `macOS` and `ARM64`, which a runner on an Apple silicon Mac gets by default.
 4. Install the runner as a service of that user, as [Configuring the self-hosted runner application as a service](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/configure-the-application) describes:
    ```bash

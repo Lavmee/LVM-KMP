@@ -92,12 +92,14 @@ jobs:
           exit 1
 
       # The self-hosted runner keeps build state in its tool cache, apart from the account it runs as: the build reads
-      # no ~/.gradle/gradle.properties of that account and shares no daemons with it.
+      # no ~/.gradle/gradle.properties of that account and shares no daemons with it. Unless the runner sets
+      # ANDROID_HOME, the build uses the SDK where Android Studio installs it.
       - name: Keep build state in the runner's tool cache
         if: runner.environment == 'self-hosted'
         run: |
           echo "GRADLE_USER_HOME=$RUNNER_TOOL_CACHE/lvm-kmp/gradle" >> "$GITHUB_ENV"
           echo "KONAN_DATA_DIR=$RUNNER_TOOL_CACHE/lvm-kmp/konan" >> "$GITHUB_ENV"
+          if [ -z "${ANDROID_HOME:-}" ]; then echo "ANDROID_HOME=$HOME/Library/Android/sdk" >> "$GITHUB_ENV"; fi
 
       - uses: actions/checkout@v7
         with:
