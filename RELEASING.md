@@ -63,7 +63,7 @@ To check a release locally, publish both builds into a throwaway repository inst
 
 ## CI runner
 
-The libraries job of the release workflow runs on `macos-latest` because the iOS klibs are built there; the blueprint job has only JVM code and runs on `ubuntu-latest`. Kotlin can cross-compile klibs for Apple targets on Linux, with limitations, and not when a module uses its own cinterop. Moving to Linux is possible later if no module needs cinterop.
+The libraries job of the release workflow runs on `macos-latest` because the iOS klibs are built there; the blueprint job has only JVM code and runs on `ubuntu-latest`. Neither runs on the self-hosted Mac of CI, described in [Continuous integration](docs/ci.md), because both use the Maven Central and signing secrets. Kotlin can cross-compile klibs for Apple targets on Linux, with limitations, and not when a module uses its own cinterop. Moving to Linux is possible later if no module needs cinterop.
 
 ## Plugin markers
 

@@ -448,6 +448,7 @@ Blueprint's API for your own convention plugins, described in [Build logic](docs
 - [Releasing](RELEASING.md): how releases are published
 - [iOS](docs/ios.md): how an iOS app runs a component tree of `lvm-decompose`
 - [Build logic](docs/build-logic.md): your own convention plugins on top of LVM's
+- [Continuous integration](docs/ci.md): the CI jobs and the self-hosted macOS runner
 
 ## License
 

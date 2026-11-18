@@ -18,7 +18,7 @@ Blueprint is an included build, so the root `build` does not run its tests. Run 
 
 ## Requirements
 
-- macOS with Xcode. iOS klibs, frameworks and simulator tests build only there.
+- macOS with Xcode for `./gradlew build`: iOS klibs, frameworks and simulator tests build only there. Blueprint's tests run on any host; CI runs them on Linux for pull requests from forks.
 - An Android SDK, found through `ANDROID_HOME` or `sdk.dir` in `local.properties`.
 - JDK 21 for the Gradle daemon, as set in `gradle/gradle-daemon-jvm.properties`.
 
