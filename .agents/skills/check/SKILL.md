@@ -5,7 +5,7 @@ description: Always use this skill to verify a change locally before committing 
 
 # Verifying a Change
 
-Keep this file in sync with [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml).
+Keep this file in sync with [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) and [`.github/workflows/tui.yml`](../../../.github/workflows/tui.yml).
 
 Run these by default:
 
@@ -15,6 +15,19 @@ Run these by default:
 ```
 
 Blueprint is an included build, so the root `build` does not run its tests. Run both. Both builds compare each module's public API with its dump in `api/`; after an intended API change, run `updateKotlinAbi` in the same build and commit the dumps.
+
+## lvm-tui
+
+Run these in `tui/` when a change touches `tui/` or a file it embeds, such as `gradle.properties`, `settings.gradle.kts`, the Gradle wrapper or `blueprint/common/lvm-keys.json`:
+
+```bash
+cargo fmt --check
+cargo clippy --all-targets --locked -- -D warnings
+cargo test --locked
+cargo deny check # licenses and advisories of the dependencies; needs cargo-deny
+```
+
+The UI tests compare screens with the snapshots in `tui/tests/snapshots`. After an intended change to a screen, review each new `.snap.new` file and accept it with `cargo insta accept`, or run `INSTA_UPDATE=always cargo test`. The `version` in `tui/Cargo.toml` must equal `VERSION_NAME`.
 
 ## Requirements
 

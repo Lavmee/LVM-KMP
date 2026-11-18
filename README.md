@@ -15,8 +15,9 @@ Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS an
 | **runtime** | App machinery: KMP libraries | `lvm-core`, `lvm-coroutines`, `lvm-io`, `lvm-logger*`, `lvm-storage`, `lvm-decompose*`, `lvm-main-context` |
 | **compiler** | Kotlin compiler plugins | `lvm-main-context-compiler` |
 | **versions** | Version catalog and BOM | `lvm-versions`, `lvm-bom` |
+| **tui** | Terminal app for builds that use LVM; see [lvm-tui](docs/tui.md) | `lvm-tui`, in GitHub Releases |
 
-All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version.
+All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version. `lvm-tui` has the same version and comes with each GitHub Release.
 
 ### Plugins
 
@@ -220,7 +221,7 @@ lvm {
 
 ### Report
 
-Every module with an LVM plugin has the task `lvmReport`, which writes what the plugins set up in the module as JSON, for tools that show or check a build. Run it for the whole build, then read the reports from one directory of the root project:
+Every module with an LVM plugin has the task `lvmReport`, which writes what the plugins set up in the module as JSON, for tools that show or check a build, such as [lvm-tui](docs/tui.md). Run it for the whole build, then read the reports from one directory of the root project:
 
 ```bash
 ./gradlew lvmReport
@@ -456,6 +457,7 @@ Blueprint's API for your own convention plugins, described in [Build logic](docs
 - [Releasing](RELEASING.md): how releases are published
 - [iOS](docs/ios.md): how an iOS app runs a component tree of `lvm-decompose`
 - [Build logic](docs/build-logic.md): your own convention plugins on top of LVM's
+- [lvm-tui](docs/tui.md): a terminal app that shows, checks, runs and upgrades a build that uses LVM
 
 ## License
 

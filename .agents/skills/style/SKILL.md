@@ -1,6 +1,6 @@
 ---
 name: style
-description: Always use this skill before writing or editing Kotlin code, Gradle build logic or KDoc in the LVM-KMP repository
+description: Always use this skill before writing or editing Kotlin or Rust code, Gradle build logic or KDoc in the LVM-KMP repository
 ---
 
 # Code Style
@@ -40,6 +40,18 @@ description: Always use this skill before writing or editing Kotlin code, Gradle
 * A compiler plugin compiles against `kotlin-compiler-embeddable` as `compileOnly`, at the Kotlin version of `gradle/libs.versions.toml`. Moving to a new Kotlin version moves kotlin-compile-testing with it.
 * Report errors at the source position through `IrPluginContext.diagnosticReporter`, never by throwing.
 * Generate only code that Kotlin accepts in source: for example, no suspend call where Kotlin rejects one, such as a default parameter value.
+
+## lvm-tui
+
+* Format with `cargo fmt`, which reads `tui/rustfmt.toml`, and keep `cargo clippy --all-targets -- -D warnings` clean. `unsafe` is forbidden.
+* The app follows The Elm Architecture: every key, tick and background event arrives as a `Message` on one channel and goes through `App::update`, and the code in `ui/` only draws the state. Work that blocks, such as Gradle, adb, simctl or a request to Maven Central, runs on its own thread and sends `Message`s back.
+* Reading a build never runs Gradle. Values from `lvmReport` win over what the build files say, and each value keeps where it came from.
+* A change to the build's files is a `ChangeSet`, which the user sees as a diff and confirms before it is applied.
+* Never show, log or write the value of a secret; show only where it is set. lvm-tui never publishes to Maven Central.
+* Text the user sees says what to do next, as blueprint's errors do: `No adb: set ANDROID_HOME to the Android SDK`.
+* `rust-version` in `tui/Cargo.toml` is the oldest Rust that builds the crate; clippy flags library functions that are newer. A new dependency needs a license that `tui/deny.toml` allows.
+* Doc comments follow the rules of the Documentation section below.
+* Test parsers and other pure logic with unit tests next to the code. Test screens in `tui/tests/ui.rs`: they drive the `App` with keys on a copy of `tests/fixtures/consumer` and compare the screen with an insta snapshot, and shell scripts stand in for Gradle, adb and other programs. The rules of the Tests section apply, with test names in snake case.
 
 ## Documentation
 

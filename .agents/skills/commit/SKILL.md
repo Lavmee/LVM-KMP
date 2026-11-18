@@ -19,7 +19,7 @@ LVM-KMP follows [Conventional Commits](https://www.conventionalcommits.org/). Pu
 
 Only the header is required.
 
-**Type**: one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Use `feat` and `fix` only for changes that users of the published plugins and libraries notice. Changes to how LVM itself is built, such as the Gradle wrapper, `blueprint/buildSrc` or test wiring, are `build`.
+**Type**: one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Use `feat` and `fix` only for changes that users of the published plugins and libraries or of `lvm-tui` notice. Changes to how LVM itself is built, such as the Gradle wrapper, `blueprint/buildSrc` or test wiring, are `build`.
 
 **Scope**: optional. The area touched: `blueprint` for the plugins, `tui` for lvm-tui, or a library name with the `lvm-` prefix dropped (`core`, `logger`, `decompose-compose`). Omit it when the change spans areas or the type says enough (`build: update Gradle to 9.8.0`).
 
