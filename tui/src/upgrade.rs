@@ -383,7 +383,8 @@ pub fn run<S: crate::maven::Source>(
     dry_run: bool,
     out: &mut impl std::io::Write,
 ) -> Result<()> {
-    let versions = releases.versions(false);
+    // A release of today is missing from a list cached yesterday, so the command asks each time.
+    let versions = releases.versions(true);
     let target = match (to, &versions) {
         (Some(to), _) => to.to_owned(),
         (None, Ok(versions)) => versions.last().cloned().unwrap_or_default(),
@@ -432,26 +433,25 @@ pub fn run<S: crate::maven::Source>(
 #[cfg(test)]
 mod run_tests {
     use super::*;
-    use crate::maven::{Releases, Source};
+    use crate::maven::Releases;
+    use crate::maven::fake::{Fake, metadata};
 
-    struct Offline;
-
-    impl Source for Offline {
-        fn fetch(&self, _: &str) -> Result<String> {
-            anyhow::bail!("offline")
-        }
-    }
-
-    #[test]
-    fn upgrades_to_the_given_version_without_maven_central() {
+    fn build_on_0_3_2() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
         fs::write(
             dir.path().join("settings.gradle.kts"),
             "plugins { id(\"tech.annexflow.lvm.settings\") version \"0.3.2\" }\n",
         )
         .unwrap();
+        dir
+    }
+
+    #[test]
+    fn upgrades_to_the_given_version_without_maven_central() {
+        let dir = build_on_0_3_2();
         let project = Project::load(dir.path());
-        let releases = Releases::new(Offline, None, None);
+        let offline = Fake::offline();
+        let releases = Releases::new(&offline, None, None);
 
         let mut out = Vec::new();
         run(&project, &releases, Some("0.4.0"), true, &mut out).unwrap();
@@ -467,5 +467,24 @@ mod run_tests {
             run(&project, &releases, None, true, &mut Vec::new()).is_err(),
             "without Maven Central, --to is needed"
         );
+    }
+
+    #[test]
+    fn upgrades_to_a_release_newer_than_the_cached_list() {
+        let cache = tempfile::tempdir().unwrap();
+        let yesterday = metadata(&["0.3.2"]);
+        let before = Fake::new(&[("maven-metadata.xml", &yesterday)]);
+        Releases::new(&before, Some(cache.path().to_owned()), None).versions(false).unwrap();
+        let today = metadata(&["0.3.2", "0.4.0"]);
+        let after = Fake::new(&[("maven-metadata.xml", &today)]);
+        let offline = Fake::offline();
+
+        for (network, source) in [("online", &after), ("offline", &offline)] {
+            let dir = build_on_0_3_2();
+            let releases = Releases::new(source, Some(cache.path().to_owned()), None);
+            run(&Project::load(dir.path()), &releases, None, false, &mut Vec::new()).unwrap();
+            let settings = fs::read_to_string(dir.path().join("settings.gradle.kts")).unwrap();
+            assert!(settings.contains("\"0.4.0\""), "{network}: {settings}");
+        }
     }
 }
