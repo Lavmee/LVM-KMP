@@ -61,7 +61,9 @@ class GradleFixture(val rootDir: File) {
         GradleRunner.create()
             .withProjectDir(rootDir)
             .withTestKitDir(testKitDir)
-            .withArguments(listOf("--configuration-cache", "--stacktrace") + arguments)
+            // Tests rewrite files right before the next build. A daemon that watches the file system can see the change
+            // too late and reuse a stale configuration cache entry, so every build reads the files again.
+            .withArguments(listOf("--configuration-cache", "--no-watch-fs", "--stacktrace") + arguments)
             .forwardOutput()
 
     companion object {
