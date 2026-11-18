@@ -41,7 +41,7 @@ lvm new my-app --name my-app --group com.example.myapp --targets android,ios,jvm
 
 Then:
 
-1. Run `lvm report` in the new build and compare `lvm.version` with the latest release, from `gh release list --repo Lavmee/LVM-KMP --exclude-pre-releases --limit 1`. lvm keeps the list of releases for a day, so right after a release it may create the build with the previous one; if so, offer to move it with the `upgrade` skill.
+1. Run `lvm report` in the new build and compare `lvm.version` with the latest release, from `gh release list --repo Lavmee/LVM-KMP --exclude-pre-releases --limit 1`. lvm 0.4.0 and older keep the list of releases for a day, so right after a release they may create the build with the previous one; if so, offer to move it with the `upgrade` skill.
 2. Run `lvm check --json` in the build and report what it finds, as the `check` skill describes. A missing Android SDK needs `ANDROID_HOME` or `sdk.dir` in `local.properties`.
 3. Offer `git init` and a first commit, and `./gradlew build`. iOS targets build only on macOS with Xcode.
 
