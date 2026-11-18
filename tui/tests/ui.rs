@@ -1,12 +1,14 @@
 //! Renders the app on the consumer fixture and compares the screens with snapshots.
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver};
 use std::time::Duration;
 
 use insta::assert_snapshot;
 use lvm_tui::app::{App, Dialog, Tab};
+use lvm_tui::applog::Level;
+use lvm_tui::devices::{Device, Platform, State as DeviceState, Tools};
 use lvm_tui::doctor::Environment;
 use lvm_tui::event::Message;
 use lvm_tui::gradle::{GradleEvent, Runner};
@@ -185,6 +187,11 @@ fn the_state_remembers_the_tab_and_module() {
     let restored = App::new(Project::load(dir.path()), Runner::new(dir.path(), sender), &state);
     assert_eq!(restored.tab, Tab::Modules);
     assert_eq!(restored.selected_module().map(|m| m.path.as_str()), Some(":core:data"));
+
+    let library = State { tab: Some("library".to_owned()), ..State::default() };
+    let (sender, _) = mpsc::channel();
+    let restored = App::new(Project::load(dir.path()), Runner::new(dir.path(), sender), &library);
+    assert_eq!(restored.tab, Tab::Overview, "no module publishes, so the build has no Library tab");
 }
 
 fn with_environment(app: &mut App, root: &Path) {
@@ -203,7 +210,7 @@ fn the_doctor_fixes_a_finding_after_showing_the_change() {
     let dir = consumer();
     let mut app = app(dir.path());
     with_environment(&mut app, dir.path());
-    press(&mut app, "4");
+    press(&mut app, "5");
     assert_snapshot!("doctor_with_a_finding", render(&mut app));
 
     press(&mut app, "f");
@@ -311,7 +318,7 @@ fn a_task_runs_and_its_log_points_at_the_error() {
     until_finished(&mut app, &events);
 
     assert_eq!(app.runs.len(), 1);
-    assert_eq!(app.runs[0].command, ":shared:build");
+    assert_eq!(app.runs[0].command, "./gradlew :shared:build");
     press(&mut app, "ln");
     assert_eq!(app.tasks.cursor, Some(1));
     assert_snapshot!("tasks_log_with_an_error", render(&mut app));
@@ -373,7 +380,7 @@ fn updates_compare_a_release_and_upgrade_to_it() {
     let dir = consumer();
     let mut app = app(dir.path());
     releases(&mut app);
-    press(&mut app, "5");
+    press(&mut app, "6");
     assert_eq!(app.updates.selected_version(), Some("0.4.0"));
     assert_snapshot!("updates_to_the_latest", render(&mut app));
 
@@ -392,7 +399,7 @@ fn updates_say_when_maven_central_cannot_be_reached() {
     let mut app = app(dir.path());
     app.fetch_releases = false;
     app.update(Message::Releases(Err("connection refused".into())));
-    press(&mut app, "5");
+    press(&mut app, "6");
     let screen = render(&mut app);
     assert!(screen.contains("Maven Central can't be reached"), "{screen}");
     press(&mut app, "u");
@@ -473,11 +480,11 @@ fn the_library_checks_the_abi_and_shows_what_changed() {
     app.library.gradle_home = Some(home.path().to_owned());
 
     assert_eq!(app.tabs().last(), Some(&Tab::Library));
-    press(&mut app, "6");
+    press(&mut app, "7");
     assert_eq!(app.tab, Tab::Library);
     press(&mut app, "c");
     until_finished(&mut app, &events);
-    assert_eq!(app.runs[0].command, ":core:data:checkKotlinAbi");
+    assert_eq!(app.runs[0].command, "./gradlew :core:data:checkKotlinAbi");
     let lvm_tui::library::AbiState::Changed(diffs) = &app.library.abi else { panic!("the ABI changed") };
     assert_eq!((diffs[0].added, diffs[0].removed), (1, 1));
     assert_snapshot!("library_with_a_changed_abi", render(&mut app));
@@ -488,7 +495,7 @@ fn the_library_checks_the_abi_and_shows_what_changed() {
 fn the_library_publishes_to_maven_local_without_signing() {
     let dir = published_consumer();
     let (mut app, events) = app_with_gradle(dir.path(), "echo \"$*\"");
-    press(&mut app, "6p");
+    press(&mut app, "7p");
     until_finished(&mut app, &events);
     assert_eq!(app.runs[0].lines[0], ":core:data:publishToMavenLocal -Plvm.publish.signing=false --console=plain");
 }
@@ -498,6 +505,138 @@ fn the_library_tab_exists_only_where_a_module_publishes() {
     let dir = consumer();
     let mut app = app(dir.path());
     assert!(!app.tabs().contains(&Tab::Library));
-    press(&mut app, "6");
+    press(&mut app, "7");
     assert_eq!(app.tab, Tab::Overview);
+}
+
+/// An emulator that runs, an AVD that doesn't, and a simulator.
+fn devices(adb: Option<PathBuf>) -> Message {
+    let device =
+        |platform, id: &str, name: &str, state, avd| Device { platform, id: id.into(), name: name.into(), state, avd };
+    Message::Devices {
+        tools: Tools { adb, emulator: None, simctl: false },
+        devices: vec![
+            device(Platform::Android, "emulator-5554", "Pixel 8 (emulator-5554)", DeviceState::Ready, false),
+            device(Platform::Android, "Pixel_9", "Pixel 9 (AVD)", DeviceState::Stopped, true),
+            device(Platform::Ios, "A1B2", "iPhone 18 (iOS 27.0)", DeviceState::Ready, false),
+        ],
+    }
+}
+
+/// A shell script at [path] that prints its name and arguments.
+#[cfg(unix)]
+fn fake_tool(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let name = path.file_name().unwrap().to_string_lossy();
+    fs::write(path, format!("#!/bin/sh\necho \"{name} $*\"\n")).unwrap();
+    fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
+}
+
+#[test]
+fn the_run_tab_lists_apps_and_the_devices_of_their_platform() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    app.run.probe = false;
+    press(&mut app, "4");
+    assert_eq!(app.tab, Tab::Run);
+    app.update(devices(Some(PathBuf::from("/sdk/platform-tools/adb"))));
+    assert_snapshot!("run_with_devices", render(&mut app));
+
+    press(&mut app, "lj\n");
+    assert_eq!(app.status.as_deref(), Some("Pixel 9 (AVD) isn't running: s starts it"));
+    press(&mut app, "s");
+    assert_eq!(app.status.as_deref(), Some("No emulator in the Android SDK"));
+    // The iOS framework builds for the simulator, with no device to pick.
+    press(&mut app, "hj");
+    assert_eq!(app.selected_device(), None);
+}
+
+#[test]
+fn the_run_tab_selects_the_device_of_the_last_run() {
+    let dir = consumer();
+    let (sender, _) = mpsc::channel();
+    let state = State { device: Some("Pixel_9".to_owned()), ..State::default() };
+    let mut app = App::new(Project::load(dir.path()), Runner::new(dir.path(), sender), &state);
+    app.run.probe = false;
+    press(&mut app, "4");
+    app.update(devices(None));
+    assert_eq!(app.selected_device().map(|d| d.id), Some("Pixel_9".to_owned()));
+    assert_eq!(app.state().device.as_deref(), Some("Pixel_9"));
+}
+
+#[cfg(unix)]
+#[test]
+fn an_android_app_installs_on_the_chosen_device_and_starts() {
+    let dir = consumer();
+    let (mut app, events) = app_with_gradle(dir.path(), "echo \"gradle $ANDROID_SERIAL $*\"");
+    app.run.probe = false;
+    let adb = dir.path().join("adb");
+    fake_tool(&adb);
+    press(&mut app, "4");
+    app.update(devices(Some(adb)));
+    press(&mut app, "\n");
+    until_finished(&mut app, &events);
+
+    let run = &app.runs[0];
+    assert_eq!(run.command, "Run :app on Pixel 8 (emulator-5554)");
+    assert_eq!(run.lines[0], "gradle emulator-5554 :app:installDebug --console=plain");
+    assert_eq!(
+        run.lines[1],
+        "adb -s emulator-5554 shell am start -n $(cmd package resolve-activity --brief -c android.intent.category.LAUNCHER com.example.app | tail -n 1)"
+    );
+    assert_eq!(app.state().device.as_deref(), Some("emulator-5554"));
+}
+
+#[cfg(unix)]
+#[test]
+fn the_log_follows_a_file_by_level_and_search() {
+    let dir = consumer();
+    let (mut app, events) = app_with_gradle(dir.path(), "true");
+    app.run.probe = false;
+    let log = dir.path().join("app.log");
+    fs::write(
+        &log,
+        "2026-11-18T10:15:31.861+03:00 Info: (Net) GET /items\n\
+         2026-11-18T10:15:32.002+03:00 Warn: (Net) slow response\n\
+         2026-11-18T10:15:32.100+03:00 Error: (Storage) disk full\n",
+    )
+    .unwrap();
+    press(&mut app, "4F");
+    press(&mut app, &format!("{}\n", log.display()));
+    let mut lines = 0;
+    while lines < 3 {
+        let message = events.recv_timeout(Duration::from_secs(10)).expect("a line of the log");
+        lines += usize::from(matches!(message, Message::AppLog { .. }));
+        app.update(message);
+    }
+
+    press(&mut app, "LLL");
+    assert_eq!(app.run.visible().len(), 2, "warnings and errors");
+    press(&mut app, "/net\n");
+    assert_eq!(app.run.visible().len(), 1);
+    assert_snapshot!("run_following_a_log_file", render(&mut app));
+    press(&mut app, "x");
+    assert_eq!(app.run.ended.as_deref(), Some("Stopped"));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_jvm_app_s_output_is_its_log() {
+    let dir = consumer();
+    let script = dir.path().join("core/data/build.gradle.kts");
+    let text = fs::read_to_string(&script).unwrap() + "\ncompose.desktop { application { mainClass = \"MainKt\" } }\n";
+    fs::write(script, text).unwrap();
+    let (mut app, events) =
+        app_with_gradle(dir.path(), "echo \"Info: (App) started by $1\"\necho 'Error: (App) crashed'");
+    app.run.probe = false;
+    press(&mut app, "4");
+    let jvm = app.run.runnables.iter().position(|r| r.platform == Platform::Jvm).expect("a JVM app");
+    app.run.targets.select(Some(jvm));
+    press(&mut app, "\n");
+    until_finished(&mut app, &events);
+
+    let messages: Vec<_> = app.run.log.iter().map(|l| (l.level, l.tag.as_str(), l.message.as_str())).collect();
+    assert_eq!(messages, [(Level::Info, "App", "started by :core:data:run"), (Level::Error, "App", "crashed")]);
+    assert_eq!(app.run.source.as_deref(), Some("output of :core:data:run"));
+    assert_eq!(app.run.ended.as_deref(), Some("The app exited"));
 }

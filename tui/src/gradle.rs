@@ -35,6 +35,20 @@ pub struct Job {
     pub id: JobId,
     pub args: Vec<String>,
     pub purpose: Purpose,
+    /// A program other than Gradle, such as adb or xcrun.
+    pub program: Option<PathBuf>,
+    pub env: Vec<(String, String)>,
+    /// What the log shows instead of the command line, for a long script.
+    pub label: Option<String>,
+}
+
+/// A program to run in the runner's queue instead of Gradle.
+#[derive(Debug, Clone, Default)]
+pub struct Program {
+    pub program: Option<PathBuf>,
+    pub args: Vec<String>,
+    pub env: Vec<(String, String)>,
+    pub label: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,11 +86,22 @@ impl<E: From<GradleEvent> + Send + 'static> Runner<E> {
 
     /// Queues a build and starts it when nothing else runs.
     pub fn submit(&mut self, args: Vec<String>, purpose: Purpose) -> JobId {
+        self.submit_program(Program { args, ..Program::default() }, purpose)
+    }
+
+    /// Queues a Gradle build with environment variables, or another program when [program] names one.
+    pub fn submit_program(&mut self, program: Program, purpose: Purpose) -> JobId {
         let id = self.next_id;
         self.next_id += 1;
-        self.queue.push_back(Job { id, args, purpose });
+        let Program { program, args, env, label } = program;
+        self.queue.push_back(Job { id, args, purpose, program, env, label });
         self.start_next();
         id
+    }
+
+    /// The Gradle that builds run with, for scripts that call it themselves.
+    pub fn gradle_path(&self) -> PathBuf {
+        self.executable.clone().unwrap_or_else(|| gradle_executable(&self.root))
     }
 
     /// Where the runner sends its events, for other background work of the app.
@@ -112,7 +137,7 @@ impl<E: From<GradleEvent> + Send + 'static> Runner<E> {
         }
         let Some(job) = self.queue.pop_front() else { return };
         let cancel = Arc::new(AtomicBool::new(false));
-        let executable = self.executable.clone().unwrap_or_else(|| gradle_executable(&self.root));
+        let executable = job.program.clone().unwrap_or_else(|| self.gradle_path());
         spawn(&self.root, &executable, job.clone(), cancel.clone(), self.events.clone());
         self.running = Some(Running { job, cancel });
     }
@@ -132,13 +157,25 @@ fn spawn<E: From<GradleEvent> + Send + 'static>(
     cancel: Arc<AtomicBool>,
     events: Sender<E>,
 ) {
+    let gradle = job.program.is_none();
     let mut args = job.args.clone();
-    args.push("--console=plain".to_owned());
-    // The arguments as the user would type them after ./gradlew.
-    let command = job.args.join(" ");
+    let command = match (&job.label, gradle) {
+        (Some(label), _) => label.clone(),
+        (None, true) => format!("./gradlew {}", job.args.join(" ")),
+        (None, false) => {
+            let name = executable
+                .file_name()
+                .map_or_else(|| executable.display().to_string(), |n| n.to_string_lossy().into_owned());
+            format!("{name} {}", job.args.join(" "))
+        }
+    };
+    if gradle {
+        args.push("--console=plain".to_owned());
+    }
     let started = Instant::now();
     let child = Command::new(executable)
         .args(&args)
+        .envs(job.env.iter().map(|(name, value)| (name, value)))
         .current_dir(root)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

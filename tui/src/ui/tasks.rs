@@ -147,7 +147,7 @@ fn draw_log(frame: &mut Frame, app: &App, area: Rect) {
         .collect();
     let follow = if app.tasks.follow { " following " } else { " f follows " };
     let bottom = Line::from(vec![
-        Span::raw(format!(" ./gradlew {} ", run.command)).dim(),
+        Span::raw(format!(" {} ", run.command)).dim(),
         state,
         Span::raw(format!("  n/N errors  o open {follow}")).dim(),
     ]);
@@ -242,7 +242,7 @@ fn draw_history(frame: &mut Frame, app: &mut App, area: Rect) {
                 Some((Outcome::Cancelled, _)) => "cancelled".yellow(),
                 Some((_, elapsed)) => format!("failed {:>2}s", elapsed.as_secs()).red(),
             };
-            ListItem::new(Line::from(vec![outcome, Span::raw(format!("  ./gradlew {}", run.command))]))
+            ListItem::new(Line::from(vec![outcome, Span::raw(format!("  {}", run.command))]))
         })
         .collect();
     let list = List::new(items)

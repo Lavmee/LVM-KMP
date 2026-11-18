@@ -2,7 +2,7 @@
 source: tests/ui.rs
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Doctor   5 Updates                                                lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates                                        lvm-tui Consumer"
 "┌ Build ───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐"
 "│Root      /work/consumer                                                                                              │"
 "│LVM       0.4.0-SNAPSHOT  from lvmReport                                                                              │"
@@ -37,4 +37,4 @@ expression: render(&mut app)
 "│                                  ││                                                                                  │"
 "│                                  ││                                                                                  │"
 "└──────────────────────────────────┘└──────────────────────────────────────────────────────────────────────────────────┘"
-" r report   3 doctor   ctrl-p commands   ? keys   q quit                                                                "
+" r report   5 doctor   ctrl-p commands   ? keys   q quit                                                                "

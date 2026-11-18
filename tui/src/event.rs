@@ -24,6 +24,21 @@ pub enum Message {
         version: String,
         catalog: Result<crate::maven::Catalog, String>,
     },
+    /// The devices that adb, the emulator and simctl list, and those tools.
+    Devices {
+        tools: crate::devices::Tools,
+        devices: Vec<crate::devices::Device>,
+    },
+    /// A line of the app's log that the Run tab follows, from the stream with this id.
+    AppLog {
+        stream: u64,
+        line: crate::applog::LogLine,
+    },
+    /// The app's log ended, with the reason.
+    AppLogEnded {
+        stream: u64,
+        reason: String,
+    },
 }
 
 impl From<GradleEvent> for Message {

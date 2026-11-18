@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 pub struct State {
     pub tab: Option<String>,
     pub module: Option<String>,
+    /// The device the Run tab used last.
+    pub device: Option<String>,
 }
 
 impl State {

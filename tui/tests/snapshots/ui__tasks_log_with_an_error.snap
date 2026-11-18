@@ -2,7 +2,7 @@
 source: tests/ui.rs
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Doctor   5 Updates                                                lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates                                        lvm-tui Consumer"
 "┌ Run in ────────────────────────┐┌─  Log  Tests (0)  Detekt (0)  History (1)  v ──────────────────────────────────────┐"
 "│  whole build                   ││> Task :shared:compileKotlinJvm                                                     │"
 "│  :app                          ││e: shared/src/Greeting.kt:3:5 Unresolved reference                                  │"
@@ -37,4 +37,4 @@ expression: render(&mut app)
 "│                                ││                                                                                    │"
 "│                                ││                                                                                    │"
 "└ enter runs  c command ─────────┘└ ./gradlew :shared:build failed after Ns  n/N errors  o open  f follows ────────────┘"
-" gradlew :shared:build: failed (exit 1)                                                                                 "
+" ./gradlew :shared:build: failed (exit 1)                                                                               "

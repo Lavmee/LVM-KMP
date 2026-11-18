@@ -6,6 +6,7 @@ pub(crate) mod form;
 mod library;
 mod modules;
 mod overview;
+mod run;
 mod tasks;
 mod updates;
 
@@ -32,6 +33,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         Tab::Overview => overview::draw(frame, app, body),
         Tab::Modules => modules::draw(frame, app, body),
         Tab::Tasks => tasks::draw(frame, app, body),
+        Tab::Run => run::draw(frame, app, body),
         Tab::Updates => updates::draw(frame, app, body),
         Tab::Library => library::draw(frame, app, body),
         Tab::Doctor => doctor::draw(frame, app, body),
@@ -83,11 +85,12 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
                 spans.push(Span::styled(format!(" {status}"), style));
             } else {
                 let hint = match app.tab {
-                    Tab::Overview => " r report   3 doctor   ctrl-p commands   ? keys   q quit",
+                    Tab::Overview => " r report   5 doctor   ctrl-p commands   ? keys   q quit",
                     Tab::Modules => {
                         " e edit   n new module   d add library   m flat layout   o open   / filter   ? keys"
                     }
                     Tab::Tasks => " enter run   c command   v log/tests/detekt/history   x cancel   ? keys",
+                    Tab::Run => " h l apps/devices/log   enter run   s start device   a follow log   ? keys",
                     Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
                     Tab::Updates => " j k release   u upgrade   f ask Maven Central again   ? keys",
                     Tab::Library => " c check ABI   u update dump   p publish to Maven local   e edit POM   ? keys",
@@ -101,7 +104,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_help(frame: &mut Frame) {
     let rows: Vec<Line> = [
-        ("1-6, tab", "switch tabs"),
+        ("1-7, tab", "switch tabs"),
         ("r", "run lvmReport, then read the reports"),
         ("R", "read the build files again"),
         ("ctrl-p, :", "command palette"),
@@ -121,6 +124,9 @@ fn draw_help(frame: &mut Frame) {
         ("t, a", "run the selected test, or the failed ones, again"),
         ("x", "cancel the running build"),
         ("u", "upgrade LVM to the selected release"),
+        ("enter, s", "Run: run the app, or start the device"),
+        ("a, F", "Run: follow the app's log, or a log file"),
+        ("L, space", "Run: the log's lowest level, or pause it"),
         ("ctrl-c", "cancel the running build, or quit"),
         ("q", "quit"),
     ]

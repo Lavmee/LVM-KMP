@@ -20,6 +20,7 @@ use crate::project::model::{Module, ValueRow};
 use crate::project::report::Source;
 use crate::project::values_edit::{self, Layer};
 use crate::results::Results;
+use crate::run_tab::RunView;
 use crate::state::State;
 use crate::tasks::TasksView;
 use crate::updates::UpdatesView;
@@ -29,19 +30,22 @@ pub enum Tab {
     Overview,
     Modules,
     Tasks,
+    Run,
     Doctor,
     Updates,
     Library,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 6] = [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Doctor, Tab::Updates, Tab::Library];
+    pub const ALL: [Tab; 7] =
+        [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Run, Tab::Doctor, Tab::Updates, Tab::Library];
 
     pub fn title(self) -> &'static str {
         match self {
             Self::Overview => "Overview",
             Self::Modules => "Modules",
             Self::Tasks => "Tasks",
+            Self::Run => "Run",
             Self::Doctor => "Doctor",
             Self::Updates => "Updates",
             Self::Library => "Library",
@@ -53,6 +57,7 @@ impl Tab {
             Self::Overview => "overview",
             Self::Modules => "modules",
             Self::Tasks => "tasks",
+            Self::Run => "run",
             Self::Doctor => "doctor",
             Self::Updates => "updates",
             Self::Library => "library",
@@ -69,6 +74,7 @@ pub enum Action {
     ShowOverview,
     ShowModules,
     ShowTasks,
+    ShowRun,
     ShowDoctor,
     ShowUpdates,
     ShowLibrary,
@@ -89,13 +95,14 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 23] = [
+    pub const ALL: [Action; 24] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
         Action::ShowOverview,
         Action::ShowModules,
         Action::ShowTasks,
+        Action::ShowRun,
         Action::ShowDoctor,
         Action::ShowUpdates,
         Action::ShowLibrary,
@@ -123,6 +130,7 @@ impl Action {
             Self::ShowOverview => "Show the overview",
             Self::ShowModules => "Show the modules",
             Self::ShowTasks => "Show the tasks, the log and the test results",
+            Self::ShowRun => "Run an app on a device and follow its log",
             Self::ShowDoctor => "Show the doctor's findings",
             Self::ShowUpdates => "Show LVM's releases",
             Self::ShowLibrary => "Show the published modules: POM, signing, ABI",
@@ -151,9 +159,10 @@ impl Action {
             Self::ShowOverview => "1",
             Self::ShowModules => "2",
             Self::ShowTasks => "3",
-            Self::ShowDoctor => "4",
-            Self::ShowUpdates => "5",
-            Self::ShowLibrary => "6",
+            Self::ShowRun => "4",
+            Self::ShowDoctor => "5",
+            Self::ShowUpdates => "6",
+            Self::ShowLibrary => "7",
             Self::UpgradeLvm => "u",
             Self::RunCommand => "c",
             Self::RerunFailedTests => "a",
@@ -280,6 +289,7 @@ pub struct App {
     pub status: Option<String>,
     pub updates: UpdatesView,
     pub library: LibraryView,
+    pub run: RunView,
     /// Whether the Updates tab asks Maven Central; tests turn it off and send the answers themselves.
     pub fetch_releases: bool,
     /// The builds of this session, the latest last.
@@ -292,7 +302,7 @@ pub struct App {
 
 impl App {
     pub fn new(project: Project, runner: Runner<Message>, state: &State) -> Self {
-        let tab = Tab::ALL.into_iter().find(|tab| state.tab.as_deref() == Some(tab.id())).unwrap_or(Tab::Overview);
+        let restored = Tab::ALL.into_iter().find(|tab| state.tab.as_deref() == Some(tab.id()));
         let selected = state
             .module
             .as_deref()
@@ -308,7 +318,7 @@ impl App {
         };
         let mut app = Self {
             project,
-            tab,
+            tab: Tab::Overview,
             modules,
             tasks: TasksView::default(),
             results: Results::default(),
@@ -321,6 +331,7 @@ impl App {
             status: None,
             updates: UpdatesView::default(),
             library: LibraryView::default(),
+            run: RunView { remembered: state.device.clone(), ..RunView::default() },
             fetch_releases: true,
             runs: Vec::new(),
             editor: None,
@@ -329,6 +340,11 @@ impl App {
             runner,
         };
         app.reload_results();
+        app.refresh_runnables();
+        // Opens the tab as a key would, which keeps Overview where the build no longer has the tab.
+        if let Some(tab) = restored {
+            app.show_tab(tab);
+        }
         app
     }
 
@@ -346,12 +362,17 @@ impl App {
         match tab {
             Tab::Updates => self.open_updates(),
             Tab::Library => self.refresh_library(),
+            Tab::Run => self.open_run(),
             _ => {}
         }
     }
 
     pub fn state(&self) -> State {
-        State { tab: Some(self.tab.id().to_owned()), module: self.selected_module().map(|m| m.path.clone()) }
+        State {
+            tab: Some(self.tab.id().to_owned()),
+            module: self.selected_module().map(|m| m.path.clone()),
+            device: self.run.remembered.clone(),
+        }
     }
 
     pub fn selected_module(&self) -> Option<&Module> {
@@ -378,6 +399,9 @@ impl App {
             }
             Message::Releases(versions) => self.on_releases(versions),
             Message::Catalog { version, catalog } => self.on_catalog(version, catalog),
+            Message::Devices { tools, devices } => self.on_devices(tools, devices),
+            Message::AppLog { stream, line } => self.on_app_log(stream, line),
+            Message::AppLogEnded { stream, reason } => self.on_app_log_ended(stream, reason),
         }
     }
 
@@ -397,6 +421,7 @@ impl App {
             Action::ShowOverview => self.show_tab(Tab::Overview),
             Action::ShowModules => self.show_tab(Tab::Modules),
             Action::ShowTasks => self.show_tab(Tab::Tasks),
+            Action::ShowRun => self.show_tab(Tab::Run),
             Action::ShowDoctor => self.show_tab(Tab::Doctor),
             Action::ShowUpdates => self.show_tab(Tab::Updates),
             Action::ShowLibrary => self.show_tab(Tab::Library),
@@ -483,6 +508,10 @@ impl App {
             self.on_tasks_key(key);
             return;
         }
+        if self.tab == Tab::Run && (self.run.file_input.is_some() || self.run.searching) {
+            self.on_run_key(key);
+            return;
+        }
         if self.help {
             self.help = false;
             return;
@@ -511,6 +540,7 @@ impl App {
             }
             _ if self.tab == Tab::Modules => self.on_modules_key(key),
             _ if self.tab == Tab::Tasks => self.on_tasks_key(key),
+            _ if self.tab == Tab::Run => self.on_run_key(key),
             _ if self.tab == Tab::Doctor => self.on_doctor_key(key),
             _ if self.tab == Tab::Updates => self.on_updates_key(key),
             _ if self.tab == Tab::Library => self.on_library_key(key),
@@ -895,6 +925,7 @@ impl App {
                 self.push_run(JobView { id: job, purpose, command, lines: VecDeque::new(), outcome: None });
             }
             GradleEvent::Line { job, line } => {
+                self.on_run_output(job, &line);
                 if let Some(run) = self.runs.iter_mut().rev().find(|run| run.id == job) {
                     if run.lines.len() == KEPT_LINES {
                         run.lines.pop_front();
@@ -925,6 +956,7 @@ impl App {
                     Purpose::Task => self.reload_results(),
                 }
                 self.on_library_job(job, &outcome);
+                self.on_run_finished(job, &outcome);
                 self.status = Some(self.describe_outcome(job, &outcome, elapsed));
             }
         }
@@ -940,7 +972,7 @@ impl App {
 
     fn describe_outcome(&self, job: JobId, outcome: &Outcome, elapsed: Duration) -> String {
         let run = self.runs.iter().rev().find(|run| run.id == job);
-        let command = format!("gradlew {}", run.map(|run| run.command.as_str()).unwrap_or_default());
+        let command = run.map_or_else(|| "Gradle".to_owned(), |run| run.command.clone());
         let seconds = elapsed.as_secs();
         match outcome {
             Outcome::Succeeded => format!("{command}: done in {seconds}s"),
@@ -966,6 +998,7 @@ impl App {
         self.modules.list.select(index);
         self.diagnose();
         self.reload_results();
+        self.refresh_runnables();
     }
 
     fn diagnose(&mut self) {

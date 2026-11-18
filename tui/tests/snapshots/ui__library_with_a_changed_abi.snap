@@ -2,7 +2,7 @@
 source: tests/ui.rs
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Doctor   5 Updates   6 Library                                    lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Library                            lvm-tui Consumer"
 "┌ Published ─────┐┌ :core:data (run r for its coordinates) ───────────────────┐┌ Signing and upload ───────────────────┐"
 "│> :core:data    ││POM                        Value                  Source   ││mavenCentralUsername        ~/.gradle  │"
 "│                ││description                Data                   property ││mavenCentralPassword        ~/.gradle  │"
@@ -37,4 +37,4 @@ expression: render(&mut app)
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "└────────────────┘└ c check   u update the dump   p publish to Maven local ────────────────────────────────────────────┘"
-" gradlew :core:data:checkKotlinAbi: failed (exit 1)                                                                     "
+" ./gradlew :core:data:checkKotlinAbi: failed (exit 1)                                                                   "
