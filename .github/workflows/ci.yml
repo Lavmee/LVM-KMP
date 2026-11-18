@@ -40,13 +40,14 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # Blueprint fixture builds resolve dependencies into their own TestKit Gradle home, which setup-gradle doesn't cache.
+      # The fixture builds of all blueprint modules resolve dependencies into one TestKit Gradle home, which
+      # setup-gradle doesn't cache.
       - uses: actions/cache@v6
         with:
           path: |
-            blueprint/*/build/tmp/test/work/.gradle-test-kit/caches/modules-2
-            !blueprint/*/build/tmp/test/work/.gradle-test-kit/caches/modules-2/*.lock
-            !blueprint/*/build/tmp/test/work/.gradle-test-kit/caches/modules-2/gc.properties
+            blueprint/build/fixture-test-kit/caches/modules-2
+            !blueprint/build/fixture-test-kit/caches/modules-2/*.lock
+            !blueprint/build/fixture-test-kit/caches/modules-2/gc.properties
           key: testkit-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', 'blueprint/**/*.gradle.kts') }}
           restore-keys: testkit-${{ runner.os }}-
 

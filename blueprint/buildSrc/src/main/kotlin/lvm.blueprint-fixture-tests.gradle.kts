@@ -19,6 +19,9 @@ tasks.test {
     jvmArgumentProviders.add(
         objects.newInstance<BlueprintFixtureDir>().apply {
             root.fileProvider(blueprintFixtureSources.map { it.destinationDir })
+            // One Gradle user home for the fixtures of every module, so each blueprint build downloads dependencies,
+            // transforms them and compiles fixture scripts once, not once per module. Concurrent daemons share it.
+            testKitDir.set(isolated.rootProject.projectDirectory.dir("build/fixture-test-kit"))
         },
     )
 }
