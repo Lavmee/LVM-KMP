@@ -83,7 +83,7 @@ impl ChangeSet {
 
     /// The current text of [file]: as an earlier edit of this change left it, or as it is on disk.
     pub fn current(&self, root: &Path, file: &Path) -> String {
-        match self.files.get(file) {
+        match self.files.get(&portable(file)) {
             Some(change) => change.after.clone(),
             None => fs::read_to_string(root.join(file)).unwrap_or_default(),
         }
@@ -96,13 +96,15 @@ impl ChangeSet {
         self.set(root, file, after);
     }
 
-    /// Replaces the text of [file].
+    /// Replaces the text of [file], keeping its line endings: a file with CRLF keeps CRLF on every line.
     pub fn set(&mut self, root: &Path, file: &Path, after: String) {
-        let before = match self.files.get(file) {
+        let file = portable(file);
+        let before = match self.files.get(&file) {
             Some(change) => change.before.clone(),
-            None => fs::read_to_string(root.join(file)).unwrap_or_default(),
+            None => fs::read_to_string(root.join(&file)).unwrap_or_default(),
         };
-        self.files.insert(file.to_owned(), FileChange { before, after });
+        let after = if before.contains("\r\n") { after.replace("\r\n", "\n").replace('\n', "\r\n") } else { after };
+        self.files.insert(file, FileChange { before, after });
     }
 
     /// A unified diff of every file, followed by the moves.
@@ -169,6 +171,12 @@ impl ChangeSet {
         remove_empty_directories(root, self.moves.iter().map(|m| m.from.as_path()));
         Ok(())
     }
+}
+
+/// [path] with `/` between its parts, as git and Gradle name files on every OS. Windows takes `/` as well, and a path
+/// joined from a module's directory such as `core/data` would otherwise mix both separators there.
+pub fn portable(path: &Path) -> PathBuf {
+    if cfg!(windows) { PathBuf::from(path.to_string_lossy().replace('\\', "/")) } else { path.to_owned() }
 }
 
 #[cfg(unix)]
@@ -242,6 +250,22 @@ fn remove_empty_directories<'a>(root: &Path, moved: impl Iterator<Item = &'a Pat
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_edit_keeps_crlf_and_names_files_with_slashes() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("core/data")).unwrap();
+        fs::write(dir.path().join("core/data/build.gradle.kts"), "plugins {\r\n}\r\n").unwrap();
+        let file = Path::new("core/data").join("build.gradle.kts");
+        let mut changes = ChangeSet::default();
+
+        changes.edit(dir.path(), &file, &[TextEdit::insert(11, "    id(\"a\")\n")]);
+
+        let (name, change) = changes.files.iter().next().unwrap();
+        assert_eq!(name.to_string_lossy(), "core/data/build.gradle.kts");
+        assert_eq!(change.after, "plugins {\r\n    id(\"a\")\r\n}\r\n");
+        assert!(changes.preview().contains("b/core/data/build.gradle.kts"));
+    }
 
     #[test]
     fn applies_edits_in_any_order() {

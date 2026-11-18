@@ -95,7 +95,7 @@ pub fn flat_layout(project: &Project, module: &Module, changes: &mut ChangeSet) 
         if root.join(&to).exists() || !destinations.insert(to.clone()) {
             bail!("{} would overwrite {}", from.display(), to.display());
         }
-        changes.moves.push(Move { from, to });
+        changes.moves.push(Move { from: crate::edit::portable(&from), to: crate::edit::portable(&to) });
     }
 
     let flat = module.values.iter().find(|row| row.key == "kotlin.flatLayout").and_then(|row| row.value.as_ref());

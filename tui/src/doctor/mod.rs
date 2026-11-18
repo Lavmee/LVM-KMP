@@ -164,7 +164,7 @@ fn finding(rule: &'static str, severity: Severity, message: impl Into<String>) -
 
 impl Finding {
     fn at(mut self, file: impl Into<PathBuf>, line: Option<usize>) -> Self {
-        self.file = Some(file.into());
+        self.file = Some(crate::edit::portable(&file.into()));
         self.line = line;
         self
     }
