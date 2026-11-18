@@ -1,3 +1,10 @@
+public final class tech/annexflow/lvm/decompose/fetcher/AppComponentContextsKt {
+	public static final fun fetcherResultState (Ltech/annexflow/lvm/decompose/AppComponentContext;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+	public static synthetic fun fetcherResultState$default (Ltech/annexflow/lvm/decompose/AppComponentContext;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+	public static final fun fetcherState (Ltech/annexflow/lvm/decompose/AppComponentContext;Ljava/lang/Object;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+	public static synthetic fun fetcherState$default (Ltech/annexflow/lvm/decompose/AppComponentContext;Ljava/lang/Object;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlin/jvm/functions/Function1;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
+}
+
 public final class tech/annexflow/lvm/decompose/fetcher/CoroutineScopeOwnersKt {
 	public static final fun fetcherResultState (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
 	public static synthetic fun fetcherResultState$default (Ltech/annexflow/lvm/decompose/CoroutineScopeOwner;Lcom/github/michaelbull/retry/policy/RetryPolicy;Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ltech/annexflow/lvm/decompose/fetcher/FetcherStateFlow;
@@ -31,6 +38,10 @@ public abstract interface class tech/annexflow/lvm/decompose/fetcher/FetcherStat
 public final class tech/annexflow/lvm/decompose/fetcher/LocalFetcherKt {
 	public static final fun getFetcher (Ltech/annexflow/lvm/decompose/AppComponentContext;)Ltech/annexflow/lvm/decompose/fetcher/Fetcher;
 	public static final fun getLocalFetcher ()Ltech/annexflow/lvm/decompose/ComponentLocal;
+}
+
+public final class tech/annexflow/lvm/decompose/fetcher/LocalFetcherRetryPolicyKt {
+	public static final fun getLocalFetcherRetryPolicy ()Ltech/annexflow/lvm/decompose/ComponentLocal;
 }
 
 public final class tech/annexflow/lvm/decompose/fetcher/ResponseBody {
