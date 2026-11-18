@@ -24,69 +24,104 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Two jobs run side by side: together they take longer than one job's timeout when blueprint changes and its fixture builds can't come from the build cache.
+# Two jobs: blueprint, with its TestKit fixture builds, and the build of every module on every target. Pushes and pull
+# requests from branches of this repository run both on the self-hosted Mac, one after the other. Pull requests from
+# forks run them side by side on GitHub's runners. docs/ci.md describes the self-hosted runner and what keeps it safe.
 jobs:
   blueprint:
-    # macOS, like the build job: the fixture builds configure iOS targets.
-    runs-on: macos-latest
+    # Forks get Linux: the fixture builds configure iOS targets, which Kotlin does on any host, but none compiles or
+    # links for iOS.
+    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
+      # Stops code from a fork on the self-hosted runner even if runs-on above changes.
+      - name: Allow only this repository's code on the self-hosted runner
+        if: runner.environment == 'self-hosted' && !(github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
+        run: |
+          echo "::error::The self-hosted runner runs only pushes and pull requests from branches of this repository."
+          exit 1
+
+      # The self-hosted runner keeps build state in its tool cache, apart from the account it runs as: the build reads
+      # no ~/.gradle/gradle.properties of that account and shares no daemons with it. Checkout cleans the workspace,
+      # so the fixtures keep their sources and Gradle user home there too.
+      - name: Keep build state in the runner's tool cache
+        if: runner.environment == 'self-hosted'
+        run: |
+          echo "GRADLE_USER_HOME=$RUNNER_TOOL_CACHE/lvm-kmp/gradle" >> "$GITHUB_ENV"
+          echo "KONAN_DATA_DIR=$RUNNER_TOOL_CACHE/lvm-kmp/konan" >> "$GITHUB_ENV"
+          echo "LVM_BLUEPRINT_FIXTURE_DIR=$RUNNER_TOOL_CACHE/lvm-kmp/blueprint-fixtures" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: gradle/actions/setup-gradle@v6
-
-      # The fixture builds of all blueprint modules resolve dependencies into one TestKit Gradle home, which
-      # setup-gradle doesn't cache.
-      - uses: actions/cache@v6
+      # The self-hosted runner keeps its Gradle user home, so GitHub's cache would only copy it back and forth.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          path: |
-            blueprint/build/fixture-test-kit/caches/modules-2
-            !blueprint/build/fixture-test-kit/caches/modules-2/*.lock
-            !blueprint/build/fixture-test-kit/caches/modules-2/gc.properties
-          key: testkit-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', 'blueprint/**/*.gradle.kts') }}
-          restore-keys: testkit-${{ runner.os }}-
-
-      - name: Read the Kotlin version
-        id: kotlin
-        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
-
-      # The build job saves the Kotlin/Native toolchain. Two jobs saving the same key at once would warn.
-      - uses: actions/cache/restore@v6
-        with:
-          path: ~/.konan
-          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
+          cache-disabled: ${{ runner.environment == 'self-hosted' }}
 
       - name: Blueprint tests
         run: ./gradlew -p blueprint check
 
+      # The next job on the self-hosted runner starts without this job's daemons, even after a failure or a cancel.
+      # Every daemon of the job, the fixture builds' included, has its classpath in the runner's tool cache. Without
+      # that Gradle user home, for example when the first step failed, the job started no daemons.
+      - name: Stop the Gradle and Kotlin daemons
+        if: always() && runner.environment == 'self-hosted'
+        run: |
+          if [ "$GRADLE_USER_HOME" != "$RUNNER_TOOL_CACHE/lvm-kmp/gradle" ]; then exit 0; fi
+          if [ -x ./gradlew ]; then ./gradlew --stop; fi
+          pkill -f -- "-cp $RUNNER_TOOL_CACHE/lvm-kmp/" || true
+
   build:
-    # macOS: iOS klibs, frameworks and simulator tests need Xcode. The image also ships the Android SDK.
-    runs-on: macos-latest
+    # macOS: iOS klibs, frameworks and simulator tests need Xcode. Forks get GitHub's macOS runners, whose image ships
+    # the Android SDK.
+    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-latest' }}
     timeout-minutes: 45
     steps:
+      # Stops code from a fork on the self-hosted runner even if runs-on above changes.
+      - name: Allow only this repository's code on the self-hosted runner
+        if: runner.environment == 'self-hosted' && !(github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
+        run: |
+          echo "::error::The self-hosted runner runs only pushes and pull requests from branches of this repository."
+          exit 1
+
+      # The self-hosted runner keeps build state in its tool cache, apart from the account it runs as: the build reads
+      # no ~/.gradle/gradle.properties of that account and shares no daemons with it.
+      - name: Keep build state in the runner's tool cache
+        if: runner.environment == 'self-hosted'
+        run: |
+          echo "GRADLE_USER_HOME=$RUNNER_TOOL_CACHE/lvm-kmp/gradle" >> "$GITHUB_ENV"
+          echo "KONAN_DATA_DIR=$RUNNER_TOOL_CACHE/lvm-kmp/konan" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: gradle/actions/setup-gradle@v6
-
-      - name: Read the Kotlin version
-        id: kotlin
-        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
-
-      # The Kotlin/Native toolchain and its dependencies. No restore keys: a new Kotlin version needs a new toolchain anyway.
-      - uses: actions/cache@v6
+      # The self-hosted runner keeps its Gradle user home, so GitHub's cache would only copy it back and forth.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          path: ~/.konan
-          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
+          cache-disabled: ${{ runner.environment == 'self-hosted' }}
 
       - name: Build and test all targets
         run: ./gradlew build
+
+      # The next job on the self-hosted runner starts without this job's daemons, even after a failure or a cancel.
+      # Every daemon of the job has its classpath in the runner's tool cache. Without that Gradle user home, for
+      # example when the first step failed, the job started no daemons.
+      - name: Stop the Gradle and Kotlin daemons
+        if: always() && runner.environment == 'self-hosted'
+        run: |
+          if [ "$GRADLE_USER_HOME" != "$RUNNER_TOOL_CACHE/lvm-kmp/gradle" ]; then exit 0; fi
+          if [ -x ./gradlew ]; then ./gradlew --stop; fi
+          pkill -f -- "-cp $RUNNER_TOOL_CACHE/lvm-kmp/" || true
