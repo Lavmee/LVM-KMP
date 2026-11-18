@@ -60,6 +60,7 @@ fn draw_summary(frame: &mut Frame, app: &App, area: Rect) {
         Line::from(vec![label("Root"), Span::raw(project.root.display().to_string())]),
         Line::from([vec![label("LVM")], lvm.spans].concat()),
         Line::from([vec![label("Reports")], report.spans].concat()),
+        Line::from([vec![label("Doctor")], doctor_summary(app)].concat()),
     ];
     lines.extend(problems);
     frame
@@ -132,4 +133,25 @@ fn draw_modules(frame: &mut Frame, app: &App, area: Rect) {
     let widths =
         [Constraint::Percentage(30), Constraint::Percentage(45), Constraint::Percentage(18), Constraint::Length(5)];
     frame.render_widget(Table::new(rows, widths).header(header).block(Block::bordered().title(title)), area);
+}
+
+fn doctor_summary(app: &App) -> Vec<Span<'static>> {
+    if app.env.is_none() {
+        return vec!["checking the machine...".dim()];
+    }
+    let count = |severity| app.findings.iter().filter(|f| f.severity == severity).count();
+    let (errors, warnings) = (count(crate::doctor::Severity::Error), count(crate::doctor::Severity::Warning));
+    if errors + warnings == 0 {
+        return vec!["no problems".green()];
+    }
+    let mut spans = Vec::new();
+    if errors > 0 {
+        spans.push(format!("{errors} error(s)").red().bold());
+        spans.push(Span::raw("  "));
+    }
+    if warnings > 0 {
+        spans.push(format!("{warnings} warning(s)").yellow());
+    }
+    spans.push(": press 3".dim());
+    spans
 }

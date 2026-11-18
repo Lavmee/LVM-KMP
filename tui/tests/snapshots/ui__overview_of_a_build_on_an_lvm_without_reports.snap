@@ -2,12 +2,12 @@
 source: tests/ui.rs
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules                                                                                 lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Doctor                                                                      lvm-tui Consumer"
 "┌ Build ───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐"
 "│Root      /work/consumer                                                                                              │"
 "│LVM       0.3.2  from settings.gradle.kts                                                                             │"
 "│Reports   needs LVM 0.4.0+: LVM 0.3.2 has no lvmReport, so values come from the build files and may be missing        │"
-"│                                                                                                                      │"
+"│Doctor    checking the machine...                                                                                     │"
 "│                                                                                                                      │"
 "└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘"
 "┌ Toolchain ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐"
@@ -37,4 +37,4 @@ expression: render(&mut app)
 "│                                  ││                                                                                  │"
 "│                                  ││                                                                                  │"
 "└──────────────────────────────────┘└──────────────────────────────────────────────────────────────────────────────────┘"
-" r report   ctrl-p commands   ? keys   q quit                                                                           "
+" r report   3 doctor   ctrl-p commands   ? keys   q quit                                                                "

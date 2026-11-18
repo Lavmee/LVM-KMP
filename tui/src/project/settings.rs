@@ -43,6 +43,8 @@ pub struct PluginPin {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsOptions {
+    /// The line of each option the script sets.
+    pub lines: std::collections::BTreeMap<String, usize>,
     pub catalog: Option<bool>,
     pub catalog_name: Option<String>,
     pub catalog_version: Option<String>,
@@ -129,7 +131,9 @@ fn options(script: &Script, body: std::ops::Range<usize>) -> SettingsOptions {
             continue;
         };
         let literal = script.literal(value.clone());
-        match (statement.chain.join(".").as_str(), literal) {
+        let name = statement.chain.join(".");
+        options.lines.insert(name.clone(), script.line(statement.tokens.start));
+        match (name.as_str(), literal) {
             ("catalog", Some(Literal::Bool(value))) => options.catalog = Some(value),
             ("catalogName", Some(Literal::Str(value))) => options.catalog_name = Some(value),
             ("catalogVersion", Some(Literal::Str(value))) => options.catalog_version = Some(value),

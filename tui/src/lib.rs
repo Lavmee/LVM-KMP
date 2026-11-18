@@ -1,8 +1,12 @@
 //! lvm-tui: a terminal app for Gradle builds that use LVM's convention plugins.
 
 pub mod app;
+pub mod check;
+pub mod doctor;
+pub mod edit;
 pub mod event;
 pub mod gradle;
+pub mod migrate;
 pub mod project;
 pub mod state;
 pub mod ui;

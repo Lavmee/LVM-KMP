@@ -6,6 +6,7 @@ use std::time::Duration;
 
 use ratatui::crossterm::event::{self, Event};
 
+use crate::doctor::Environment;
 use crate::gradle::GradleEvent;
 
 #[derive(Debug, Clone)]
@@ -14,6 +15,8 @@ pub enum Message {
     /// Sent while no input arrives, so spinners move.
     Tick,
     Gradle(GradleEvent),
+    /// What the machine offers, probed in the background at start.
+    Environment(Environment),
 }
 
 impl From<GradleEvent> for Message {
@@ -23,6 +26,13 @@ impl From<GradleEvent> for Message {
 }
 
 const TICK: Duration = Duration::from_millis(200);
+
+/// Probes the machine on its own thread, since it runs a few commands.
+pub fn spawn_environment(root: std::path::PathBuf, sender: Sender<Message>) {
+    thread::spawn(move || {
+        let _ = sender.send(Message::Environment(Environment::probe(&root)));
+    });
+}
 
 /// Reads terminal input on its own thread until the receiver is gone.
 pub fn spawn_input(sender: Sender<Message>) {

@@ -1,29 +1,39 @@
 //! The app's state and how it changes: every [Message] goes through [App::update], and the UI only draws the state.
 
 use std::collections::VecDeque;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::widgets::{ListState, TableState};
+use serde_json::Value;
 
+use crate::doctor::{self, Environment, Finding, Fix};
+use crate::edit::ChangeSet;
 use crate::event::Message;
 use crate::gradle::{GradleEvent, JobId, Outcome, Purpose, Runner};
+use crate::migrate;
 use crate::project::Project;
+use crate::project::model::{Module, ValueRow};
+use crate::project::report::Source;
+use crate::project::values_edit::{self, Layer};
 use crate::state::State;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
     Overview,
     Modules,
+    Doctor,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 2] = [Tab::Overview, Tab::Modules];
+    pub const ALL: [Tab; 3] = [Tab::Overview, Tab::Modules, Tab::Doctor];
 
     pub fn title(self) -> &'static str {
         match self {
             Self::Overview => "Overview",
             Self::Modules => "Modules",
+            Self::Doctor => "Doctor",
         }
     }
 
@@ -31,6 +41,7 @@ impl Tab {
         match self {
             Self::Overview => "overview",
             Self::Modules => "modules",
+            Self::Doctor => "doctor",
         }
     }
 }
@@ -43,6 +54,12 @@ pub enum Action {
     Cancel,
     ShowOverview,
     ShowModules,
+    ShowDoctor,
+    EditValue,
+    MigrateModule,
+    FixFinding,
+    FixAll,
+    OpenFile,
     ToggleAffected,
     FilterValues,
     Help,
@@ -50,12 +67,18 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 9] = [
+    pub const ALL: [Action; 15] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
         Action::ShowOverview,
         Action::ShowModules,
+        Action::ShowDoctor,
+        Action::EditValue,
+        Action::MigrateModule,
+        Action::FixFinding,
+        Action::FixAll,
+        Action::OpenFile,
         Action::ToggleAffected,
         Action::FilterValues,
         Action::Help,
@@ -69,6 +92,12 @@ impl Action {
             Self::Cancel => "Cancel the running build",
             Self::ShowOverview => "Show the overview",
             Self::ShowModules => "Show the modules",
+            Self::ShowDoctor => "Show the doctor's findings",
+            Self::EditValue => "Edit the selected value",
+            Self::MigrateModule => "Move the module's sources to the flat layout",
+            Self::FixFinding => "Fix the selected finding",
+            Self::FixAll => "Fix every finding that has a fix",
+            Self::OpenFile => "Open the file in $EDITOR",
             Self::ToggleAffected => "Show dependencies or affected modules",
             Self::FilterValues => "Filter the values of the module",
             Self::Help => "Show the keys",
@@ -83,6 +112,12 @@ impl Action {
             Self::Cancel => "ctrl-c",
             Self::ShowOverview => "1",
             Self::ShowModules => "2",
+            Self::ShowDoctor => "3",
+            Self::EditValue => "e",
+            Self::MigrateModule => "m",
+            Self::FixFinding => "f",
+            Self::FixAll => "F",
+            Self::OpenFile => "o",
             Self::ToggleAffected => "a",
             Self::FilterValues => "/",
             Self::Help => "?",
@@ -126,6 +161,33 @@ impl Palette {
     }
 }
 
+/// A window over the tabs that takes the keys until it closes.
+pub enum Dialog {
+    /// A change to confirm, shown as a diff.
+    Confirm { title: String, changes: ChangeSet, preview: Vec<String>, scroll: usize, then: AfterApply },
+    /// A value of a module to set in one of its layers.
+    Edit(EditDialog),
+    /// Whether to run lvmReport and build after a change that moved sources.
+    OfferBuild,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AfterApply {
+    Nothing,
+    OfferBuild,
+}
+
+pub struct EditDialog {
+    pub key: String,
+    pub module: String,
+    pub value: Option<Value>,
+    pub source: Source,
+    pub layers: Vec<Layer>,
+    pub layer: usize,
+    pub input: String,
+    pub error: Option<String>,
+}
+
 /// A build that runs or ran last.
 pub struct JobView {
     pub id: JobId,
@@ -135,16 +197,29 @@ pub struct JobView {
     pub outcome: Option<(Outcome, Duration)>,
 }
 
+/// A file to open in the user's editor, which the main loop does with the terminal handed over.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EditorRequest {
+    pub file: PathBuf,
+    pub line: Option<usize>,
+}
+
 const KEPT_LINES: usize = 500;
 
 pub struct App {
     pub project: Project,
     pub tab: Tab,
     pub modules: ModulesView,
+    pub doctor: ListState,
+    /// What the machine offers; the doctor waits for it, since probing takes a moment.
+    pub env: Option<Environment>,
+    pub findings: Vec<Finding>,
+    pub dialog: Option<Dialog>,
     pub palette: Option<Palette>,
     pub help: bool,
     pub status: Option<String>,
     pub job: Option<JobView>,
+    pub editor: Option<EditorRequest>,
     pub ticks: usize,
     pub quit: bool,
     runner: Runner<Message>,
@@ -170,10 +245,15 @@ impl App {
             project,
             tab,
             modules,
+            doctor: ListState::default(),
+            env: None,
+            findings: Vec::new(),
+            dialog: None,
             palette: None,
             help: false,
             status: None,
             job: None,
+            editor: None,
             ticks: 0,
             quit: false,
             runner,
@@ -184,8 +264,12 @@ impl App {
         State { tab: Some(self.tab.id().to_owned()), module: self.selected_module().map(|m| m.path.clone()) }
     }
 
-    pub fn selected_module(&self) -> Option<&crate::project::model::Module> {
+    pub fn selected_module(&self) -> Option<&Module> {
         self.modules.list.selected().and_then(|i| self.project.modules.get(i))
+    }
+
+    pub fn selected_finding(&self) -> Option<&Finding> {
+        self.doctor.selected().and_then(|i| self.findings.get(i))
     }
 
     pub fn is_running(&self) -> bool {
@@ -198,6 +282,10 @@ impl App {
             Message::Input(Event::Key(key)) if key.kind != KeyEventKind::Release => self.on_key(key),
             Message::Input(_) => {}
             Message::Gradle(event) => self.on_gradle(event),
+            Message::Environment(env) => {
+                self.env = Some(env);
+                self.diagnose();
+            }
         }
     }
 
@@ -216,6 +304,12 @@ impl App {
             }
             Action::ShowOverview => self.tab = Tab::Overview,
             Action::ShowModules => self.tab = Tab::Modules,
+            Action::ShowDoctor => self.tab = Tab::Doctor,
+            Action::EditValue => self.edit_value(),
+            Action::MigrateModule => self.migrate_module(),
+            Action::FixFinding => self.fix_selected(),
+            Action::FixAll => self.fix_all(),
+            Action::OpenFile => self.open_file(),
             Action::ToggleAffected => {
                 self.tab = Tab::Modules;
                 self.modules.pane = match self.modules.pane {
@@ -243,6 +337,10 @@ impl App {
             }
             return;
         }
+        if self.dialog.is_some() {
+            self.on_dialog_key(key);
+            return;
+        }
         if self.palette.is_some() {
             self.on_palette_key(key);
             return;
@@ -267,10 +365,14 @@ impl App {
             KeyCode::Char('R') => self.perform(Action::Reload),
             KeyCode::Char('1') => self.perform(Action::ShowOverview),
             KeyCode::Char('2') => self.perform(Action::ShowModules),
+            KeyCode::Char('3') => self.perform(Action::ShowDoctor),
             KeyCode::Tab | KeyCode::BackTab => {
-                self.tab = if self.tab == Tab::Overview { Tab::Modules } else { Tab::Overview };
+                let position = Tab::ALL.iter().position(|tab| *tab == self.tab).unwrap_or(0);
+                let step = if key.code == KeyCode::Tab { 1 } else { Tab::ALL.len() - 1 };
+                self.tab = Tab::ALL[(position + step) % Tab::ALL.len()];
             }
             _ if self.tab == Tab::Modules => self.on_modules_key(key),
+            _ if self.tab == Tab::Doctor => self.on_doctor_key(key),
             _ => {}
         }
     }
@@ -279,8 +381,13 @@ impl App {
         match key.code {
             KeyCode::Char('/') => self.perform(Action::FilterValues),
             KeyCode::Char('a') => self.perform(Action::ToggleAffected),
+            KeyCode::Char('e') => self.perform(Action::EditValue),
+            KeyCode::Char('m') => self.perform(Action::MigrateModule),
+            KeyCode::Char('o') => self.perform(Action::OpenFile),
             KeyCode::Left | KeyCode::Char('h') => self.modules.focus = Focus::List,
-            KeyCode::Right | KeyCode::Char('l') | KeyCode::Enter => self.modules.focus = Focus::Values,
+            KeyCode::Right | KeyCode::Char('l') => self.modules.focus = Focus::Values,
+            KeyCode::Enter if self.modules.focus == Focus::Values => self.perform(Action::EditValue),
+            KeyCode::Enter => self.modules.focus = Focus::Values,
             KeyCode::Esc if !self.modules.filter.is_empty() => self.modules.filter.clear(),
             KeyCode::Down | KeyCode::Char('j') => self.move_selection(1),
             KeyCode::Up | KeyCode::Char('k') => self.move_selection(-1),
@@ -288,6 +395,22 @@ impl App {
             KeyCode::PageUp => self.move_selection(-10),
             KeyCode::Home | KeyCode::Char('g') => self.move_selection(isize::MIN / 2),
             KeyCode::End | KeyCode::Char('G') => self.move_selection(isize::MAX / 2),
+            _ => {}
+        }
+    }
+
+    fn on_doctor_key(&mut self, key: KeyEvent) {
+        let count = self.findings.len();
+        match key.code {
+            KeyCode::Char('f') | KeyCode::Enter => self.perform(Action::FixFinding),
+            KeyCode::Char('F') => self.perform(Action::FixAll),
+            KeyCode::Char('o') => self.perform(Action::OpenFile),
+            KeyCode::Down | KeyCode::Char('j') if count > 0 => {
+                self.doctor.select(Some(self.doctor.selected().map_or(0, |i| (i + 1).min(count - 1))));
+            }
+            KeyCode::Up | KeyCode::Char('k') if count > 0 => {
+                self.doctor.select(Some(self.doctor.selected().map_or(0, |i| i.saturating_sub(1))));
+            }
             _ => {}
         }
     }
@@ -352,8 +475,51 @@ impl App {
         }
     }
 
+    fn on_dialog_key(&mut self, key: KeyEvent) {
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+        match self.dialog.as_mut() {
+            Some(Dialog::Confirm { scroll, preview, .. }) => match key.code {
+                KeyCode::Char('y') | KeyCode::Enter => self.apply_dialog(),
+                KeyCode::Char('n') | KeyCode::Esc | KeyCode::Char('q') => self.dialog = None,
+                KeyCode::Down | KeyCode::Char('j') => *scroll = (*scroll + 1).min(preview.len().saturating_sub(1)),
+                KeyCode::Up | KeyCode::Char('k') => *scroll = scroll.saturating_sub(1),
+                KeyCode::PageDown | KeyCode::Char(' ') => *scroll = (*scroll + 20).min(preview.len().saturating_sub(1)),
+                KeyCode::PageUp => *scroll = scroll.saturating_sub(20),
+                _ => {}
+            },
+            Some(Dialog::Edit(edit)) => match key.code {
+                KeyCode::Esc => self.dialog = None,
+                KeyCode::Tab | KeyCode::BackTab => {
+                    edit.layer = (edit.layer + 1) % edit.layers.len();
+                    edit.error = None;
+                }
+                KeyCode::Char('d') if ctrl => self.confirm_edit(true),
+                KeyCode::Enter => self.confirm_edit(false),
+                KeyCode::Backspace => {
+                    edit.input.pop();
+                    edit.error = None;
+                }
+                KeyCode::Char(c) if !ctrl => {
+                    edit.input.push(c);
+                    edit.error = None;
+                }
+                _ => {}
+            },
+            Some(Dialog::OfferBuild) => match key.code {
+                KeyCode::Char('y') | KeyCode::Enter => {
+                    self.dialog = None;
+                    self.run_report();
+                    self.runner.submit(vec!["build".to_owned()], Purpose::Task);
+                }
+                KeyCode::Char('n') | KeyCode::Esc | KeyCode::Char('q') => self.dialog = None,
+                _ => {}
+            },
+            None => {}
+        }
+    }
+
     /// The values of the selected module that the filter keeps.
-    pub fn visible_values(&self) -> Vec<&crate::project::model::ValueRow> {
+    pub fn visible_values(&self) -> Vec<&ValueRow> {
         let filter = self.modules.filter.to_lowercase();
         self.selected_module()
             .map(|module| {
@@ -368,6 +534,151 @@ impl App {
                     .collect()
             })
             .unwrap_or_default()
+    }
+
+    fn edit_value(&mut self) {
+        let (Some(module), Some(row)) = (
+            self.selected_module(),
+            self.modules.values.selected().and_then(|i| self.visible_values().get(i).copied()),
+        ) else {
+            self.status = Some("Select a value of a module first: 2, then l and j".to_owned());
+            return;
+        };
+        let layers = values_edit::layers(&row.key);
+        if layers.is_empty() {
+            self.status = Some(format!("{} is not a value lvm-tui can edit", row.key));
+            return;
+        }
+        // A module's own value is edited where it is; any other one most often belongs to the module too.
+        let layer = match row.source {
+            Source::Property => Layer::Properties,
+            Source::Settings => Layer::Settings,
+            Source::Module | Source::Default => Layer::Module,
+        };
+        let edit = EditDialog {
+            key: row.key.clone(),
+            module: module.path.clone(),
+            value: row.value.clone(),
+            source: row.source,
+            layer: layers.iter().position(|l| *l == layer).unwrap_or(0),
+            layers,
+            input: values_edit::input_text(row.value.as_ref()),
+            error: None,
+        };
+        self.dialog = Some(Dialog::Edit(edit));
+    }
+
+    fn confirm_edit(&mut self, remove: bool) {
+        let Some(Dialog::Edit(edit)) = &mut self.dialog else { return };
+        let layer = edit.layers[edit.layer];
+        let value = if remove {
+            None
+        } else {
+            match values_edit::parse_input(&edit.key, &edit.input) {
+                Ok(value) => Some(value),
+                Err(error) => {
+                    edit.error = Some(error);
+                    return;
+                }
+            }
+        };
+        let key = edit.key.clone();
+        let module = self.project.module(&edit.module).cloned();
+        match values_edit::change(&self.project, module.as_ref(), &key, layer, value.as_ref()) {
+            Ok(changes) if changes.is_empty() => {
+                if let Some(Dialog::Edit(edit)) = &mut self.dialog {
+                    edit.error = Some(format!("{} doesn't set {key}: nothing to change", layer.label()));
+                }
+            }
+            Ok(changes) => {
+                let verb = if remove { "Remove" } else { "Set" };
+                self.confirm(format!("{verb} {key} in {}", layer.label()), changes, AfterApply::Nothing);
+            }
+            Err(error) => {
+                if let Some(Dialog::Edit(edit)) = &mut self.dialog {
+                    edit.error = Some(format!("{error:#}"));
+                }
+            }
+        }
+    }
+
+    fn migrate_module(&mut self) {
+        let Some(module) = self.selected_module().cloned() else { return };
+        let mut changes = ChangeSet::default();
+        match migrate::flat_layout(&self.project, &module, &mut changes) {
+            Ok(()) => self.confirm(format!("Move {} to the flat layout", module.path), changes, AfterApply::OfferBuild),
+            Err(error) => self.status = Some(format!("{error:#}")),
+        }
+    }
+
+    fn fix_selected(&mut self) {
+        let Some(finding) = self.selected_finding().cloned() else { return };
+        let Some(fix) = &finding.fix else {
+            self.status = Some(format!("[{}] has no automatic fix", finding.rule));
+            return;
+        };
+        self.fix(vec![fix.clone()], format!("Fix: {}", fix.label()));
+    }
+
+    fn fix_all(&mut self) {
+        let fixes: Vec<Fix> = self.findings.iter().filter_map(|f| f.fix.clone()).collect();
+        if fixes.is_empty() {
+            self.status = Some("No finding has an automatic fix".to_owned());
+            return;
+        }
+        let title = format!("Fix {} finding(s)", fixes.len());
+        self.fix(fixes, title);
+    }
+
+    fn fix(&mut self, fixes: Vec<Fix>, title: String) {
+        let mut changes = ChangeSet::default();
+        for fix in &fixes {
+            if let Err(error) = fix.apply(&self.project, &mut changes) {
+                self.status = Some(format!("{error:#}"));
+                return;
+            }
+        }
+        let moves_sources = fixes.iter().any(|fix| matches!(fix, Fix::MigrateFlatLayout { .. }));
+        self.confirm(title, changes, if moves_sources { AfterApply::OfferBuild } else { AfterApply::Nothing });
+    }
+
+    fn confirm(&mut self, title: String, changes: ChangeSet, then: AfterApply) {
+        let preview = changes.preview().lines().map(str::to_owned).collect();
+        self.dialog = Some(Dialog::Confirm { title, changes, preview, scroll: 0, then });
+    }
+
+    fn apply_dialog(&mut self) {
+        let Some(Dialog::Confirm { changes, then, .. }) = self.dialog.take() else { return };
+        match changes.apply(&self.project.root) {
+            Ok(()) => {
+                let files = changes.files.values().filter(|c| c.before != c.after).count();
+                self.status = Some(format!("Changed {files} file(s) and moved {} file(s)", changes.moves.len()));
+                if let Some(env) = &mut self.env {
+                    env.recheck_git(&self.project.root);
+                }
+                self.reload();
+                if then == AfterApply::OfferBuild {
+                    self.dialog = Some(Dialog::OfferBuild);
+                }
+            }
+            Err(error) => self.status = Some(format!("Could not apply the change: {error:#}")),
+        }
+    }
+
+    fn open_file(&mut self) {
+        let request = match self.tab {
+            Tab::Doctor => self.selected_finding().and_then(|f| {
+                let file = f.file.clone().or_else(|| self.project.module(f.module.as_deref()?)?.build_file.clone())?;
+                Some(EditorRequest { file: self.project.root.join(file), line: f.line })
+            }),
+            _ => {
+                self.selected_module().and_then(|m| m.build_file.clone()).map(|file| EditorRequest { file, line: None })
+            }
+        };
+        match request {
+            Some(request) => self.editor = Some(request),
+            None => self.status = Some("No file to open".to_owned()),
+        }
     }
 
     fn run_report(&mut self) {
@@ -444,6 +755,14 @@ impl App {
             .is_empty())
         .then_some(0));
         self.modules.list.select(index);
+        self.diagnose();
+    }
+
+    fn diagnose(&mut self) {
+        let Some(env) = &self.env else { return };
+        self.findings = doctor::diagnose(&self.project, env);
+        let selected = self.doctor.selected().map(|i| i.min(self.findings.len().saturating_sub(1)));
+        self.doctor.select(if self.findings.is_empty() { None } else { selected.or(Some(0)) });
     }
 }
 

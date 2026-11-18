@@ -28,6 +28,11 @@ const LVM_GROUP: &str = "tech.annexflow.lvm";
 #[serde(rename_all = "camelCase")]
 pub struct ModuleScript {
     pub file: PathBuf,
+    /// The script's text, for checks that look for a dependency by name.
+    #[serde(skip)]
+    pub source: String,
+    /// The native `android { namespace = ... }` of AGP, which wins over `lvm { }`.
+    pub native_namespace: bool,
     pub plugins: Vec<PluginRef>,
     pub group: Option<String>,
     pub targets: ScriptTargets,
@@ -75,7 +80,7 @@ impl ModuleScript {
 
     pub fn parse(source: &str) -> Self {
         let script = Script::parse(source);
-        let mut module = Self::default();
+        let mut module = Self { source: source.to_owned(), ..Self::default() };
         for statement in script.statements(script.all()) {
             match (statement.chain.join(".").as_str(), &statement.form) {
                 ("plugins", Form::Block { body }) => module.plugins = plugins(&script, body.clone()),
@@ -83,6 +88,12 @@ impl ModuleScript {
                     if let Some(Literal::Str(group)) = script.literal(value.clone()) {
                         module.group = Some(group);
                     }
+                }
+                ("android", Form::Block { body }) => {
+                    module.native_namespace = script
+                        .statements(body.clone())
+                        .iter()
+                        .any(|s| s.chain == ["namespace"] && matches!(s.form, Form::Assign { .. }));
                 }
                 ("lvm", Form::Block { body }) => {
                     module.values = read_values(&script, body.clone(), &[]);

@@ -1,11 +1,12 @@
 //! Renders the app on the consumer fixture and compares the screens with snapshots.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::mpsc;
 
 use insta::assert_snapshot;
-use lvm_tui::app::{App, Tab};
+use lvm_tui::app::{App, Dialog, Tab};
+use lvm_tui::doctor::Environment;
 use lvm_tui::event::Message;
 use lvm_tui::gradle::Runner;
 use lvm_tui::project::Project;
@@ -36,17 +37,26 @@ fn copy(from: &Path, to: &Path) {
 }
 
 fn app(root: &Path) -> App {
-    let mut project = Project::load(root);
-    // The temporary directory differs on every run; snapshots show a fixed one.
-    project.root = PathBuf::from("/work/consumer");
     let (sender, _) = mpsc::channel();
-    App::new(project, Runner::new(root, sender), &State::default())
+    App::new(Project::load(root), Runner::new(root, sender), &State::default())
 }
 
+/// The screen, with the temporary directory shown as `/work/consumer` so snapshots match on every machine.
 fn render(app: &mut App) -> String {
     let mut terminal = Terminal::new(TestBackend::new(120, 36)).unwrap();
     terminal.draw(|frame| ui::draw(frame, app)).unwrap();
-    terminal.backend().to_string()
+    let root = app.project.root.display().to_string();
+    terminal.backend().to_string().lines().map(|line| fixed_root(line, &root)).collect::<Vec<_>>().join("\n")
+}
+
+/// Replaces [root] in [line], keeping the text after it where it was.
+fn fixed_root(line: &str, root: &str) -> String {
+    const SHOWN: &str = "/work/consumer";
+    let Some(start) = line.find(root) else { return line.to_owned() };
+    let rest = &line[start + root.len()..];
+    let spaces = rest.len() - rest.trim_start_matches(' ').len();
+    let padding = (spaces + root.chars().count()).saturating_sub(SHOWN.len());
+    format!("{}{SHOWN}{}{}", &line[..start], " ".repeat(padding), rest.trim_start_matches(' '))
 }
 
 fn press(app: &mut App, keys: &str) {
@@ -148,4 +158,81 @@ fn the_state_remembers_the_tab_and_module() {
     let restored = App::new(Project::load(dir.path()), Runner::new(dir.path(), sender), &state);
     assert_eq!(restored.tab, Tab::Modules);
     assert_eq!(restored.selected_module().map(|m| m.path.as_str()), Some(":core:data"));
+}
+
+fn with_environment(app: &mut App, root: &Path) {
+    let env = Environment {
+        os: "macos".into(),
+        java: Some(21),
+        android_sdk: Some(root.to_owned()),
+        xcode: Some(true),
+        local_properties_tracked: false,
+    };
+    app.update(Message::Environment(env));
+}
+
+#[test]
+fn the_doctor_fixes_a_finding_after_showing_the_change() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    with_environment(&mut app, dir.path());
+    press(&mut app, "3");
+    assert_snapshot!("doctor_with_a_finding", render(&mut app));
+
+    press(&mut app, "f");
+    assert!(matches!(app.dialog, Some(Dialog::Confirm { .. })));
+    assert_snapshot!("doctor_confirms_the_move", render(&mut app));
+
+    press(&mut app, "y");
+    assert!(matches!(app.dialog, Some(Dialog::OfferBuild)));
+    press(&mut app, "n");
+    assert!(dir.path().join("core/data/src/Repository.kt").is_file());
+    assert!(app.findings.is_empty());
+}
+
+#[test]
+fn editing_a_value_writes_it_to_the_chosen_layer() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    press(&mut app, "2jj/minSdk\nl");
+    press(&mut app, "j");
+    press(&mut app, "e");
+    assert_snapshot!("edit_dialog", render(&mut app));
+    let Some(Dialog::Edit(edit)) = &app.dialog else { panic!("no edit dialog") };
+    assert_eq!(edit.key, "android.minSdk");
+
+    // The value comes from the settings script, so that is where it is edited first.
+    app.update(Message::Input(Event::Key(KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE))));
+    app.update(Message::Input(Event::Key(KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE))));
+    press(&mut app, "x\n");
+    let Some(Dialog::Edit(edit)) = &app.dialog else { panic!("the dialog closed on an invalid value") };
+    assert_eq!(edit.error.as_deref(), Some("lvm.android.minSdk must be an integer, but was 'x'"));
+
+    app.update(Message::Input(Event::Key(KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE))));
+    press(&mut app, "28\n");
+    assert!(matches!(app.dialog, Some(Dialog::Confirm { .. })));
+    press(&mut app, "y");
+    let settings = fs::read_to_string(dir.path().join("settings.gradle.kts")).unwrap();
+    assert!(settings.contains("android { minSdk = 28 }"), "{settings}");
+    let shared = app.project.module(":shared").unwrap();
+    let min_sdk = shared.values.iter().find(|row| row.key == "android.minSdk").unwrap();
+    assert_eq!(min_sdk.value, Some(28.into()));
+}
+
+#[test]
+fn a_module_moves_to_the_flat_layout_from_the_modules_tab() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    press(&mut app, "2jm");
+    let Some(Dialog::Confirm { preview, .. }) = &app.dialog else { panic!("no confirmation") };
+    assert!(
+        preview.contains(
+            &"move core/data/src/commonMain/kotlin/com/example/data/Repository.kt -> core/data/src/Repository.kt"
+                .to_owned()
+        ),
+        "{preview:?}"
+    );
+    press(&mut app, "n");
+    assert!(app.dialog.is_none());
+    assert!(dir.path().join("core/data/src/commonMain/kotlin/com/example/data/Repository.kt").is_file());
 }

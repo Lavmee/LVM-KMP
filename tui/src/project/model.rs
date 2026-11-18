@@ -48,6 +48,9 @@ pub struct Project {
     pub settings: Option<SettingsScript>,
     #[serde(skip)]
     pub properties: Properties,
+    /// The root project's build script.
+    #[serde(skip)]
+    pub root_script: Option<ModuleScript>,
 }
 
 /// Which LVM the build uses.
@@ -132,6 +135,9 @@ pub struct Module {
     pub tasks: Vec<String>,
     pub publication: Option<Publication>,
     pub origin: Origin,
+    /// The module's build script as lvm-tui read it, also where a report describes the module.
+    #[serde(skip)]
+    pub script: Option<ModuleScript>,
 }
 
 impl Module {
@@ -206,6 +212,7 @@ impl Project {
             reports,
             settings,
             properties,
+            root_script,
         }
     }
 
@@ -302,10 +309,12 @@ fn from_report(root: &Path, report: &ModuleReport) -> Module {
             .collect()
     };
     let dir = root.join(&report.project_dir);
+    let build_file = build_file(&dir);
     Module {
         path: report.path.clone(),
         dir: report.project_dir.clone(),
-        build_file: build_file(&dir),
+        script: build_file.as_deref().and_then(ModuleScript::read),
+        build_file,
         plugins: report.plugins.clone(),
         targets,
         framework,
@@ -377,6 +386,7 @@ fn from_files(root: &Path, path: &str, context: &FileContext) -> Module {
         tasks: Vec::new(),
         publication: None,
         origin: Origin::Files,
+        script: Some(script),
     }
 }
 

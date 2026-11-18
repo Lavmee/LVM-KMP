@@ -1,5 +1,7 @@
 //! Draws the app's state. Nothing here changes it, except the scroll positions that ratatui's stateful widgets keep.
 
+mod dialog;
+mod doctor;
 mod modules;
 mod overview;
 
@@ -25,6 +27,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     match app.tab {
         Tab::Overview => overview::draw(frame, app, body),
         Tab::Modules => modules::draw(frame, app, body),
+        Tab::Doctor => doctor::draw(frame, app, body),
     }
     draw_status(frame, app, status);
     if app.help {
@@ -32,6 +35,9 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     }
     if app.palette.is_some() {
         draw_palette(frame, app);
+    }
+    if app.dialog.is_some() {
+        dialog::draw(frame, app);
     }
 }
 
@@ -68,7 +74,12 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
                 };
                 spans.push(Span::styled(format!(" {status}"), style));
             } else {
-                spans.push(" r report   ctrl-p commands   ? keys   q quit".dim());
+                let hint = match app.tab {
+                    Tab::Overview => " r report   3 doctor   ctrl-p commands   ? keys   q quit",
+                    Tab::Modules => " e edit value   m flat layout   o open   / filter   a affected   ? keys",
+                    Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
+                };
+                spans.push(hint.dim());
             }
         }
     }
@@ -77,21 +88,25 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_help(frame: &mut Frame) {
     let rows: Vec<Line> = [
-        ("1 2, tab", "switch tabs"),
+        ("1 2 3, tab", "switch tabs"),
         ("r", "run lvmReport, then read the reports"),
         ("R", "read the build files again"),
         ("ctrl-p, :", "command palette"),
         ("j k, arrows", "move in the list or the values"),
-        ("h l, enter", "move between the list and the values"),
+        ("h l", "move between the list and the values"),
+        ("e, enter", "edit the selected value"),
         ("/", "filter the values; esc clears the filter"),
         ("a", "dependencies or affected modules"),
+        ("m", "move the module's sources to the flat layout"),
+        ("f, F", "fix the selected finding, or all of them"),
+        ("o", "open the file in $EDITOR"),
         ("ctrl-c", "cancel the running build, or quit"),
         ("q", "quit"),
     ]
     .into_iter()
     .map(|(key, text)| Line::from(vec![Span::raw(format!("{key:>12}  ")).bold(), Span::raw(text)]))
     .collect();
-    let area = centered(frame.area(), 60, rows.len() as u16 + 2);
+    let area = centered(frame.area(), 64, rows.len() as u16 + 2);
     frame.render_widget(Clear, area);
     frame.render_widget(Paragraph::new(rows).block(Block::bordered().title(" Keys ")), area);
 }
@@ -116,7 +131,7 @@ fn draw_palette(frame: &mut Frame, app: &App) {
     frame.render_stateful_widget(List::new(items).highlight_style(Style::new().reversed()), list, &mut state);
 }
 
-fn centered(area: Rect, width: u16, height: u16) -> Rect {
+pub(crate) fn centered(area: Rect, width: u16, height: u16) -> Rect {
     let [row] = Layout::vertical([Constraint::Length(height)]).flex(Flex::Center).areas(area);
     let [cell] = Layout::horizontal([Constraint::Length(width.min(area.width))]).flex(Flex::Center).areas(row);
     cell
