@@ -1,5 +1,7 @@
 // Tests that run blueprint plugins in TestKit fixture builds.
 // Fixtures build blueprint from a copy of its sources, so their nested builds never write into this build's outputs.
+// Every module has a copy of its own: the test tasks of several modules run at once, and nested builds of one copy
+// would compile into the same outputs at the same time.
 
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
