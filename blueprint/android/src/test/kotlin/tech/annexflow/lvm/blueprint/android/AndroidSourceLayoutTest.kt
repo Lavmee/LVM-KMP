@@ -56,6 +56,27 @@ class AndroidSourceLayoutTest {
     }
 
     @Test
+    fun `the flat layout compiles Java sources that Kotlin calls`() {
+        assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
+        val fixture = applicationFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        dir.resolve("app/src/main/kotlin").deleteRecursively()
+        fixture.file(
+            "app/src/NativeMarkdown.java",
+            "public class NativeMarkdown { public static String render(String text) { return \"<h1>\" + text + \"</h1>\"; } }",
+        )
+        fixture.file("app/src/Markdown.kt", "class Markdown { fun render(text: String) = NativeMarkdown.render(text) }")
+        // Kotlin compiles against the Java file either way; without javac, the test fails with NoClassDefFoundError.
+        fixture.file(
+            "app/test/MarkdownTest.kt",
+            "class MarkdownTest { @kotlin.test.Test fun renders() { kotlin.test.assertEquals(\"<h1>lvm</h1>\", Markdown().render(\"lvm\")) } }",
+        )
+
+        fixture.build(":app:testDebugUnitTest")
+
+        assertTrue(dir.resolve("app/build/test-results/testDebugUnitTest/TEST-MarkdownTest.xml").isFile)
+    }
+
+    @Test
     fun `the flat layout fails while conventional source directories remain`() {
         assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
         val fixture = applicationFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
