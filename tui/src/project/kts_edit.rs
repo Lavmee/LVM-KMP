@@ -77,6 +77,11 @@ pub fn add_statement(source: &str, blocks: &[&str], statement: &str) -> TextEdit
     insert(&script, body, &Nested { blocks: &blocks[found..], statement: statement.to_owned() })
 }
 
+/// Whether the script has every block of [blocks], nested in that order.
+pub fn has_blocks(source: &str, blocks: &[&str]) -> bool {
+    find_blocks(&Script::parse(source), blocks).0 == blocks.len()
+}
+
 /// A value as Kotlin code: a string literal, a number, a boolean or `listOf(...)`.
 pub fn kotlin_literal(value: &Value) -> String {
     match value {
@@ -107,9 +112,10 @@ fn find_blocks(script: &Script, blocks: &[&str]) -> (usize, Option<Range<usize>>
     let mut body: Option<Range<usize>> = None;
     for (index, name) in blocks.iter().enumerate() {
         let within = body.clone().unwrap_or_else(|| script.all());
+        // A name may be dotted, as in `sourceSets.commonMain.dependencies`.
         let next = script.statements(within).into_iter().find_map(|statement| match statement.form {
-            Form::Block { body } if statement.chain == [*name] => Some(body),
-            Form::Call { lambda: Some(body), .. } if statement.chain == [*name] => Some(body),
+            Form::Block { body } if statement.chain.join(".") == *name => Some(body),
+            Form::Call { lambda: Some(body), .. } if statement.chain.join(".") == *name => Some(body),
             _ => None,
         });
         match next {
@@ -252,6 +258,21 @@ mod tests {
         assert_eq!(
             set(source, &["lvm", "publish", "license"], "name", "\"MIT\""),
             "plugins {\n    id(\"x\")\n}\n\nlvm {\n    publish {\n        license {\n            name = \"MIT\"\n        }\n    }\n}\n"
+        );
+    }
+
+    #[test]
+    fn finds_and_creates_dotted_blocks() {
+        let source = "kotlin {\n    sourceSets.commonMain.dependencies {\n        api(projects.core)\n    }\n}\n";
+        let edit = add_statement(source, &["kotlin", "sourceSets.commonMain.dependencies"], "implementation(x)");
+        assert_eq!(
+            apply_edits(source, &[edit]),
+            "kotlin {\n    sourceSets.commonMain.dependencies {\n        api(projects.core)\n        implementation(x)\n    }\n}\n"
+        );
+        let edit = add_statement(source, &["kotlin", "sourceSets.jvmMain.dependencies"], "implementation(y)");
+        assert!(
+            apply_edits(source, &[edit])
+                .contains("    sourceSets.jvmMain.dependencies {\n        implementation(y)\n    }\n}")
         );
     }
 

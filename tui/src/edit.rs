@@ -52,6 +52,11 @@ pub struct ChangeSet {
     pub moves: Vec<Move>,
     /// Files to remove from git's index while keeping them on disk.
     pub untrack: Vec<PathBuf>,
+    /// New binary files, such as the Gradle wrapper's jar, by path.
+    #[serde(skip)]
+    pub binaries: BTreeMap<PathBuf, Vec<u8>>,
+    /// Files to make executable, such as `gradlew`.
+    pub executables: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -73,6 +78,7 @@ impl ChangeSet {
         self.files.values().all(|change| change.before == change.after)
             && self.moves.is_empty()
             && self.untrack.is_empty()
+            && self.binaries.is_empty()
     }
 
     /// The current text of [file]: as an earlier edit of this change left it, or as it is on disk.
@@ -114,6 +120,9 @@ impl ChangeSet {
                 text.push('\n');
             }
         }
+        for (file, bytes) in &self.binaries {
+            text.push_str(&format!("new binary file {} ({} bytes)\n", file.display(), bytes.len()));
+        }
         for change in &self.moves {
             text.push_str(&format!("move {} -> {}\n", change.from.display(), change.to.display()));
         }
@@ -140,6 +149,16 @@ impl ChangeSet {
             }
             fs::write(&path, &change.after).with_context(|| format!("writing {}", file.display()))?;
         }
+        for (file, bytes) in &self.binaries {
+            let path = root.join(file);
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(&path, bytes).with_context(|| format!("writing {}", file.display()))?;
+        }
+        for file in &self.executables {
+            make_executable(&root.join(file))?;
+        }
         let git = is_git_work_tree(root);
         for change in &self.moves {
             move_file(root, change, git)?;
@@ -150,6 +169,19 @@ impl ChangeSet {
         remove_empty_directories(root, self.moves.iter().map(|m| m.from.as_path()));
         Ok(())
     }
+}
+
+#[cfg(unix)]
+fn make_executable(path: &Path) -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let mut permissions = fs::metadata(path)?.permissions();
+    permissions.set_mode(permissions.mode() | 0o111);
+    fs::set_permissions(path, permissions).with_context(|| format!("making {} executable", path.display()))
+}
+
+#[cfg(not(unix))]
+fn make_executable(_: &Path) -> Result<()> {
+    Ok(())
 }
 
 pub fn is_git_work_tree(root: &Path) -> bool {

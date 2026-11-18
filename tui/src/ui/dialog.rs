@@ -14,6 +14,10 @@ pub fn draw(frame: &mut Frame, app: &App) {
     match &app.dialog {
         Some(Dialog::Confirm { title, preview, scroll, .. }) => draw_confirm(frame, title, preview, *scroll),
         Some(Dialog::Edit(edit)) => draw_edit(frame, edit),
+        Some(Dialog::Form { form, .. }) => {
+            let area = centered(frame.area(), 84, super::form::height(form) + 2);
+            super::form::draw(frame, area, form);
+        }
         Some(Dialog::OfferBuild) => {
             let area = centered(frame.area(), 64, 5);
             frame.render_widget(Clear, area);
@@ -28,7 +32,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     }
 }
 
-fn draw_confirm(frame: &mut Frame, title: &str, preview: &[String], scroll: usize) {
+pub(crate) fn draw_confirm(frame: &mut Frame, title: &str, preview: &[String], scroll: usize) {
     let full = frame.area();
     let area = centered(full, full.width.saturating_sub(8).max(40), full.height.saturating_sub(4).max(10));
     frame.render_widget(Clear, area);
@@ -50,8 +54,10 @@ fn draw_confirm(frame: &mut Frame, title: &str, preview: &[String], scroll: usiz
                 span.red()
             } else if line.starts_with("@@") {
                 span.cyan()
-            } else if line.starts_with("move ") || line.starts_with("git ") {
+            } else if line.starts_with("move ") || line.starts_with("git ") || line.starts_with("new binary") {
                 span.yellow()
+            } else if line.starts_with("note: ") {
+                span.blue()
             } else {
                 span
             })

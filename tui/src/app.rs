@@ -11,6 +11,7 @@ use serde_json::Value;
 use crate::doctor::{self, Environment, Finding, Fix};
 use crate::edit::ChangeSet;
 use crate::event::Message;
+use crate::form::{Form, FormEvent};
 use crate::gradle::{GradleEvent, JobId, Outcome, Purpose, Runner};
 use crate::migrate;
 use crate::project::Project;
@@ -70,6 +71,8 @@ pub enum Action {
     RunCommand,
     RerunFailedTests,
     EditValue,
+    NewModule,
+    AddDependency,
     MigrateModule,
     FixFinding,
     FixAll,
@@ -81,7 +84,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 20] = [
+    pub const ALL: [Action; 22] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
@@ -94,6 +97,8 @@ impl Action {
         Action::RunCommand,
         Action::RerunFailedTests,
         Action::EditValue,
+        Action::NewModule,
+        Action::AddDependency,
         Action::MigrateModule,
         Action::FixFinding,
         Action::FixAll,
@@ -118,6 +123,8 @@ impl Action {
             Self::RunCommand => "Run a Gradle command",
             Self::RerunFailedTests => "Run the failed tests again",
             Self::EditValue => "Edit the selected value",
+            Self::NewModule => "Create a module",
+            Self::AddDependency => "Add an LVM library to the module",
             Self::MigrateModule => "Move the module's sources to the flat layout",
             Self::FixFinding => "Fix the selected finding",
             Self::FixAll => "Fix every finding that has a fix",
@@ -143,6 +150,8 @@ impl Action {
             Self::RunCommand => "c",
             Self::RerunFailedTests => "a",
             Self::EditValue => "e",
+            Self::NewModule => "n",
+            Self::AddDependency => "d",
             Self::MigrateModule => "m",
             Self::FixFinding => "f",
             Self::FixAll => "F",
@@ -196,8 +205,17 @@ pub enum Dialog {
     Confirm { title: String, changes: ChangeSet, preview: Vec<String>, scroll: usize, then: AfterApply },
     /// A value of a module to set in one of its layers.
     Edit(EditDialog),
-    /// Whether to run lvmReport and build after a change that moved sources.
+    /// Whether to run lvmReport and build after a change to the build.
     OfferBuild,
+    /// A form that makes a change.
+    Form { form: Form, purpose: FormPurpose },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FormPurpose {
+    NewModule,
+    /// Adds a library to the module at this path.
+    AddDependency(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -376,6 +394,21 @@ impl App {
                 }
             }
             Action::EditValue => self.edit_value(),
+            Action::NewModule => {
+                self.tab = Tab::Modules;
+                let mut form = crate::wizard::module_form(&self.project);
+                crate::wizard::sync_module_form(&mut form);
+                self.dialog = Some(Dialog::Form { form, purpose: FormPurpose::NewModule });
+            }
+            Action::AddDependency => match self.selected_module() {
+                Some(module) if module.is_lvm() => {
+                    let form = crate::wizard::dependency_form(module);
+                    let purpose = FormPurpose::AddDependency(module.path.clone());
+                    self.tab = Tab::Modules;
+                    self.dialog = Some(Dialog::Form { form, purpose });
+                }
+                _ => self.status = Some("Select a module with an LVM plugin in the Modules tab first".to_owned()),
+            },
             Action::MigrateModule => self.migrate_module(),
             Action::FixFinding => self.fix_selected(),
             Action::FixAll => self.fix_all(),
@@ -465,6 +498,8 @@ impl App {
             KeyCode::Char('a') => self.perform(Action::ToggleAffected),
             KeyCode::Char('e') => self.perform(Action::EditValue),
             KeyCode::Char('m') => self.perform(Action::MigrateModule),
+            KeyCode::Char('n') => self.perform(Action::NewModule),
+            KeyCode::Char('d') => self.perform(Action::AddDependency),
             KeyCode::Char('o') => self.perform(Action::OpenFile),
             KeyCode::Left | KeyCode::Char('h') => self.modules.focus = Focus::List,
             KeyCode::Right | KeyCode::Char('l') => self.modules.focus = Focus::Values,
@@ -587,6 +622,7 @@ impl App {
                 }
                 _ => {}
             },
+            Some(Dialog::Form { .. }) => self.on_form_key(key),
             Some(Dialog::OfferBuild) => match key.code {
                 KeyCode::Char('y') | KeyCode::Enter => {
                     self.dialog = None;
@@ -684,6 +720,39 @@ impl App {
         }
     }
 
+    fn on_form_key(&mut self, key: KeyEvent) {
+        let Some(Dialog::Form { mut form, purpose }) = self.dialog.take() else { return };
+        match form.key(key) {
+            FormEvent::Cancel => return,
+            FormEvent::Changed if purpose == FormPurpose::NewModule => crate::wizard::sync_module_form(&mut form),
+            FormEvent::Submit => {
+                let result = match &purpose {
+                    FormPurpose::NewModule => {
+                        let spec = crate::wizard::module_spec(&form);
+                        crate::scaffold::add_module(&self.project, &spec)
+                            .map(|changes| (format!("Create {}", spec.path), changes, Vec::new()))
+                    }
+                    FormPurpose::AddDependency(path) => match self.project.module(path) {
+                        Some(module) => crate::wizard::dependency_spec(&form, module).and_then(|spec| {
+                            crate::scaffold::dependency::add(&self.project, module, &spec)
+                                .map(|(changes, notes)| (format!("Add {} to {path}", spec.artifact), changes, notes))
+                        }),
+                        None => Err(anyhow::anyhow!("{path} is gone from the build")),
+                    },
+                };
+                match result {
+                    Ok((title, changes, notes)) => {
+                        self.confirm_with_notes(title, changes, AfterApply::OfferBuild, &notes);
+                        return;
+                    }
+                    Err(error) => form.error = Some(format!("{error:#}")),
+                }
+            }
+            _ => {}
+        }
+        self.dialog = Some(Dialog::Form { form, purpose });
+    }
+
     fn migrate_module(&mut self) {
         let Some(module) = self.selected_module().cloned() else { return };
         let mut changes = ChangeSet::default();
@@ -725,7 +794,16 @@ impl App {
     }
 
     pub(crate) fn confirm(&mut self, title: String, changes: ChangeSet, then: AfterApply) {
-        let preview = changes.preview().lines().map(str::to_owned).collect();
+        self.confirm_with_notes(title, changes, then, &[]);
+    }
+
+    /// Shows [changes] as a diff, after [notes] on what else they do.
+    fn confirm_with_notes(&mut self, title: String, changes: ChangeSet, then: AfterApply, notes: &[String]) {
+        let mut preview: Vec<String> = notes.iter().map(|note| format!("note: {note}")).collect();
+        if !preview.is_empty() {
+            preview.push(String::new());
+        }
+        preview.extend(changes.preview().lines().map(str::to_owned));
         self.dialog = Some(Dialog::Confirm { title, changes, preview, scroll: 0, then });
     }
 

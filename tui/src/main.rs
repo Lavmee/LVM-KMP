@@ -7,12 +7,18 @@ use clap::{Parser, Subcommand};
 use lvm_tui::app::{App, EditorRequest};
 use lvm_tui::check;
 use lvm_tui::doctor::Environment;
-use lvm_tui::event::{self, Message};
+use lvm_tui::edit::ChangeSet;
+use lvm_tui::event::{self as events, Message};
+use lvm_tui::form::{Form, FormEvent};
 use lvm_tui::gradle::Runner;
 use lvm_tui::project::{Project, discover};
+use lvm_tui::scaffold;
 use lvm_tui::state::State;
+use lvm_tui::wizard::{self, ProjectDefaults};
 use lvm_tui::{LVM_VERSION, ui};
 use ratatui::DefaultTerminal;
+use ratatui::crossterm::event;
+use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 /// A terminal app for Gradle builds that use LVM's convention plugins.
 #[derive(Parser)]
@@ -42,6 +48,8 @@ enum Command {
         #[arg(long)]
         fix: bool,
     },
+    /// Creates a build with LVM: a shared Kotlin Multiplatform library and an Android app that uses it.
+    New(NewArgs),
     /// Moves the build to another LVM release, by default the latest on Maven Central.
     Upgrade {
         /// A directory of the build. Defaults to the current directory.
@@ -55,6 +63,42 @@ enum Command {
     },
 }
 
+#[derive(clap::Args)]
+struct NewArgs {
+    /// Where the build goes; created when missing. Defaults to the current directory.
+    dir: Option<PathBuf>,
+    /// rootProject.name. Defaults to the directory's name.
+    #[arg(long)]
+    name: Option<String>,
+    /// The group and package of the modules.
+    #[arg(long, default_value = "com.example")]
+    group: String,
+    /// The targets of :shared.
+    #[arg(long, value_delimiter = ',', default_value = "android,ios,jvm")]
+    targets: Vec<String>,
+    /// Leaves out the Android app.
+    #[arg(long)]
+    no_app: bool,
+    /// Applies tech.annexflow.lvm.compose.
+    #[arg(long)]
+    compose: bool,
+    /// Leaves out tech.annexflow.lvm.quality.
+    #[arg(long)]
+    no_quality: bool,
+    /// Uses src/<sourceSet>/kotlin instead of LVM's flat layout.
+    #[arg(long)]
+    standard_layout: bool,
+    /// Creates the build without asking.
+    #[arg(long)]
+    yes: bool,
+    /// The LVM version; the latest on Maven Central by default.
+    #[arg(long, hide = true)]
+    lvm_version: Option<String>,
+    /// Resolves LVM from Maven local first, to try a version published there.
+    #[arg(long, hide = true)]
+    maven_local: bool,
+}
+
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
@@ -63,6 +107,7 @@ fn main() -> ExitCode {
         Some(Command::Upgrade { path, to, dry_run }) => {
             upgrade(path.or(cli.path), to.as_deref(), dry_run).map(|()| true)
         }
+        Some(Command::New(args)) => new_build(args).map(|()| true),
         None => interactive(cli.path).map(|()| true),
     };
     match result {
@@ -102,14 +147,151 @@ fn upgrade(path: Option<PathBuf>, to: Option<&str>, dry_run: bool) -> Result<()>
     lvm_tui::upgrade::run(&project, &releases, to, dry_run, &mut std::io::stdout().lock())
 }
 
+fn defaults(args: &NewArgs) -> Result<ProjectDefaults> {
+    let cwd = std::env::current_dir()?;
+    let dir = args.dir.as_ref().map_or_else(|| cwd.clone(), |dir| cwd.join(dir));
+    let lvm_version = match &args.lvm_version {
+        Some(version) => version.clone(),
+        None => lvm_tui::maven::Releases::maven_central()
+            .versions(false)
+            .ok()
+            .and_then(|versions| versions.last().cloned())
+            .unwrap_or_else(|| LVM_VERSION.to_owned()),
+    };
+    let name =
+        args.name.clone().unwrap_or_else(|| dir.file_name().map_or("app".into(), |n| n.to_string_lossy().into_owned()));
+    Ok(ProjectDefaults {
+        dir,
+        name,
+        group: args.group.clone(),
+        lvm_version,
+        targets: args.targets.clone(),
+        app: !args.no_app,
+        compose: args.compose,
+        quality: !args.no_quality,
+        flat: !args.standard_layout,
+        maven_local: args.maven_local,
+    })
+}
+
+fn new_build(args: NewArgs) -> Result<()> {
+    let defaults = defaults(&args)?;
+    if args.yes {
+        let changes = scaffold::new_project(&defaults.dir, &defaults.spec())?;
+        changes.apply(&defaults.dir)?;
+        for file in changes.files.keys().chain(changes.binaries.keys()) {
+            println!("created {}", defaults.dir.join(file).display());
+        }
+        println!("Next: cd {} && ./gradlew build", defaults.dir.display());
+        return Ok(());
+    }
+    if let Some(dir) = wizard(defaults)? {
+        interactive(Some(dir))?;
+    }
+    Ok(())
+}
+
+/// What the wizard shows: the form, then the files it creates.
+enum Step {
+    Form(Form),
+    Confirm { form: Form, dir: PathBuf, changes: ChangeSet, preview: Vec<String>, scroll: usize },
+}
+
+/// Asks for the build in a form and creates it; returns its directory, or `None` when the user leaves.
+fn wizard(defaults: ProjectDefaults) -> Result<Option<PathBuf>> {
+    let mut terminal = ratatui::init();
+    let result = run_wizard(&mut terminal, &defaults);
+    ratatui::restore();
+    result
+}
+
+fn run_wizard(terminal: &mut DefaultTerminal, defaults: &ProjectDefaults) -> Result<Option<PathBuf>> {
+    let mut step = Step::Form(wizard::project_form(defaults));
+    loop {
+        terminal.draw(|frame| match &step {
+            Step::Form(form) => ui::draw_form(frame, form),
+            Step::Confirm { preview, scroll, dir, .. } => {
+                ui::draw_changes(frame, &format!("Create the build in {}", dir.display()), preview, *scroll)
+            }
+        })?;
+        let Event::Key(key) = event::read()? else { continue };
+        if key.kind == KeyEventKind::Release {
+            continue;
+        }
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            return Ok(None);
+        }
+        step = match step {
+            Step::Form(mut form) => match form.key(key) {
+                FormEvent::Cancel => return Ok(None),
+                FormEvent::Submit => {
+                    let defaults = wizard::project_defaults(&form);
+                    match scaffold::new_project(&defaults.dir, &defaults.spec()) {
+                        Ok(changes) => {
+                            let preview = changes.preview().lines().map(str::to_owned).collect();
+                            Step::Confirm { form, dir: defaults.dir, changes, preview, scroll: 0 }
+                        }
+                        Err(error) => {
+                            form.error = Some(format!("{error:#}"));
+                            Step::Form(form)
+                        }
+                    }
+                }
+                _ => Step::Form(form),
+            },
+            Step::Confirm { form, dir, changes, preview, scroll } => {
+                let last = preview.len().saturating_sub(1);
+                let scroll = match key.code {
+                    KeyCode::Char('y') | KeyCode::Enter => {
+                        changes.apply(&dir)?;
+                        return Ok(Some(dir));
+                    }
+                    KeyCode::Char('n') | KeyCode::Esc => {
+                        step = Step::Form(form);
+                        continue;
+                    }
+                    KeyCode::Down | KeyCode::Char('j') => (scroll + 1).min(last),
+                    KeyCode::Up | KeyCode::Char('k') => scroll.saturating_sub(1),
+                    KeyCode::PageDown | KeyCode::Char(' ') => (scroll + 20).min(last),
+                    KeyCode::PageUp => scroll.saturating_sub(20),
+                    _ => scroll,
+                };
+                Step::Confirm { form, dir, changes, preview, scroll }
+            }
+        };
+    }
+}
+
 fn interactive(path: Option<PathBuf>) -> Result<()> {
-    let project = find_project(path)?;
+    let start = path.clone().unwrap_or_else(|| PathBuf::from("."));
+    if discover::find_root(&start).is_none() {
+        // Outside a build, lvm-tui offers to create one.
+        let args = NewArgs {
+            dir: path,
+            name: None,
+            group: "com.example".into(),
+            targets: vec!["android".into(), "ios".into(), "jvm".into()],
+            no_app: false,
+            compose: false,
+            no_quality: false,
+            standard_layout: false,
+            yes: false,
+            lvm_version: None,
+            maven_local: false,
+        };
+        return match wizard(defaults(&args)?)? {
+            Some(dir) => interactive(Some(dir)),
+            None => Ok(()),
+        };
+    }
+    let project = find_project(Some(start))?;
+
     let root = project.root.clone();
     let (sender, receiver) = mpsc::channel();
     let runner = Runner::new(&root, sender.clone());
     let mut app = App::new(project, runner, &State::load(&root));
-    event::spawn_environment(root.clone(), sender.clone());
-    event::spawn_input(sender);
+    events::spawn_environment(root.clone(), sender.clone());
+    events::spawn_input(sender);
 
     let mut terminal = ratatui::init();
     let result = run(&mut terminal, &mut app, &receiver);

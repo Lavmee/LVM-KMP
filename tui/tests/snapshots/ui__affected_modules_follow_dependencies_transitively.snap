@@ -37,4 +37,4 @@ expression: render(&mut app)
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "└────────────────┘└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-" e edit value   m flat layout   o open   / filter   a affected   ? keys                                                 "
+" e edit   n new module   d add library   m flat layout   o open   / filter   ? keys                                     "

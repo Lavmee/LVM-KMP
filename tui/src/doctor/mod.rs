@@ -193,40 +193,60 @@ const EXTERNAL_PLUGINS: &[(&str, &str)] = &[
 
 /// The plugins that the root build script must put on the build classpath for the modules' LVM plugins, by alias.
 fn required_root_plugins(project: &Project) -> BTreeSet<&'static str> {
-    let mut required = BTreeSet::new();
-    for module in &project.modules {
-        let kmp = module.has_plugin("multiplatform");
-        for plugin in &module.plugins {
-            if let Some((alias, _)) = BLUEPRINT_ALIASES.iter().find(|(_, id)| id == plugin) {
-                required.insert(*alias);
-            }
-        }
-        if kmp {
-            required.insert("kotlin.multiplatform");
-            if module.targets.iter().any(|t| t == "android") {
-                required.insert("android.kmp.library");
-            }
-        }
-        if module.has_plugin("android.application") {
-            required.insert("android.application");
-        }
-        if module.has_plugin("android.library") {
-            required.insert("android.library");
-        }
-        if module.has_plugin("compose") {
-            required.insert("kotlin.compose");
-            if kmp {
-                required.insert("compose.multiplatform");
-            }
-        }
-        if module.has_plugin("quality") {
-            required.insert("detekt");
-        }
-        if module.has_plugin("publish") {
-            required.insert("vanniktech.mavenPublish");
+    project
+        .modules
+        .iter()
+        .flat_map(|module| required_aliases(&module.plugins, module.targets.iter().any(|t| t == "android")))
+        .collect()
+}
+
+/// The plugins, by alias, that the root build script declares for a module with LVM's [plugins], for example
+/// `kotlin.multiplatform` for `tech.annexflow.lvm.multiplatform`.
+pub fn required_aliases(plugins: &[String], android_target: bool) -> BTreeSet<&'static str> {
+    let has = |suffix: &str| plugins.iter().any(|id| *id == format!("tech.annexflow.lvm.{suffix}"));
+    let kmp = has("multiplatform");
+    let mut required: BTreeSet<&'static str> = plugins
+        .iter()
+        .filter_map(|plugin| BLUEPRINT_ALIASES.iter().find(|(_, id)| id == plugin).map(|(alias, _)| *alias))
+        .collect();
+    if kmp {
+        required.insert("kotlin.multiplatform");
+        if android_target {
+            required.insert("android.kmp.library");
         }
     }
+    let external = [
+        ("android.application", "android.application"),
+        ("android.library", "android.library"),
+        ("compose", "kotlin.compose"),
+        ("quality", "detekt"),
+        ("publish", "vanniktech.mavenPublish"),
+    ];
+    for (plugin, alias) in external {
+        if has(plugin) {
+            required.insert(alias);
+        }
+    }
+    if kmp && has("compose") {
+        required.insert("compose.multiplatform");
+    }
     required
+}
+
+/// The lines that declare [aliases] in the root build script with `apply false`, for those it doesn't declare yet
+/// and that lvm-tui can write: without the catalog, only LVM's own plugins, whose version the settings plugin sets.
+pub fn missing_root_lines(project: &Project, aliases: &BTreeSet<&str>) -> Vec<String> {
+    let declared = declared_root_plugins(project);
+    aliases.iter().filter(|alias| !declared.contains(**alias)).filter_map(|alias| root_line(project, alias)).collect()
+}
+
+fn root_line(project: &Project, alias: &str) -> Option<String> {
+    match (project.options.catalog != Some(false)).then_some(project.options.catalog_name.as_str()) {
+        Some(catalog) => Some(format!("alias({catalog}.plugins.{alias}) apply false")),
+        None => {
+            alias_to_id(alias).filter(|_| alias.starts_with("blueprint.")).map(|id| format!("id(\"{id}\") apply false"))
+        }
+    }
 }
 
 /// The aliases that the root build script declares, from `alias(...)`, `id(...)` and `kotlin(...)`.
@@ -266,16 +286,7 @@ fn root_plugins(project: &Project, findings: &mut Vec<Finding>) {
     if missing.is_empty() {
         return;
     }
-    let catalog = (project.options.catalog != Some(false)).then_some(project.options.catalog_name.as_str());
-    let line = |alias: &str| -> Option<String> {
-        match catalog {
-            Some(catalog) => Some(format!("alias({catalog}.plugins.{alias}) apply false")),
-            // Without the catalog, only LVM's own plugins have a version lvm-tui knows: the settings plugin's.
-            None => alias_to_id(alias)
-                .filter(|_| alias.starts_with("blueprint."))
-                .map(|id| format!("id(\"{id}\") apply false")),
-        }
-    };
+    let line = |alias: &str| root_line(project, alias);
     let (blueprint, external): (Vec<&str>, Vec<&str>) =
         missing.iter().partition(|alias| alias.starts_with("blueprint."));
     let file =

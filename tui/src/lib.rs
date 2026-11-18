@@ -5,17 +5,20 @@ pub mod check;
 pub mod doctor;
 pub mod edit;
 pub mod event;
+pub mod form;
 pub mod gradle;
 pub mod maven;
 pub mod migrate;
 pub mod project;
 pub mod results;
+pub mod scaffold;
 pub mod state;
 pub mod tasks;
 pub mod ui;
 pub mod updates;
 pub mod upgrade;
 pub mod version;
+pub mod wizard;
 
 /// The LVM release that this lvm-tui ships with.
 pub const LVM_VERSION: &str = env!("LVM_VERSION");

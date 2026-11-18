@@ -398,3 +398,45 @@ fn updates_say_when_maven_central_cannot_be_reached() {
     press(&mut app, "u");
     assert!(app.dialog.is_none());
 }
+
+#[test]
+fn a_module_is_created_from_the_form() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    press(&mut app, "2n");
+    press(&mut app, "feature:chat");
+    assert_snapshot!("new_module_form", render(&mut app));
+    press(&mut app, "\n");
+    let Some(Dialog::Confirm { title, .. }) = &app.dialog else { panic!("no confirmation") };
+    assert_eq!(title, "Create :feature:chat");
+    press(&mut app, "yn");
+
+    assert!(dir.path().join("feature/chat/build.gradle.kts").is_file());
+    assert!(dir.path().join("feature/chat/src/Chat.kt").is_file());
+    assert!(app.project.module(":feature:chat").is_some());
+}
+
+#[test]
+fn the_module_form_reports_what_is_wrong() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    press(&mut app, "2n");
+    press(&mut app, "shared\n");
+    let Some(Dialog::Form { form, .. }) = &app.dialog else { panic!("the form closed") };
+    assert_eq!(form.error.as_deref(), Some("the build already has :shared"));
+}
+
+#[test]
+fn a_library_is_added_with_what_it_needs() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    press(&mut app, "2jd");
+    press(&mut app, "storage\n");
+    let Some(Dialog::Confirm { preview, .. }) = &app.dialog else { panic!("no confirmation") };
+    assert!(preview[0].starts_with("note: lvm-storage stores @Serializable values"), "{preview:?}");
+    press(&mut app, "yn");
+
+    let script = fs::read_to_string(dir.path().join("core/data/build.gradle.kts")).unwrap();
+    assert!(script.contains("implementation(lvmLibs.lvm.storage)"), "{script}");
+    assert!(script.contains("alias(lvmLibs.plugins.kotlin.serialization)"), "{script}");
+}

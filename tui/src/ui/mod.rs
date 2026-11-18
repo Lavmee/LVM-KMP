@@ -2,6 +2,7 @@
 
 mod dialog;
 mod doctor;
+pub(crate) mod form;
 mod modules;
 mod overview;
 mod tasks;
@@ -80,7 +81,9 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
             } else {
                 let hint = match app.tab {
                     Tab::Overview => " r report   3 doctor   ctrl-p commands   ? keys   q quit",
-                    Tab::Modules => " e edit value   m flat layout   o open   / filter   a affected   ? keys",
+                    Tab::Modules => {
+                        " e edit   n new module   d add library   m flat layout   o open   / filter   ? keys"
+                    }
                     Tab::Tasks => " enter run   c command   v log/tests/detekt/history   x cancel   ? keys",
                     Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
                     Tab::Updates => " j k release   u upgrade   f ask Maven Central again   ? keys",
@@ -104,6 +107,8 @@ fn draw_help(frame: &mut Frame) {
         ("/", "filter the values; esc clears the filter"),
         ("a", "dependencies or affected modules"),
         ("m", "move the module's sources to the flat layout"),
+        ("n", "create a module"),
+        ("d", "add an LVM library to the module"),
         ("f, F", "fix the selected finding, or all of them"),
         ("o", "open the file in $EDITOR"),
         ("c", "run a Gradle command"),
@@ -141,6 +146,17 @@ fn draw_palette(frame: &mut Frame, app: &App) {
         .collect();
     let mut state = ListState::default().with_selected((!matches.is_empty()).then_some(palette.selected));
     frame.render_stateful_widget(List::new(items).highlight_style(Style::new().reversed()), list, &mut state);
+}
+
+/// A form in the middle of the screen, as `lvm-tui new` shows it.
+pub fn draw_form(frame: &mut Frame, form: &crate::form::Form) {
+    let area = centered(frame.area(), 90, form::height(form) + 2);
+    form::draw(frame, area, form);
+}
+
+/// A change as a diff, as `lvm-tui new` asks to confirm it.
+pub fn draw_changes(frame: &mut Frame, title: &str, preview: &[String], scroll: usize) {
+    dialog::draw_confirm(frame, title, preview, scroll);
 }
 
 pub(crate) fn centered(area: Rect, width: u16, height: u16) -> Rect {

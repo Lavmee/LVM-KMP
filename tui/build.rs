@@ -8,8 +8,10 @@ use std::path::Path;
 fn main() {
     let gradle_properties = Path::new("../gradle.properties");
     let wrapper_properties = Path::new("../gradle/wrapper/gradle-wrapper.properties");
-    println!("cargo:rerun-if-changed={}", gradle_properties.display());
-    println!("cargo:rerun-if-changed={}", wrapper_properties.display());
+    let settings = Path::new("../settings.gradle.kts");
+    for file in [gradle_properties, wrapper_properties, settings] {
+        println!("cargo:rerun-if-changed={}", file.display());
+    }
 
     let version = property(gradle_properties, "VERSION_NAME");
     let distribution = property(wrapper_properties, "distributionUrl");
@@ -23,6 +25,18 @@ fn main() {
 
     println!("cargo:rustc-env=LVM_VERSION={version}");
     println!("cargo:rustc-env=LVM_TESTED_GRADLE={gradle}");
+    println!("cargo:rustc-env=LVM_LIBRARIES={}", libraries(settings).join(","));
+}
+
+/// LVM's libraries: one module in runtime/ per artifact, named lvm-<module>.
+fn libraries(settings: &Path) -> Vec<String> {
+    let text =
+        fs::read_to_string(settings).unwrap_or_else(|error| panic!("Cannot read {}: {error}", settings.display()));
+    text.lines()
+        .filter_map(|line| {
+            line.trim().strip_prefix("include(\":runtime:")?.split('"').next().map(|name| format!("lvm-{name}"))
+        })
+        .collect()
 }
 
 fn property(file: &Path, key: &str) -> String {
