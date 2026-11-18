@@ -10,10 +10,8 @@ import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 import tech.annexflow.lvm.blueprint.common.reportTool
 
 /**
- * Compiler options of the Kotlin that AGP builds in, and kotlin-test for unit tests. The JVM target follows the Java
- * version, as AGP derives it, so it isn't set here.
- *
- * Unit tests run on JUnit 4, so they get kotlin-test-junit: kotlin-test alone has no `@Test` for the JVM.
+ * Compiler options of the Kotlin that AGP builds in. The JVM target follows the Java version, as AGP derives it, so it
+ * isn't set here.
  */
 internal fun Project.configureKotlin(section: KotlinSection, values: KotlinValues) {
     reportTool("kotlin", getKotlinPluginVersion(), LvmBuildInfo.MIN_KOTLIN, LvmBuildInfo.TESTED_KOTLIN)
@@ -26,7 +24,10 @@ internal fun Project.configureKotlin(section: KotlinSection, values: KotlinValue
             freeCompilerArgs.addAll(freeArgs)
         }
     }
+}
 
+/** Adds kotlin-test-junit to unit tests, which run on JUnit 4: kotlin-test alone has no `@Test` for the JVM. */
+internal fun Project.addKotlinTestToUnitTests(section: KotlinSection) {
     val kotlinTest = dependencies.create("org.jetbrains.kotlin:kotlin-test-junit:${getKotlinPluginVersion()}")
     val kotlinTestIfEnabled = section.testDependencies.map { enabled -> if (enabled) listOf(kotlinTest) else emptyList() }
     configurations.named("testImplementation").configure { dependencies.addAllLater(kotlinTestIfEnabled) }

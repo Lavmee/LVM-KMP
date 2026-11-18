@@ -24,21 +24,13 @@ Every plugin artifact brings `lvm-blueprint-common`, which holds the build-wide 
 `project.lvmValues` holds the build-wide values of the `android`, `jvm` and `kotlin` sections. Each value comes from the `lvm.<section>.<name>` Gradle property, then from `lvm { }` in `settings.gradle.kts`, then from LVM's default, as [Configuration](../README.md#configuration) describes. A module's own `lvm { }` block doesn't change them, so every module reads the same values.
 
 ```kotlin
-// A Kotlin/JVM module with the build's JVM target and Kotlin options.
-class KotlinJvmConventionPlugin : Plugin<Project> {
+// Tests run on a JDK of the build's JVM target.
+class TestJdkConventionPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        project.pluginManager.apply("org.jetbrains.kotlin.jvm")
-        val values = project.lvmValues
-        project.extensions.configure<KotlinJvmProjectExtension> {
-            compilerOptions {
-                jvmTarget.set(values.jvm.target.map { JvmTarget.fromTarget(it.toString()) })
-                allWarningsAsErrors.set(values.kotlin.warningsAsErrors)
-                optIn.addAll(values.kotlin.optIns)
-                freeCompilerArgs.addAll(values.kotlin.freeCompilerArgs)
-            }
-        }
-        project.tasks.withType<JavaCompile>().configureEach {
-            options.release.set(values.jvm.target)
+        val jvmTarget = project.lvmValues.jvm.target
+        val toolchains = project.extensions.getByType<JavaToolchainService>()
+        project.tasks.withType<Test>().configureEach {
+            javaLauncher.set(toolchains.launcherFor { languageVersion.set(jvmTarget.map(JavaLanguageVersion::of)) })
         }
     }
 }

@@ -6,10 +6,17 @@ Each part summarizes a section of LVM's README. The links go to `main`; for the 
 
 * An application applies `tech.annexflow.lvm.android.application`. It sets the SDK levels and the namespace from `lvm { android { } }`, the Java version from `lvm { jvm { } }`, and from `lvm { application { } }` the application ID, `versionCode`, `versionName`, R8 and resource shrinking in the release build type (`minify`), the keep rules (`proguardFiles`) and core library desugaring (`desugaring`). CI can pass `-Plvm.application.versionCode=42`.
 * An Android library without Kotlin Multiplatform, such as one with product flavors, applies `tech.annexflow.lvm.android.library`. `lvm { library { } }` sets `desugaring`, `consumerProguardFiles`, `resourcePrefix` (the module path, as in `core_ui_`) and `skipEmptyAndroidTest`. Flavors are declared with the native `android { }` DSL.
+* A test module of `com.android.test`, such as a macrobenchmark or a baseline profile generator, applies `tech.annexflow.lvm.android.test`. It sets the SDK levels, the namespace and the runner from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, and names the app it tests natively, with `android { targetProjectPath = ":app" }`. It adds no `kotlin-test` and leaves desugaring off.
 * A Kotlin Multiplatform library gets its Android target from `lvm { targets { android() } }`. Its namespace defaults to the module's `group` followed by its path, so a library sets `group` or `lvm { android { namespace = "..." } }`. A module that also configures `kotlin { android { } }` natively adds `alias(lvmLibs.plugins.android.kmp.library)` to its plugins.
 * Values set with the native `android { }` DSL win: lvm fills in only what the build script leaves unset.
 
 See [Android](https://github.com/Lavmee/LVM-KMP/blob/main/README.md#android).
+
+## Kotlin/JVM
+
+A Kotlin/JVM module, such as a KSP processor, applies `tech.annexflow.lvm.jvm`. It applies `org.jetbrains.kotlin.jvm`, which the root project declares as `lvmLibs.plugins.kotlin.jvm`, sets the Java version and Kotlin's JVM target from `lvm { jvm { target } }`, passes `lvm { kotlin { } }` to the compiler and adds `kotlin-test` to unit tests, which run on JUnit 4. A module on the JUnit Platform calls `tasks.test { useJUnitPlatform() }` and declares `junit-platform-launcher` itself. Native `java { }` and `kotlin { compilerOptions { jvmTarget } }` win over `lvm { jvm { } }`.
+
+See [Kotlin/JVM](https://github.com/Lavmee/LVM-KMP/blob/main/README.md#kotlinjvm).
 
 ## Compose
 

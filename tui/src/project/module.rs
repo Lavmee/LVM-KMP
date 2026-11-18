@@ -13,12 +13,14 @@ use super::lvm_block::{ScriptValue, ValueOp, read_values};
 /// LVM's project plugins by the alias that `lvm-versions` gives them after `plugins.`.
 pub const BLUEPRINT_ALIASES: &[(&str, &str)] = &[
     ("blueprint.multiplatform", "tech.annexflow.lvm.multiplatform"),
+    ("blueprint.jvm", "tech.annexflow.lvm.jvm"),
     ("blueprint.compose", "tech.annexflow.lvm.compose"),
     ("blueprint.quality", "tech.annexflow.lvm.quality"),
     ("blueprint.publish", "tech.annexflow.lvm.publish"),
     ("blueprint.main.context", "tech.annexflow.lvm.main-context"),
     ("blueprint.android.application", "tech.annexflow.lvm.android.application"),
     ("blueprint.android.library", "tech.annexflow.lvm.android.library"),
+    ("blueprint.android.test", "tech.annexflow.lvm.android.test"),
 ];
 
 const LVM_PLUGIN_PREFIX: &str = "tech.annexflow.lvm.";

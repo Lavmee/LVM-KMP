@@ -9,13 +9,13 @@ abstract class AndroidSection {
     abstract val compileSdk: Property<Int>
     abstract val minSdk: Property<Int>
 
-    /** Target SDK level of an application, and of the instrumented tests and lint of an Android library. */
+    /** Target SDK level of an application or a test module, and of the instrumented tests and lint of an Android library. */
     abstract val targetSdk: Property<Int>
 
     /** Default: the project group followed by the module path, with `-` replaced by `_`. */
     abstract val namespace: Property<String>
 
-    /** Runner of instrumented tests in applications and Android libraries. */
+    /** Runner of instrumented tests in applications, Android libraries and test modules. */
     abstract val testInstrumentationRunner: Property<String>
 }
 
@@ -66,7 +66,8 @@ val LvmExtension.kotlin: KotlinSection
 
 fun LvmExtension.kotlin(action: Action<KotlinSection>) = action.execute(kotlin)
 
-private const val ANDROID_PLUGINS =
-    "tech.annexflow.lvm.multiplatform, tech.annexflow.lvm.android.application or tech.annexflow.lvm.android.library"
-private const val JVM_AND_KOTLIN_PLUGINS = "tech.annexflow.lvm.multiplatform, tech.annexflow.lvm.android.application, " +
-    "tech.annexflow.lvm.android.library or tech.annexflow.lvm.quality"
+private const val ANDROID_PLUGINS = "tech.annexflow.lvm.multiplatform, tech.annexflow.lvm.android.application, " +
+    "tech.annexflow.lvm.android.library or tech.annexflow.lvm.android.test"
+private const val JVM_AND_KOTLIN_PLUGINS = "tech.annexflow.lvm.multiplatform, tech.annexflow.lvm.jvm, " +
+    "tech.annexflow.lvm.android.application, tech.annexflow.lvm.android.library, tech.annexflow.lvm.android.test " +
+    "or tech.annexflow.lvm.quality"

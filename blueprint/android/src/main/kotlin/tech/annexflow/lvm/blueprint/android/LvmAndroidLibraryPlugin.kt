@@ -83,6 +83,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         }
 
         project.configureKotlin(kotlin, project.lvmValues.kotlin)
+        project.addKotlinTestToUnitTests(kotlin)
         project.configureExplicitApi(kotlin, androidComponents)
         project.addDesugaringDependency(library.desugaring)
     }

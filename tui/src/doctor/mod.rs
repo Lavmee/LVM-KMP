@@ -183,9 +183,11 @@ impl Finding {
 /// External plugins by their alias in `lvm-versions`, with their IDs.
 const EXTERNAL_PLUGINS: &[(&str, &str)] = &[
     ("kotlin.multiplatform", "org.jetbrains.kotlin.multiplatform"),
+    ("kotlin.jvm", "org.jetbrains.kotlin.jvm"),
     ("android.application", "com.android.application"),
     ("android.library", "com.android.library"),
     ("android.kmp.library", "com.android.kotlin.multiplatform.library"),
+    ("android.test", "com.android.test"),
     ("kotlin.compose", "org.jetbrains.kotlin.plugin.compose"),
     ("compose.multiplatform", "org.jetbrains.compose"),
     ("detekt", "io.gitlab.arturbosch.detekt"),
@@ -219,6 +221,8 @@ pub fn required_aliases(plugins: &[String], android_target: bool) -> BTreeSet<&'
     let external = [
         ("android.application", "android.application"),
         ("android.library", "android.library"),
+        ("android.test", "android.test"),
+        ("jvm", "kotlin.jvm"),
         ("compose", "kotlin.compose"),
         ("quality", "detekt"),
         ("publish", "vanniktech.mavenPublish"),
@@ -426,6 +430,7 @@ fn distance(a: &str, b: &str) -> usize {
 fn has_android(module: &Module) -> bool {
     module.has_plugin("android.application")
         || module.has_plugin("android.library")
+        || module.has_plugin("android.test")
         || (module.has_plugin("multiplatform") && module.targets.iter().any(|t| t == "android"))
 }
 

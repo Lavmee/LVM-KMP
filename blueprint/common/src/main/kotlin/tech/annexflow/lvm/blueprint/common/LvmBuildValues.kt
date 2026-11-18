@@ -26,10 +26,10 @@ class AndroidValues internal constructor(values: LvmValues) {
     val compileSdk: Provider<Int> = values.int(LvmKeys.ANDROID_COMPILE_SDK, LvmDefaults.ANDROID_COMPILE_SDK)
     val minSdk: Provider<Int> = values.int(LvmKeys.ANDROID_MIN_SDK, LvmDefaults.ANDROID_MIN_SDK)
 
-    /** Target SDK level of applications, and of the instrumented tests and lint of Android libraries. */
+    /** Target SDK level of applications and test modules, and of the instrumented tests and lint of Android libraries. */
     val targetSdk: Provider<Int> = values.int(LvmKeys.ANDROID_TARGET_SDK, LvmDefaults.ANDROID_TARGET_SDK)
 
-    /** Runner of instrumented tests in applications and Android libraries. */
+    /** Runner of instrumented tests in applications, Android libraries and test modules. */
     val testInstrumentationRunner: Provider<String> = values.raw(LvmKeys.ANDROID_TEST_INSTRUMENTATION_RUNNER)
         .orElse(LvmDefaults.ANDROID_TEST_INSTRUMENTATION_RUNNER)
 
