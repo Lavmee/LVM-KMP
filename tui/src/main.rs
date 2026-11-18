@@ -152,8 +152,9 @@ fn defaults(args: &NewArgs) -> Result<ProjectDefaults> {
     let dir = args.dir.as_ref().map_or_else(|| cwd.clone(), |dir| cwd.join(dir));
     let lvm_version = match &args.lvm_version {
         Some(version) => version.clone(),
+        // A release of today is missing from a list cached yesterday, so the command asks each time.
         None => lvm_tui::maven::Releases::maven_central()
-            .versions(false)
+            .versions(true)
             .ok()
             .and_then(|versions| versions.last().cloned())
             .unwrap_or_else(|| LVM_VERSION.to_owned()),

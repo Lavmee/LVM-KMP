@@ -1,8 +1,9 @@
 //! LVM's releases on Maven Central: which versions exist, and the `lvm-versions` catalog of each, with the versions of
 //! Kotlin, AGP and the rest that a release was tested with.
 //!
-//! A catalog that Gradle already downloaded is read from its cache. Everything fetched is kept for a day in lvm-tui's
-//! cache directory, and an older copy is used while Maven Central can't be reached.
+//! A catalog that Gradle already downloaded is read from its cache. Everything fetched is kept in lvm-tui's cache
+//! directory: the list of releases is read from there for a day unless the caller asks for a fresh one, and the catalog
+//! of a release for good. A kept copy of any age is used while Maven Central can't be reached.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -66,7 +67,8 @@ impl<S: Source> Releases<S> {
         Self { source, cache, gradle_home }
     }
 
-    /// The released versions, oldest first. [refresh] skips the day-old cache.
+    /// The released versions, oldest first. [refresh] asks the source even while the cached list is younger than a day;
+    /// the cached list stands in when the source fails.
     pub fn versions(&self, refresh: bool) -> Result<Vec<String>> {
         let text = self.cached("maven-metadata.xml", refresh, true)?;
         let mut versions = parse_metadata(&text);
@@ -145,18 +147,34 @@ pub fn parse_metadata(xml: &str) -> Vec<String> {
     versions
 }
 
+/// A [Source] for tests.
 #[cfg(test)]
-mod tests {
-    use super::*;
+pub(crate) mod fake {
     use std::cell::RefCell;
+    use std::collections::BTreeMap;
 
-    const METADATA: &str = "<metadata><versioning><latest>0.3.2</latest><versions><version>0.10.0</version><version>0.3.2</version><version>0.3.1</version></versions></versioning></metadata>";
+    use anyhow::{Context, Result, bail};
+
+    use super::Source;
 
     /// Serves fixed files and counts the requests, or fails while offline.
-    struct Fake {
-        files: BTreeMap<&'static str, &'static str>,
-        requests: RefCell<usize>,
+    pub(crate) struct Fake {
+        files: BTreeMap<String, String>,
+        pub(crate) requests: RefCell<usize>,
         offline: bool,
+    }
+
+    impl Fake {
+        /// Serves [files], each a path and its text.
+        pub(crate) fn new(files: &[(&str, &str)]) -> Self {
+            let files = files.iter().map(|(path, text)| ((*path).to_owned(), (*text).to_owned())).collect();
+            Self { files, requests: RefCell::new(0), offline: false }
+        }
+
+        /// Fails every request.
+        pub(crate) fn offline() -> Self {
+            Self { offline: true, ..Self::new(&[]) }
+        }
     }
 
     impl Source for &Fake {
@@ -165,25 +183,35 @@ mod tests {
             if self.offline {
                 bail!("offline");
             }
-            self.files.get(path).map(|text| (*text).to_owned()).context("not found")
+            self.files.get(path).cloned().context("not found")
         }
     }
 
-    fn fake(offline: bool) -> Fake {
-        Fake {
-            files: BTreeMap::from([
-                ("maven-metadata.xml", METADATA),
-                ("0.3.2/lvm-versions-0.3.2.toml", "[versions]\nkotlin = \"2.4.21\"\nagp = \"9.5.1\"\n"),
-            ]),
-            requests: RefCell::new(0),
-            offline,
-        }
+    /// The `maven-metadata.xml` of lvm-versions with [versions].
+    pub(crate) fn metadata(versions: &[&str]) -> String {
+        let versions: String = versions.iter().map(|v| format!("<version>{v}</version>")).collect();
+        format!("<metadata><versioning><versions>{versions}</versions></versioning></metadata>")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::fake::{Fake, metadata};
+    use super::*;
+
+    const METADATA: &str = "<metadata><versioning><latest>0.3.2</latest><versions><version>0.10.0</version><version>0.3.2</version><version>0.3.1</version></versions></versioning></metadata>";
+
+    fn online() -> Fake {
+        Fake::new(&[
+            ("maven-metadata.xml", METADATA),
+            ("0.3.2/lvm-versions-0.3.2.toml", "[versions]\nkotlin = \"2.4.21\"\nagp = \"9.5.1\"\n"),
+        ])
     }
 
     #[test]
     fn lists_versions_in_numeric_order() {
         assert_eq!(parse_metadata(METADATA), ["0.10.0", "0.3.2", "0.3.1"]);
-        let source = fake(false);
+        let source = online();
         let releases = Releases::new(&source, None, None);
         assert_eq!(releases.versions(false).unwrap(), ["0.3.1", "0.3.2", "0.10.0"]);
     }
@@ -191,7 +219,7 @@ mod tests {
     #[test]
     fn keeps_what_it_fetched_and_uses_it_offline() {
         let cache = tempfile::tempdir().unwrap();
-        let online = fake(false);
+        let online = online();
         let releases = Releases::new(&online, Some(cache.path().to_owned()), None);
         releases.versions(false).unwrap();
         releases.versions(false).unwrap();
@@ -199,10 +227,24 @@ mod tests {
         releases.versions(true).unwrap();
         assert_eq!(*online.requests.borrow(), 2, "a refresh asks again");
 
-        let offline = fake(true);
+        let offline = Fake::offline();
         let releases = Releases::new(&offline, Some(cache.path().to_owned()), None);
         assert_eq!(releases.versions(true).unwrap().len(), 3);
         assert!(Releases::new(&offline, None, None).versions(false).is_err());
+    }
+
+    #[test]
+    fn a_refresh_replaces_a_list_that_is_younger_than_a_day() {
+        let cache = tempfile::tempdir().unwrap();
+        let yesterday = metadata(&["0.3.1"]);
+        let before = Fake::new(&[("maven-metadata.xml", &yesterday)]);
+        Releases::new(&before, Some(cache.path().to_owned()), None).versions(false).unwrap();
+
+        let after = online();
+        let releases = Releases::new(&after, Some(cache.path().to_owned()), None);
+        assert_eq!(releases.versions(false).unwrap(), ["0.3.1"], "without a refresh, the cached list is used");
+        assert_eq!(releases.versions(true).unwrap(), ["0.3.1", "0.3.2", "0.10.0"]);
+        assert_eq!(releases.versions(false).unwrap(), ["0.3.1", "0.3.2", "0.10.0"], "the refresh is kept");
     }
 
     #[test]
@@ -211,7 +253,7 @@ mod tests {
         let dir = gradle.path().join("caches/modules-2/files-2.1/tech.annexflow.lvm/lvm-versions/0.3.2/abc123");
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("lvm-versions-0.3.2.toml"), "[versions]\nkotlin = \"2.4.20\"\n").unwrap();
-        let source = fake(false);
+        let source = online();
 
         let from_gradle = Releases::new(&source, None, Some(gradle.path().to_owned())).catalog("0.3.2").unwrap();
         assert_eq!(from_gradle.get("kotlin").map(String::as_str), Some("2.4.20"));
