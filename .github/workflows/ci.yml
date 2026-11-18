@@ -31,7 +31,7 @@ jobs:
   blueprint:
     # Forks get Linux: the fixture builds configure iOS targets, which Kotlin does on any host, but none compiles or
     # links for iOS.
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
       # Stops code from a fork on the self-hosted runner even if runs-on above changes.
