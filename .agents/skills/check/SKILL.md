@@ -5,7 +5,7 @@ description: Always use this skill to verify a change locally before committing 
 
 # Verifying a Change
 
-Keep this file in sync with [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) and [`.github/workflows/tui.yml`](../../../.github/workflows/tui.yml).
+Keep this file in sync with [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml), [`.github/workflows/tui.yml`](../../../.github/workflows/tui.yml) and [`.github/workflows/plugin.yml`](../../../.github/workflows/plugin.yml).
 
 Run these by default:
 
@@ -29,6 +29,17 @@ cargo deny check # licenses and advisories of the dependencies; needs cargo-deny
 ```
 
 The UI tests compare screens with the snapshots in `tui/tests/snapshots`. After an intended change to a screen, review each new `.snap.new` file and accept it with `cargo insta accept`, or run `INSTA_UPDATE=always cargo test`. The `version` in `tui/Cargo.toml` must equal `VERSION_NAME`.
+
+## Claude Code plugin
+
+Run these when a change touches `.claude-plugin/` or `claude-plugin/`:
+
+```bash
+claude plugin validate --strict . # the marketplace
+claude plugin validate --strict claude-plugin # the plugin and its skills
+```
+
+The `version` in `claude-plugin/.claude-plugin/plugin.json` must equal `VERSION_NAME`. To try the skills, start Claude Code in a build with LVM with `claude --plugin-dir path/to/claude-plugin`.
 
 ## Requirements
 

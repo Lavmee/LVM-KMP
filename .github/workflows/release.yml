@@ -35,6 +35,11 @@ jobs:
               exit 1
               ;;
           esac
+          ref=$(jq -r '.plugins[] | select(.name == "lvm") | .source.ref' .claude-plugin/marketplace.json)
+          if [ "$ref" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::.claude-plugin/marketplace.json installs the Claude Code plugin at $ref, not at $GITHUB_REF_NAME."
+            exit 1
+          fi
 
       - uses: actions/setup-java@v6
         with:

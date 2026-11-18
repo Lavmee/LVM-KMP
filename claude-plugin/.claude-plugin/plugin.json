@@ -1,0 +1,13 @@
+{
+  "name": "lvm",
+  "version": "0.5.0-SNAPSHOT",
+  "description": "Reads, checks, upgrades and creates Gradle builds that use LVM's convention plugins, with the lvm command",
+  "author": {
+    "name": "Samuel Gagarin",
+    "url": "https://github.com/Lavmee"
+  },
+  "homepage": "https://github.com/Lavmee/LVM-KMP/blob/main/docs/claude-code.md",
+  "repository": "https://github.com/Lavmee/LVM-KMP",
+  "license": "Apache-2.0",
+  "keywords": ["gradle", "kotlin", "multiplatform", "android", "ios", "lvm"]
+}
