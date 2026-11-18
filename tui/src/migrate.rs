@@ -40,6 +40,13 @@ pub fn android_directory(source_set: &str) -> String {
     if source_set == "main" { "src".to_owned() } else { format!("src@{source_set}") }
 }
 
+/// Whether blueprint compiles the Java files in the flat directory of [source_set]: those of every source set of a module
+/// without Kotlin Multiplatform, and in a Kotlin Multiplatform module, those of the JVM target and, after `withJava()`,
+/// of the Android target.
+fn holds_java(kmp: bool, source_set: &str) -> bool {
+    !kmp || ["jvmMain", "jvmTest", "androidMain", "androidHostTest", "androidDeviceTest"].contains(&source_set)
+}
+
 fn lower_first(text: &str) -> String {
     let mut chars = text.chars();
     chars.next().map(|first| first.to_lowercase().chain(chars).collect()).unwrap_or_default()
@@ -64,11 +71,12 @@ pub fn flat_layout(project: &Project, module: &Module, changes: &mut ChangeSet) 
             }
             let mut files = Vec::new();
             collect_files(&dir, &mut files);
-            // Blueprint compiles Java files from the flat directories of every module but a Kotlin Multiplatform one.
-            if kmp && files.iter().any(|file| file.extension().is_some_and(|ext| ext == "java")) {
+            if !holds_java(kmp, &source_set)
+                && files.iter().any(|file| file.extension().is_some_and(|ext| ext == "java"))
+            {
                 bail!(
                     "{} has Java sources in src/{source_set}/{language}, which the flat layout of a Kotlin \
-                     Multiplatform module can't hold",
+                     Multiplatform module holds only in the source sets of its JVM and Android targets",
                     module.path
                 );
             }
@@ -170,6 +178,44 @@ mod tests {
     }
 
     #[test]
+    fn moves_java_sources_of_the_jvm_target_next_to_its_kotlin_sources() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write(root, "settings.gradle.kts", "include(\":lib\")\n");
+        write(
+            root,
+            "lib/build.gradle.kts",
+            "plugins { id(\"tech.annexflow.lvm.multiplatform\") }\nlvm { targets { jvm() } }\n",
+        );
+        write(root, "lib/src/jvmMain/java/com/example/lib/NativeMarkdown.java", "package com.example.lib;\n");
+        write(root, "lib/src/jvmMain/kotlin/com/example/lib/Markdown.kt", "package com.example.lib\n");
+        let project = Project::load(root);
+
+        let mut changes = ChangeSet::default();
+        flat_layout(&project, project.module(":lib").unwrap(), &mut changes).unwrap();
+
+        let destinations: Vec<_> = changes.moves.iter().map(|m| m.to.to_string_lossy().into_owned()).collect();
+        assert_eq!(destinations, ["lib/src@jvm/NativeMarkdown.java", "lib/src@jvm/Markdown.kt"]);
+    }
+
+    #[test]
+    fn refuses_java_sources_of_common_code() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write(root, "settings.gradle.kts", "include(\":lib\")\n");
+        write(
+            root,
+            "lib/build.gradle.kts",
+            "plugins { id(\"tech.annexflow.lvm.multiplatform\") }\nlvm { targets { jvm() } }\n",
+        );
+        write(root, "lib/src/commonMain/java/com/example/Main.java", "package com.example;\n");
+        let project = Project::load(root);
+
+        let error = flat_layout(&project, project.module(":lib").unwrap(), &mut ChangeSet::default()).unwrap_err();
+        assert!(error.to_string().contains("Java"), "{error}");
+    }
+
+    #[test]
     fn moves_sources_without_the_root_package_and_turns_the_layout_on() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
@@ -228,22 +274,5 @@ mod tests {
 
         let destinations: Vec<_> = changes.moves.iter().map(|m| m.to.to_string_lossy().into_owned()).collect();
         assert_eq!(destinations, ["app/src/NativeMarkdown.java", "app/src/Markdown.kt"]);
-    }
-
-    #[test]
-    fn refuses_java_sources_of_a_kotlin_multiplatform_module() {
-        let dir = tempfile::tempdir().unwrap();
-        let root = dir.path();
-        write(root, "settings.gradle.kts", "include(\":lib\")\n");
-        write(
-            root,
-            "lib/build.gradle.kts",
-            "plugins { id(\"tech.annexflow.lvm.multiplatform\") }\nlvm { targets { jvm() } }\n",
-        );
-        write(root, "lib/src/jvmMain/java/com/example/Main.java", "package com.example;\n");
-        let project = Project::load(root);
-
-        let error = flat_layout(&project, project.module(":lib").unwrap(), &mut ChangeSet::default()).unwrap_err();
-        assert!(error.to_string().contains("Java"), "{error}");
     }
 }
