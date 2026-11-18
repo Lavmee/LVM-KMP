@@ -2,13 +2,14 @@
 
 use std::fs;
 use std::path::Path;
-use std::sync::mpsc;
+use std::sync::mpsc::{self, Receiver};
+use std::time::Duration;
 
 use insta::assert_snapshot;
 use lvm_tui::app::{App, Dialog, Tab};
 use lvm_tui::doctor::Environment;
 use lvm_tui::event::Message;
-use lvm_tui::gradle::Runner;
+use lvm_tui::gradle::{GradleEvent, Runner};
 use lvm_tui::project::Project;
 use lvm_tui::state::State;
 use lvm_tui::ui;
@@ -41,12 +42,13 @@ fn app(root: &Path) -> App {
     App::new(Project::load(root), Runner::new(root, sender), &State::default())
 }
 
-/// The screen, with the temporary directory shown as `/work/consumer` so snapshots match on every machine.
+/// The screen, with the temporary directory shown as `/work/consumer` and durations as `N` seconds, so snapshots
+/// match on every machine.
 fn render(app: &mut App) -> String {
     let mut terminal = Terminal::new(TestBackend::new(120, 36)).unwrap();
     terminal.draw(|frame| ui::draw(frame, app)).unwrap();
     let root = app.project.root.display().to_string();
-    terminal.backend().to_string().lines().map(|line| fixed_root(line, &root)).collect::<Vec<_>>().join("\n")
+    terminal.backend().to_string().lines().map(|line| seconds(&fixed_root(line, &root))).collect::<Vec<_>>().join("\n")
 }
 
 /// Replaces [root] in [line], keeping the text after it where it was.
@@ -57,6 +59,31 @@ fn fixed_root(line: &str, root: &str) -> String {
     let spaces = rest.len() - rest.trim_start_matches(' ').len();
     let padding = (spaces + root.chars().count()).saturating_sub(SHOWN.len());
     format!("{}{SHOWN}{}{}", &line[..start], " ".repeat(padding), rest.trim_start_matches(' '))
+}
+
+/// `after 12s` -> `after Ns ` and `in 3s` -> `in Ns`, keeping the width of the line.
+fn seconds(line: &str) -> String {
+    let mut result = String::new();
+    let mut rest = line;
+    while let Some(at) = rest.find(|c: char| c.is_ascii_digit()) {
+        let digits = rest[at..].chars().take_while(char::is_ascii_digit).count();
+        let after = &rest[at + digits..];
+        let before = &rest[..at];
+        if after.starts_with('s') && (before.ends_with("after ") || before.ends_with("in ")) {
+            result.push_str(before);
+            result.push('N');
+            result.push('s');
+            let after = &after[1..];
+            // Keep the width: the spaces the digits took go after the unit.
+            result.push_str(&" ".repeat(digits - 1));
+            rest = after;
+        } else {
+            result.push_str(&rest[..at + digits]);
+            rest = after;
+        }
+    }
+    result.push_str(rest);
+    result
 }
 
 fn press(app: &mut App, keys: &str) {
@@ -176,7 +203,7 @@ fn the_doctor_fixes_a_finding_after_showing_the_change() {
     let dir = consumer();
     let mut app = app(dir.path());
     with_environment(&mut app, dir.path());
-    press(&mut app, "3");
+    press(&mut app, "4");
     assert_snapshot!("doctor_with_a_finding", render(&mut app));
 
     press(&mut app, "f");
@@ -235,4 +262,96 @@ fn a_module_moves_to_the_flat_layout_from_the_modules_tab() {
     press(&mut app, "n");
     assert!(app.dialog.is_none());
     assert!(dir.path().join("core/data/src/commonMain/kotlin/com/example/data/Repository.kt").is_file());
+}
+
+/// An app whose Gradle is [script], a shell script, with the channel its events arrive on.
+#[cfg(unix)]
+fn app_with_gradle(root: &Path, script: &str) -> (App, Receiver<Message>) {
+    use std::os::unix::fs::PermissionsExt;
+    let gradle = root.join("fake-gradle");
+    fs::write(&gradle, format!("#!/bin/sh\n{script}\n")).unwrap();
+    fs::set_permissions(&gradle, fs::Permissions::from_mode(0o755)).unwrap();
+    let (sender, receiver) = mpsc::channel();
+    let app = App::new(Project::load(root), Runner::new(root, sender).with_executable(gradle), &State::default());
+    (app, receiver)
+}
+
+/// Hands the app every event of the running build until it finishes.
+fn until_finished(app: &mut App, events: &Receiver<Message>) {
+    loop {
+        let message = events.recv_timeout(Duration::from_secs(10)).expect("an event");
+        let done = matches!(message, Message::Gradle(GradleEvent::Finished { .. }));
+        app.update(message);
+        if done {
+            return;
+        }
+    }
+}
+
+const FAILED_TEST: &str = r#"<testsuite name="com.example.shared.GreetingTest">
+  <testcase name="greets" classname="com.example.shared.GreetingTest" time="0.02">
+    <failure message="expected:&lt;Hi&gt; but was:&lt;Hello&gt;">java.lang.AssertionError: expected:&lt;Hi&gt; but was:&lt;Hello&gt;
+	at com.example.shared.GreetingTest.greets(GreetingTest.kt:7)
+</failure>
+  </testcase>
+  <testcase name="waves" classname="com.example.shared.GreetingTest" time="0.01"/>
+</testsuite>"#;
+
+#[cfg(unix)]
+#[test]
+fn a_task_runs_and_its_log_points_at_the_error() {
+    let dir = consumer();
+    let script = "echo '> Task :shared:compileKotlinJvm'\necho 'e: shared/src/Greeting.kt:3:5 Unresolved reference'\necho 'BUILD FAILED in 1s'\nexit 1";
+    let (mut app, events) = app_with_gradle(dir.path(), script);
+
+    // After the whole build come :app, :core:data and :shared, whose tasks start with build and check.
+    press(&mut app, "3jjjl");
+    assert_eq!(app.visible_tasks()[..2], ["build".to_owned(), "check".to_owned()]);
+    press(&mut app, "\n");
+    until_finished(&mut app, &events);
+
+    assert_eq!(app.runs.len(), 1);
+    assert_eq!(app.runs[0].command, ":shared:build");
+    press(&mut app, "ln");
+    assert_eq!(app.tasks.cursor, Some(1));
+    assert_snapshot!("tasks_log_with_an_error", render(&mut app));
+    press(&mut app, "o");
+    let request = app.editor.take().expect("an editor request");
+    assert_eq!(request.file, dir.path().join("shared/src/Greeting.kt"));
+    assert_eq!(request.line, Some(3));
+}
+
+#[cfg(unix)]
+#[test]
+fn failed_tests_open_at_their_frame_and_run_again() {
+    let dir = consumer();
+    let results = dir.path().join("shared/build/test-results/jvmTest");
+    fs::create_dir_all(&results).unwrap();
+    fs::write(results.join("TEST-com.example.shared.GreetingTest.xml"), FAILED_TEST).unwrap();
+    fs::create_dir_all(dir.path().join("shared/test")).unwrap();
+    fs::write(dir.path().join("shared/test/GreetingTest.kt"), "package com.example.shared\n").unwrap();
+    let (mut app, events) = app_with_gradle(dir.path(), "echo \"args: $*\"");
+
+    press(&mut app, "3lv");
+    assert_snapshot!("tasks_tests_with_a_failure", render(&mut app));
+    press(&mut app, "o");
+    let request = app.editor.take().expect("an editor request");
+    assert!(request.file.ends_with("shared/test/GreetingTest.kt"), "{}", request.file.display());
+    assert_eq!(request.line, Some(7));
+
+    press(&mut app, "a");
+    until_finished(&mut app, &events);
+    let log: Vec<&String> = app.runs[0].lines.iter().collect();
+    assert_eq!(log, ["args: :shared:jvmTest --tests com.example.shared.GreetingTest.greets --console=plain"]);
+}
+
+#[test]
+fn a_typed_command_keeps_the_keys_of_the_app_for_itself() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    press(&mut app, "3jjjc");
+    assert_eq!(app.tasks.command.as_deref(), Some(":shared:"));
+    press(&mut app, "q1");
+    assert!(!app.quit);
+    assert_eq!(app.tasks.command.as_deref(), Some(":shared:q1"));
 }

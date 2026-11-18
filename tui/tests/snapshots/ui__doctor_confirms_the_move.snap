@@ -2,7 +2,7 @@
 source: tests/ui.rs
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Doctor                                                                      lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Doctor                                                            lvm-tui Consumer"
 "┌ Doctor: 1 error(s) of 1 finding(s) ──────────────────────────────────────────────────────────────────────────────────┐"
 "│err┌ Fix: move its sources to the flat layout ────────────────────────────────────────────────────────────────────┐   │"
 "│   │move core/data/src/commonMain/kotlin/com/example/data/Repository.kt -> core/data/src/Repository.kt            │   │"

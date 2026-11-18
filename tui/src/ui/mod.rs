@@ -4,6 +4,7 @@ mod dialog;
 mod doctor;
 mod modules;
 mod overview;
+mod tasks;
 
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
@@ -27,6 +28,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     match app.tab {
         Tab::Overview => overview::draw(frame, app, body),
         Tab::Modules => modules::draw(frame, app, body),
+        Tab::Tasks => tasks::draw(frame, app, body),
         Tab::Doctor => doctor::draw(frame, app, body),
     }
     draw_status(frame, app, status);
@@ -56,7 +58,7 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
     let mut spans = Vec::new();
-    match &app.job {
+    match app.runs.last() {
         Some(job) if job.outcome.is_none() => {
             let spinner = SPINNER[app.ticks % SPINNER.len()];
             spans.push(Span::raw(format!(" {spinner} {} ", job.command)).yellow());
@@ -66,7 +68,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
         }
         _ => {
             if let Some(status) = &app.status {
-                let style = match app.job.as_ref().and_then(|job| job.outcome.as_ref()) {
+                let style = match app.runs.last().and_then(|job| job.outcome.as_ref()) {
                     Some((Outcome::Succeeded, _)) => Style::new().green(),
                     Some((Outcome::Cancelled, _)) => Style::new().yellow(),
                     Some(_) => Style::new().red(),
@@ -77,6 +79,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
                 let hint = match app.tab {
                     Tab::Overview => " r report   3 doctor   ctrl-p commands   ? keys   q quit",
                     Tab::Modules => " e edit value   m flat layout   o open   / filter   a affected   ? keys",
+                    Tab::Tasks => " enter run   c command   v log/tests/detekt/history   x cancel   ? keys",
                     Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
                 };
                 spans.push(hint.dim());
@@ -88,7 +91,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_help(frame: &mut Frame) {
     let rows: Vec<Line> = [
-        ("1 2 3, tab", "switch tabs"),
+        ("1 2 3 4, tab", "switch tabs"),
         ("r", "run lvmReport, then read the reports"),
         ("R", "read the build files again"),
         ("ctrl-p, :", "command palette"),
@@ -100,13 +103,18 @@ fn draw_help(frame: &mut Frame) {
         ("m", "move the module's sources to the flat layout"),
         ("f, F", "fix the selected finding, or all of them"),
         ("o", "open the file in $EDITOR"),
+        ("c", "run a Gradle command"),
+        ("v", "log, tests, detekt or history of the Tasks tab"),
+        ("n N", "next or previous error in the log"),
+        ("t, a", "run the selected test, or the failed ones, again"),
+        ("x", "cancel the running build"),
         ("ctrl-c", "cancel the running build, or quit"),
         ("q", "quit"),
     ]
     .into_iter()
     .map(|(key, text)| Line::from(vec![Span::raw(format!("{key:>12}  ")).bold(), Span::raw(text)]))
     .collect();
-    let area = centered(frame.area(), 64, rows.len() as u16 + 2);
+    let area = centered(frame.area(), 68, rows.len() as u16 + 2);
     frame.render_widget(Clear, area);
     frame.render_widget(Paragraph::new(rows).block(Block::bordered().title(" Keys ")), area);
 }

@@ -8,7 +8,9 @@ pub mod event;
 pub mod gradle;
 pub mod migrate;
 pub mod project;
+pub mod results;
 pub mod state;
+pub mod tasks;
 pub mod ui;
 pub mod version;
 

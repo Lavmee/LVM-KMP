@@ -129,11 +129,8 @@ fn spawn<E: From<GradleEvent> + Send + 'static>(
 ) {
     let mut args = job.args.clone();
     args.push("--console=plain".to_owned());
-    let command = format!(
-        "{} {}",
-        executable.file_name().map_or_else(|| executable.display().to_string(), |n| n.to_string_lossy().into_owned()),
-        job.args.join(" ")
-    );
+    // The arguments as the user would type them after ./gradlew.
+    let command = job.args.join(" ");
     let started = Instant::now();
     let child = Command::new(executable)
         .args(&args)

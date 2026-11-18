@@ -17,22 +17,26 @@ use crate::project::Project;
 use crate::project::model::{Module, ValueRow};
 use crate::project::report::Source;
 use crate::project::values_edit::{self, Layer};
+use crate::results::Results;
 use crate::state::State;
+use crate::tasks::TasksView;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
     Overview,
     Modules,
+    Tasks,
     Doctor,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 3] = [Tab::Overview, Tab::Modules, Tab::Doctor];
+    pub const ALL: [Tab; 4] = [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Doctor];
 
     pub fn title(self) -> &'static str {
         match self {
             Self::Overview => "Overview",
             Self::Modules => "Modules",
+            Self::Tasks => "Tasks",
             Self::Doctor => "Doctor",
         }
     }
@@ -41,6 +45,7 @@ impl Tab {
         match self {
             Self::Overview => "overview",
             Self::Modules => "modules",
+            Self::Tasks => "tasks",
             Self::Doctor => "doctor",
         }
     }
@@ -54,7 +59,10 @@ pub enum Action {
     Cancel,
     ShowOverview,
     ShowModules,
+    ShowTasks,
     ShowDoctor,
+    RunCommand,
+    RerunFailedTests,
     EditValue,
     MigrateModule,
     FixFinding,
@@ -67,13 +75,16 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 15] = [
+    pub const ALL: [Action; 18] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
         Action::ShowOverview,
         Action::ShowModules,
+        Action::ShowTasks,
         Action::ShowDoctor,
+        Action::RunCommand,
+        Action::RerunFailedTests,
         Action::EditValue,
         Action::MigrateModule,
         Action::FixFinding,
@@ -92,7 +103,10 @@ impl Action {
             Self::Cancel => "Cancel the running build",
             Self::ShowOverview => "Show the overview",
             Self::ShowModules => "Show the modules",
+            Self::ShowTasks => "Show the tasks, the log and the test results",
             Self::ShowDoctor => "Show the doctor's findings",
+            Self::RunCommand => "Run a Gradle command",
+            Self::RerunFailedTests => "Run the failed tests again",
             Self::EditValue => "Edit the selected value",
             Self::MigrateModule => "Move the module's sources to the flat layout",
             Self::FixFinding => "Fix the selected finding",
@@ -112,7 +126,10 @@ impl Action {
             Self::Cancel => "ctrl-c",
             Self::ShowOverview => "1",
             Self::ShowModules => "2",
-            Self::ShowDoctor => "3",
+            Self::ShowTasks => "3",
+            Self::ShowDoctor => "4",
+            Self::RunCommand => "c",
+            Self::RerunFailedTests => "a",
             Self::EditValue => "e",
             Self::MigrateModule => "m",
             Self::FixFinding => "f",
@@ -204,12 +221,17 @@ pub struct EditorRequest {
     pub line: Option<usize>,
 }
 
-const KEPT_LINES: usize = 500;
+/// Lines kept of each build's output, and builds kept in the history.
+const KEPT_LINES: usize = 20_000;
+const KEPT_RUNS: usize = 20;
 
 pub struct App {
     pub project: Project,
     pub tab: Tab,
     pub modules: ModulesView,
+    pub tasks: TasksView,
+    /// Test results and detekt issues of the last builds.
+    pub results: Results,
     pub doctor: ListState,
     /// What the machine offers; the doctor waits for it, since probing takes a moment.
     pub env: Option<Environment>,
@@ -218,11 +240,12 @@ pub struct App {
     pub palette: Option<Palette>,
     pub help: bool,
     pub status: Option<String>,
-    pub job: Option<JobView>,
+    /// The builds of this session, the latest last.
+    pub runs: Vec<JobView>,
     pub editor: Option<EditorRequest>,
     pub ticks: usize,
     pub quit: bool,
-    runner: Runner<Message>,
+    pub(crate) runner: Runner<Message>,
 }
 
 impl App {
@@ -241,10 +264,12 @@ impl App {
             filtering: false,
             pane: GraphPane::Dependencies,
         };
-        Self {
+        let mut app = Self {
             project,
             tab,
             modules,
+            tasks: TasksView::default(),
+            results: Results::default(),
             doctor: ListState::default(),
             env: None,
             findings: Vec::new(),
@@ -252,12 +277,14 @@ impl App {
             palette: None,
             help: false,
             status: None,
-            job: None,
+            runs: Vec::new(),
             editor: None,
             ticks: 0,
             quit: false,
             runner,
-        }
+        };
+        app.reload_results();
+        app
     }
 
     pub fn state(&self) -> State {
@@ -304,7 +331,22 @@ impl App {
             }
             Action::ShowOverview => self.tab = Tab::Overview,
             Action::ShowModules => self.tab = Tab::Modules,
+            Action::ShowTasks => self.tab = Tab::Tasks,
             Action::ShowDoctor => self.tab = Tab::Doctor,
+            Action::RunCommand => {
+                self.tab = Tab::Tasks;
+                let prefix = self.selected_target().map(|m| format!("{}:", m.path)).filter(|p| p != "::");
+                self.tasks.command = Some(prefix.unwrap_or_default());
+            }
+            Action::RerunFailedTests => {
+                self.tab = Tab::Tasks;
+                let args = crate::tasks::rerun_args(self.results.failed());
+                if args.is_empty() {
+                    self.status = Some("No test failed".to_owned());
+                } else {
+                    self.run_gradle(args);
+                }
+            }
             Action::EditValue => self.edit_value(),
             Action::MigrateModule => self.migrate_module(),
             Action::FixFinding => self.fix_selected(),
@@ -349,6 +391,11 @@ impl App {
             self.on_filter_key(key);
             return;
         }
+        // Text typed into the Tasks tab goes there, not to the keys of the app.
+        if self.tab == Tab::Tasks && (self.tasks.command.is_some() || self.tasks.filtering) {
+            self.on_tasks_key(key);
+            return;
+        }
         if self.help {
             self.help = false;
             return;
@@ -365,13 +412,15 @@ impl App {
             KeyCode::Char('R') => self.perform(Action::Reload),
             KeyCode::Char('1') => self.perform(Action::ShowOverview),
             KeyCode::Char('2') => self.perform(Action::ShowModules),
-            KeyCode::Char('3') => self.perform(Action::ShowDoctor),
+            KeyCode::Char('3') => self.perform(Action::ShowTasks),
+            KeyCode::Char('4') => self.perform(Action::ShowDoctor),
             KeyCode::Tab | KeyCode::BackTab => {
                 let position = Tab::ALL.iter().position(|tab| *tab == self.tab).unwrap_or(0);
                 let step = if key.code == KeyCode::Tab { 1 } else { Tab::ALL.len() - 1 };
                 self.tab = Tab::ALL[(position + step) % Tab::ALL.len()];
             }
             _ if self.tab == Tab::Modules => self.on_modules_key(key),
+            _ if self.tab == Tab::Tasks => self.on_tasks_key(key),
             _ if self.tab == Tab::Doctor => self.on_doctor_key(key),
             _ => {}
         }
@@ -509,7 +558,7 @@ impl App {
                 KeyCode::Char('y') | KeyCode::Enter => {
                     self.dialog = None;
                     self.run_report();
-                    self.runner.submit(vec!["build".to_owned()], Purpose::Task);
+                    self.run_gradle(vec!["build".to_owned()]);
                 }
                 KeyCode::Char('n') | KeyCode::Esc | KeyCode::Char('q') => self.dialog = None,
                 _ => {}
@@ -682,7 +731,7 @@ impl App {
     }
 
     fn run_report(&mut self) {
-        if self.job.as_ref().is_some_and(|job| job.purpose == Purpose::Report && job.outcome.is_none()) {
+        if self.runs.iter().any(|run| run.purpose == Purpose::Report && run.outcome.is_none()) {
             self.status = Some("lvmReport is already running".to_owned());
             return;
         }
@@ -696,49 +745,61 @@ impl App {
             GradleEvent::Started { job, command } => {
                 let purpose =
                     self.runner.running().filter(|running| running.id == job).map_or(Purpose::Task, |r| r.purpose);
-                self.job = Some(JobView { id: job, purpose, command, lines: VecDeque::new(), outcome: None });
+                self.push_run(JobView { id: job, purpose, command, lines: VecDeque::new(), outcome: None });
             }
             GradleEvent::Line { job, line } => {
-                if let Some(view) = self.job.as_mut().filter(|view| view.id == job) {
-                    if view.lines.len() == KEPT_LINES {
-                        view.lines.pop_front();
+                if let Some(run) = self.runs.iter_mut().rev().find(|run| run.id == job) {
+                    if run.lines.len() == KEPT_LINES {
+                        run.lines.pop_front();
                     }
-                    view.lines.push_back(line);
+                    run.lines.push_back(line);
                 }
             }
             GradleEvent::Finished { job, outcome, elapsed } => {
                 let finished = self.runner.finished(job);
                 let purpose = finished.as_ref().map_or(Purpose::Task, |job| job.purpose);
-                match self.job.as_mut().filter(|view| view.id == job) {
-                    Some(view) => view.outcome = Some((outcome.clone(), elapsed)),
+                match self.runs.iter_mut().rev().find(|run| run.id == job) {
+                    Some(run) => run.outcome = Some((outcome.clone(), elapsed)),
+                    // A build that could not start has no Started event.
                     None => {
                         let command = finished.map(|job| job.args.join(" ")).unwrap_or_default();
-                        self.job = Some(JobView {
+                        let lines = VecDeque::new();
+                        self.push_run(JobView {
                             id: job,
                             purpose,
                             command,
-                            lines: VecDeque::new(),
+                            lines,
                             outcome: Some((outcome.clone(), elapsed)),
                         });
                     }
                 }
-                if purpose == Purpose::Report {
-                    self.reload();
+                match purpose {
+                    Purpose::Report => self.reload(),
+                    Purpose::Task => self.reload_results(),
                 }
-                self.status = Some(self.describe_outcome(&outcome, elapsed));
+                self.status = Some(self.describe_outcome(job, &outcome, elapsed));
             }
         }
     }
 
-    fn describe_outcome(&self, outcome: &Outcome, elapsed: Duration) -> String {
-        let command = self.job.as_ref().map(|job| job.command.as_str()).unwrap_or("Gradle");
+    fn push_run(&mut self, run: JobView) {
+        if self.runs.len() == KEPT_RUNS {
+            self.runs.remove(0);
+            self.tasks.run = self.tasks.run.and_then(|index| index.checked_sub(1));
+        }
+        self.runs.push(run);
+    }
+
+    fn describe_outcome(&self, job: JobId, outcome: &Outcome, elapsed: Duration) -> String {
+        let run = self.runs.iter().rev().find(|run| run.id == job);
+        let command = format!("gradlew {}", run.map(|run| run.command.as_str()).unwrap_or_default());
         let seconds = elapsed.as_secs();
         match outcome {
             Outcome::Succeeded => format!("{command}: done in {seconds}s"),
             Outcome::Cancelled => format!("{command}: cancelled"),
             Outcome::NotStarted(reason) => format!("Could not start Gradle: {reason}"),
             Outcome::Failed(code) => {
-                let reason = self.job.as_ref().and_then(|job| failure_reason(&job.lines)).unwrap_or_default();
+                let reason = run.and_then(|run| failure_reason(&run.lines)).unwrap_or_default();
                 let code = code.map(|c| format!(" (exit {c})")).unwrap_or_default();
                 format!("{command}: failed{code} {reason}").trim_end().to_owned()
             }
@@ -756,6 +817,7 @@ impl App {
         .then_some(0));
         self.modules.list.select(index);
         self.diagnose();
+        self.reload_results();
     }
 
     fn diagnose(&mut self) {

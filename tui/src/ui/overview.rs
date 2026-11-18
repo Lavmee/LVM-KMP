@@ -152,6 +152,6 @@ fn doctor_summary(app: &App) -> Vec<Span<'static>> {
     if warnings > 0 {
         spans.push(format!("{warnings} warning(s)").yellow());
     }
-    spans.push(": press 3".dim());
+    spans.push(": press 4".dim());
     spans
 }
