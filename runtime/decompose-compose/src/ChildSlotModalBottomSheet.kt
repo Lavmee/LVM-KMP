@@ -19,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.value.Value
@@ -206,17 +205,4 @@ public fun DecomposeModalBottomSheetOverlayScope.Scrim(
     AnimatedVisibility(visibleState = visibleState, enter = enter, exit = exit) {
         Box(modifier = modifier.modalFragment().fillMaxSize().background(scrimColor))
     }
-}
-
-@Composable
-private fun InputBlocker(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.pointerInput(Unit) {
-            awaitPointerEventScope {
-                while (true) {
-                    awaitPointerEvent().changes.forEach { it.consume() }
-                }
-            }
-        },
-    )
 }
