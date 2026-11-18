@@ -10,6 +10,7 @@ LVM-KMP holds Gradle convention plugins and Kotlin Multiplatform libraries for A
 - `samples/` holds modules that apply the plugins the way a consumer would. CI builds them for every target.
 - A module of this build that applies `tech.annexflow.lvm.main-context` substitutes `lvm-main-context` and `lvm-main-context-compiler` with their projects, as `samples/main-context-sample/build.gradle.kts` does: the plugin adds the published artifacts.
 - `gradle/libs.versions.toml` is published as the `lvm-versions` catalog, so it lists only what consumers need.
+- `tui/` holds `lvm-tui`, a Rust terminal app for builds that use LVM. It reads a build's scripts and the JSON that `lvmReport` writes, and knows LVM's keys from `blueprint/common/lvm-keys.json`. Its version matches `VERSION_NAME`. Check it with `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test` in `tui/`.
 - The repository is public. Write in English, and never commit `local.properties`, keys or other secrets.
 
 Use the skills in [`.agents/skills`](.agents/skills):
