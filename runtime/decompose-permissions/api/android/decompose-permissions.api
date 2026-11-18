@@ -5,6 +5,7 @@ public final class tech/annexflow/lvm/decompose/permissions/LocalPermissionsCont
 
 public final class tech/annexflow/lvm/decompose/permissions/PermissionsControllersKt {
 	public static final fun openAppLocaleSettings (Ldev/icerock/moko/permissions/PermissionsController;Landroid/content/Context;)V
+	public static final fun openAppNotificationSettings (Ldev/icerock/moko/permissions/PermissionsController;Landroid/content/Context;)V
 }
 
 public final class tech/annexflow/lvm/decompose/permissions/RetainedPermissionsControllerKt {
