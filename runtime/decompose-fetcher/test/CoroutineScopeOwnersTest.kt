@@ -10,15 +10,19 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import tech.annexflow.lvm.core.Loadable
@@ -28,6 +32,8 @@ import tech.annexflow.lvm.decompose.PreviewAppComponentContext
 class CoroutineScopeOwnersTest {
 
     private val threeAttempts = stopAtAttempts<Throwable>(3)
+
+    private val oneAttempt = stopAtAttempts<Throwable>(1)
 
     @BeforeTest
     fun setMain() {
@@ -100,6 +106,110 @@ class CoroutineScopeOwnersTest {
         val failed = state.first { it != Loadable.Loading }
 
         assertEquals("offline", (failed as Loadable.Failed).throwable.message)
+    }
+
+    @Test
+    fun `refreshOn refreshes the state on every emission`() = runTest {
+        val trigger = MutableSharedFlow<Unit>()
+        var loads = 0
+        val state = TestCoroutineScopeOwner().fetcherState(initialValue = 0, refreshOn = trigger) { ++loads }
+        runCurrent()
+
+        trigger.emit(Unit)
+        runCurrent()
+        trigger.emit(Unit)
+        runCurrent()
+
+        assertEquals(3, state.value)
+    }
+
+    @Test
+    fun `an emission of refreshOn restarts a load that an earlier emission started`() = runTest {
+        // The buffer keeps emit from waiting for a collector that is still busy with the earlier emission.
+        val trigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        var loads = 0
+        TestCoroutineScopeOwner().fetcherState(initialValue = "", refreshOn = trigger) {
+            loads++
+            awaitCancellation()
+        }
+        runCurrent()
+
+        trigger.emit(Unit)
+        runCurrent()
+        trigger.emit(Unit)
+        runCurrent()
+
+        assertEquals(3, loads)
+    }
+
+    @Test
+    fun `retryOn refreshes a failed state`() = runTest {
+        val reconnected = MutableSharedFlow<Unit>()
+        var online = false
+        val state = TestCoroutineScopeOwner().fetcherResultState(retryPolicy = oneAttempt, retryOn = reconnected) {
+            if (!online) error("offline")
+            "rows"
+        }
+        runCurrent()
+        assertIs<Loadable.Failed>(state.value)
+
+        online = true
+        reconnected.emit(Unit)
+        runCurrent()
+
+        assertEquals(Loadable.Loaded("rows"), state.value)
+    }
+
+    @Test
+    fun `retryOn ignores emissions while the state is loading or loaded`() = runTest {
+        val reconnected = MutableSharedFlow<Unit>()
+        val responses = Channel<String>(Channel.UNLIMITED)
+        var loads = 0
+        val state = TestCoroutineScopeOwner().fetcherResultState(retryOn = reconnected) {
+            loads++
+            responses.receive()
+        }
+        runCurrent()
+
+        reconnected.emit(Unit)
+        runCurrent()
+        responses.send("rows")
+        runCurrent()
+        reconnected.emit(Unit)
+        runCurrent()
+
+        assertEquals(Loadable.Loaded("rows"), state.value)
+        assertEquals(1, loads)
+    }
+
+    @Test
+    fun `destroying the component cancels the load and stops the triggers`() = runTest {
+        val lifecycle = LifecycleRegistry(Lifecycle.State.RESUMED)
+        val trigger = MutableSharedFlow<Unit>()
+        var loads = 0
+        var cancelledLoads = 0
+        val state = TestCoroutineScopeOwner(lifecycle).fetcherResultState<String>(
+            refreshOn = trigger,
+            retryOn = trigger,
+        ) {
+            loads++
+            try {
+                awaitCancellation()
+            } finally {
+                cancelledLoads++
+            }
+        }
+        runCurrent()
+        assertEquals(2, trigger.subscriptionCount.value)
+
+        lifecycle.destroy()
+        runCurrent()
+        state.refresh()
+
+        assertEquals(0, trigger.subscriptionCount.value)
+        assertEquals(1, loads)
+        assertEquals(1, cancelledLoads)
+        assertEquals(Loadable.Loading, state.value)
     }
 
     @Test

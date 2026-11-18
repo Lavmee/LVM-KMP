@@ -31,7 +31,7 @@ The UI tests compare screens with the snapshots in `tui/tests/snapshots`. After 
 
 ## Requirements
 
-- macOS with Xcode. iOS klibs, frameworks and simulator tests build only there.
+- macOS with Xcode for `./gradlew build`: iOS klibs, frameworks and simulator tests build only there. Blueprint's tests run on any host; CI runs them on Linux for pull requests from forks.
 - An Android SDK, found through `ANDROID_HOME` or `sdk.dir` in `local.properties`.
 - JDK 21 for the Gradle daemon, as set in `gradle/gradle-daemon-jvm.properties`.
 

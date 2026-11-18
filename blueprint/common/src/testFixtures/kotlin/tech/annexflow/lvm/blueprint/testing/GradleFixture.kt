@@ -60,16 +60,20 @@ class GradleFixture(val rootDir: File) {
     private fun runner(arguments: Array<out String>): GradleRunner =
         GradleRunner.create()
             .withProjectDir(rootDir)
-            .withArguments(listOf("--configuration-cache", "--stacktrace") + arguments)
+            .withTestKitDir(testKitDir)
+            // Tests rewrite files right before the next build. A daemon that watches the file system can see the change
+            // too late and reuse a stale configuration cache entry, so every build reads the files again.
+            .withArguments(listOf("--configuration-cache", "--no-watch-fs", "--stacktrace") + arguments)
             .forwardOutput()
 
     companion object {
-        val blueprintDir: String = requireNotNull(System.getProperty("lvm.blueprint.dir")) {
-            "System property lvm.blueprint.dir is not set: apply lvm.blueprint-fixture-tests to the module."
-        }.replace('\\', '/')
+        val blueprintDir: String = fixtureProperty("lvm.blueprint.dir").replace('\\', '/')
         val kotlinVersion: String = LvmBuildInfo.TESTED_KOTLIN
         val agpVersion: String = LvmBuildInfo.TESTED_AGP
         val detektVersion: String = LvmTestVersions.DETEKT
+
+        /** The Gradle user home that the fixture builds of every blueprint module share. */
+        private val testKitDir: File = File(fixtureProperty("lvm.blueprint.testKitDir"))
 
         /**
          * Start of settings.gradle.kts: blueprint from sources, the settings plugin, and [lvmBlock] inside `lvm { }`.
@@ -98,5 +102,9 @@ class GradleFixture(val rootDir: File) {
                 System.getenv("ANDROID_SDK_ROOT"),
                 File(System.getProperty("user.home"), "Library/Android/sdk").path,
             ).filterNotNull().map(::File).firstOrNull(File::isDirectory)
+
+        private fun fixtureProperty(name: String): String = requireNotNull(System.getProperty(name)) {
+            "System property $name is not set: apply lvm.blueprint-fixture-tests to the module."
+        }
     }
 }

@@ -43,16 +43,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: Read the Kotlin version
-        id: kotlin
-        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
-
-      # The Kotlin/Native toolchain that CI saves on main.
-      - uses: actions/cache/restore@v6
-        with:
-          path: ~/.konan
-          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
-
       # Publishing doesn't check the ABI dumps; the tests ran in CI on the tagged commit.
       - name: Check the ABI dumps
         run: ./gradlew checkKotlinAbi
