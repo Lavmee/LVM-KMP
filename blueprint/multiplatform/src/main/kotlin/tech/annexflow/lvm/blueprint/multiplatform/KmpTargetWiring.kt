@@ -16,6 +16,7 @@ internal class KmpTargetWiring(
     private val kotlin: KotlinMultiplatformExtension,
     private val androidSection: AndroidSection,
     private val jvmSection: JvmSection,
+    private val flatLayout: Provider<Boolean>,
     private val values: LvmValues,
 ) : TargetWiring {
 
@@ -29,7 +30,7 @@ internal class KmpTargetWiring(
         values.report(LvmKeys.ANDROID_HOST_TESTS, spec.hostTests, defaultHostTests)
         val details = spec.hostTests.map { hostTests -> mapOf("hostTests" to hostTests) }
         project.lvmReport { targets.put("android", details) }
-        project.configureAndroidTarget(kotlin, androidSection, jvmSection, spec)
+        project.configureAndroidTarget(kotlin, androidSection, jvmSection, flatLayout, spec)
     }
 
     override fun ios(spec: IosTargetSpec) {

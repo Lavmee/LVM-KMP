@@ -44,7 +44,7 @@ class LvmMultiplatformPlugin : Plugin<Project> {
             "targets",
             TargetsSection::class.java,
             project.objects,
-            KmpTargetWiring(project, kotlin, android, jvm, values),
+            KmpTargetWiring(project, kotlin, android, jvm, kotlinSection.flatLayout, values),
         )
 
         configureKotlinCompilerOptions(kotlin, kotlinSection, project.lvmValues.kotlin)
