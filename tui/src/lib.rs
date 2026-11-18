@@ -6,12 +6,15 @@ pub mod doctor;
 pub mod edit;
 pub mod event;
 pub mod gradle;
+pub mod maven;
 pub mod migrate;
 pub mod project;
 pub mod results;
 pub mod state;
 pub mod tasks;
 pub mod ui;
+pub mod updates;
+pub mod upgrade;
 pub mod version;
 
 /// The LVM release that this lvm-tui ships with.

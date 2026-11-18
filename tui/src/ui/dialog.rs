@@ -18,7 +18,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
             let area = centered(frame.area(), 64, 5);
             frame.render_widget(Clear, area);
             let lines = vec![
-                Line::from("Sources moved. Run lvmReport and build to check the module?"),
+                Line::from("Run lvmReport and build to check the change?"),
                 Line::from(""),
                 Line::from(vec!["y ".bold(), "run   ".into(), "n ".bold(), "not now".into()]),
             ];

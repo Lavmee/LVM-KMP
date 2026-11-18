@@ -79,6 +79,11 @@ impl<E: From<GradleEvent> + Send + 'static> Runner<E> {
         id
     }
 
+    /// Where the runner sends its events, for other background work of the app.
+    pub fn sender(&self) -> Sender<E> {
+        self.events.clone()
+    }
+
     pub fn running(&self) -> Option<&Job> {
         self.running.as_ref().map(|running| &running.job)
     }

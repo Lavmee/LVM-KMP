@@ -17,6 +17,13 @@ pub enum Message {
     Gradle(GradleEvent),
     /// What the machine offers, probed in the background at start.
     Environment(Environment),
+    /// LVM's releases on Maven Central, newest first.
+    Releases(Result<Vec<String>, String>),
+    /// The `lvm-versions` catalog of a release.
+    Catalog {
+        version: String,
+        catalog: Result<crate::maven::Catalog, String>,
+    },
 }
 
 impl From<GradleEvent> for Message {

@@ -20,6 +20,7 @@ use crate::project::values_edit::{self, Layer};
 use crate::results::Results;
 use crate::state::State;
 use crate::tasks::TasksView;
+use crate::updates::UpdatesView;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
@@ -27,10 +28,11 @@ pub enum Tab {
     Modules,
     Tasks,
     Doctor,
+    Updates,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 4] = [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Doctor];
+    pub const ALL: [Tab; 5] = [Tab::Overview, Tab::Modules, Tab::Tasks, Tab::Doctor, Tab::Updates];
 
     pub fn title(self) -> &'static str {
         match self {
@@ -38,6 +40,7 @@ impl Tab {
             Self::Modules => "Modules",
             Self::Tasks => "Tasks",
             Self::Doctor => "Doctor",
+            Self::Updates => "Updates",
         }
     }
 
@@ -47,6 +50,7 @@ impl Tab {
             Self::Modules => "modules",
             Self::Tasks => "tasks",
             Self::Doctor => "doctor",
+            Self::Updates => "updates",
         }
     }
 }
@@ -61,6 +65,8 @@ pub enum Action {
     ShowModules,
     ShowTasks,
     ShowDoctor,
+    ShowUpdates,
+    UpgradeLvm,
     RunCommand,
     RerunFailedTests,
     EditValue,
@@ -75,7 +81,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub const ALL: [Action; 18] = [
+    pub const ALL: [Action; 20] = [
         Action::RunReport,
         Action::Reload,
         Action::Cancel,
@@ -83,6 +89,8 @@ impl Action {
         Action::ShowModules,
         Action::ShowTasks,
         Action::ShowDoctor,
+        Action::ShowUpdates,
+        Action::UpgradeLvm,
         Action::RunCommand,
         Action::RerunFailedTests,
         Action::EditValue,
@@ -105,6 +113,8 @@ impl Action {
             Self::ShowModules => "Show the modules",
             Self::ShowTasks => "Show the tasks, the log and the test results",
             Self::ShowDoctor => "Show the doctor's findings",
+            Self::ShowUpdates => "Show LVM's releases",
+            Self::UpgradeLvm => "Upgrade LVM to the selected release",
             Self::RunCommand => "Run a Gradle command",
             Self::RerunFailedTests => "Run the failed tests again",
             Self::EditValue => "Edit the selected value",
@@ -128,6 +138,8 @@ impl Action {
             Self::ShowModules => "2",
             Self::ShowTasks => "3",
             Self::ShowDoctor => "4",
+            Self::ShowUpdates => "5",
+            Self::UpgradeLvm => "u",
             Self::RunCommand => "c",
             Self::RerunFailedTests => "a",
             Self::EditValue => "e",
@@ -240,6 +252,9 @@ pub struct App {
     pub palette: Option<Palette>,
     pub help: bool,
     pub status: Option<String>,
+    pub updates: UpdatesView,
+    /// Whether the Updates tab asks Maven Central; tests turn it off and send the answers themselves.
+    pub fetch_releases: bool,
     /// The builds of this session, the latest last.
     pub runs: Vec<JobView>,
     pub editor: Option<EditorRequest>,
@@ -277,6 +292,8 @@ impl App {
             palette: None,
             help: false,
             status: None,
+            updates: UpdatesView::default(),
+            fetch_releases: true,
             runs: Vec::new(),
             editor: None,
             ticks: 0,
@@ -313,6 +330,8 @@ impl App {
                 self.env = Some(env);
                 self.diagnose();
             }
+            Message::Releases(versions) => self.on_releases(versions),
+            Message::Catalog { version, catalog } => self.on_catalog(version, catalog),
         }
     }
 
@@ -333,6 +352,15 @@ impl App {
             Action::ShowModules => self.tab = Tab::Modules,
             Action::ShowTasks => self.tab = Tab::Tasks,
             Action::ShowDoctor => self.tab = Tab::Doctor,
+            Action::ShowUpdates => {
+                self.tab = Tab::Updates;
+                self.open_updates();
+            }
+            Action::UpgradeLvm => {
+                self.tab = Tab::Updates;
+                self.open_updates();
+                self.upgrade_selected();
+            }
             Action::RunCommand => {
                 self.tab = Tab::Tasks;
                 let prefix = self.selected_target().map(|m| format!("{}:", m.path)).filter(|p| p != "::");
@@ -414,14 +442,19 @@ impl App {
             KeyCode::Char('2') => self.perform(Action::ShowModules),
             KeyCode::Char('3') => self.perform(Action::ShowTasks),
             KeyCode::Char('4') => self.perform(Action::ShowDoctor),
+            KeyCode::Char('5') => self.perform(Action::ShowUpdates),
             KeyCode::Tab | KeyCode::BackTab => {
                 let position = Tab::ALL.iter().position(|tab| *tab == self.tab).unwrap_or(0);
                 let step = if key.code == KeyCode::Tab { 1 } else { Tab::ALL.len() - 1 };
                 self.tab = Tab::ALL[(position + step) % Tab::ALL.len()];
+                if self.tab == Tab::Updates {
+                    self.open_updates();
+                }
             }
             _ if self.tab == Tab::Modules => self.on_modules_key(key),
             _ if self.tab == Tab::Tasks => self.on_tasks_key(key),
             _ if self.tab == Tab::Doctor => self.on_doctor_key(key),
+            _ if self.tab == Tab::Updates => self.on_updates_key(key),
             _ => {}
         }
     }
@@ -691,7 +724,7 @@ impl App {
         self.confirm(title, changes, if moves_sources { AfterApply::OfferBuild } else { AfterApply::Nothing });
     }
 
-    fn confirm(&mut self, title: String, changes: ChangeSet, then: AfterApply) {
+    pub(crate) fn confirm(&mut self, title: String, changes: ChangeSet, then: AfterApply) {
         let preview = changes.preview().lines().map(str::to_owned).collect();
         self.dialog = Some(Dialog::Confirm { title, changes, preview, scroll: 0, then });
     }

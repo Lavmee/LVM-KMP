@@ -5,6 +5,7 @@ mod doctor;
 mod modules;
 mod overview;
 mod tasks;
+mod updates;
 
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
@@ -29,6 +30,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         Tab::Overview => overview::draw(frame, app, body),
         Tab::Modules => modules::draw(frame, app, body),
         Tab::Tasks => tasks::draw(frame, app, body),
+        Tab::Updates => updates::draw(frame, app, body),
         Tab::Doctor => doctor::draw(frame, app, body),
     }
     draw_status(frame, app, status);
@@ -81,6 +83,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
                     Tab::Modules => " e edit value   m flat layout   o open   / filter   a affected   ? keys",
                     Tab::Tasks => " enter run   c command   v log/tests/detekt/history   x cancel   ? keys",
                     Tab::Doctor => " f fix   F fix all   o open in $EDITOR   R check again   ? keys",
+                    Tab::Updates => " j k release   u upgrade   f ask Maven Central again   ? keys",
                 };
                 spans.push(hint.dim());
             }
@@ -91,7 +94,7 @@ fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
 
 fn draw_help(frame: &mut Frame) {
     let rows: Vec<Line> = [
-        ("1 2 3 4, tab", "switch tabs"),
+        ("1-5, tab", "switch tabs"),
         ("r", "run lvmReport, then read the reports"),
         ("R", "read the build files again"),
         ("ctrl-p, :", "command palette"),
@@ -108,6 +111,7 @@ fn draw_help(frame: &mut Frame) {
         ("n N", "next or previous error in the log"),
         ("t, a", "run the selected test, or the failed ones, again"),
         ("x", "cancel the running build"),
+        ("u", "upgrade LVM to the selected release"),
         ("ctrl-c", "cancel the running build, or quit"),
         ("q", "quit"),
     ]

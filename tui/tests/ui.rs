@@ -355,3 +355,46 @@ fn a_typed_command_keeps_the_keys_of_the_app_for_itself() {
     assert!(!app.quit);
     assert_eq!(app.tasks.command.as_deref(), Some(":shared:q1"));
 }
+
+fn releases(app: &mut App) {
+    app.fetch_releases = false;
+    app.update(Message::Releases(Ok(vec!["0.4.0".into(), "0.3.2".into(), "0.3.1".into()])));
+    for (version, kotlin, agp) in [("0.3.2", "2.4.21", "9.5.1"), ("0.4.0", "2.5.0", "9.6.0")] {
+        let catalog = [("kotlin", kotlin), ("agp", agp), ("composeMultiplatform", "1.12.2")]
+            .into_iter()
+            .map(|(name, version)| (name.to_owned(), version.to_owned()))
+            .collect();
+        app.update(Message::Catalog { version: version.into(), catalog: Ok(catalog) });
+    }
+}
+
+#[test]
+fn updates_compare_a_release_and_upgrade_to_it() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    releases(&mut app);
+    press(&mut app, "5");
+    assert_eq!(app.updates.selected_version(), Some("0.4.0"));
+    assert_snapshot!("updates_to_the_latest", render(&mut app));
+
+    press(&mut app, "u");
+    let Some(Dialog::Confirm { preview, .. }) = &app.dialog else { panic!("no confirmation") };
+    assert!(preview.contains(&"+    id(\"tech.annexflow.lvm.settings\") version \"0.4.0\"".to_owned()), "{preview:?}");
+    press(&mut app, "yn");
+    let settings = fs::read_to_string(dir.path().join("settings.gradle.kts")).unwrap();
+    assert!(settings.contains("version \"0.4.0\""), "{settings}");
+    assert_eq!(app.project.lvm, lvm_tui::project::model::LvmVersion::Pinned("0.4.0".into()));
+}
+
+#[test]
+fn updates_say_when_maven_central_cannot_be_reached() {
+    let dir = consumer();
+    let mut app = app(dir.path());
+    app.fetch_releases = false;
+    app.update(Message::Releases(Err("connection refused".into())));
+    press(&mut app, "5");
+    let screen = render(&mut app);
+    assert!(screen.contains("Maven Central can't be reached"), "{screen}");
+    press(&mut app, "u");
+    assert!(app.dialog.is_none());
+}

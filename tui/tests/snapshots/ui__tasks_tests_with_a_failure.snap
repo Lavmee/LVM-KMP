@@ -2,7 +2,7 @@
 source: tests/ui.rs
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Doctor                                                            lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Doctor   5 Updates                                                lvm-tui Consumer"
 "┌ Run in ────────────────────────┐┌─  Log  Tests (1 failed)  Detekt (0)  History (0)  v ───────────────────────────────┐"
 "│> whole build                   ││FAIL GreetingTest.greets  :shared jvmTest 0.02s                                     │"
 "│  :app                          ││pass GreetingTest.waves  :shared jvmTest 0.01s                                      │"

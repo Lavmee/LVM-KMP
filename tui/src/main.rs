@@ -42,6 +42,17 @@ enum Command {
         #[arg(long)]
         fix: bool,
     },
+    /// Moves the build to another LVM release, by default the latest on Maven Central.
+    Upgrade {
+        /// A directory of the build. Defaults to the current directory.
+        path: Option<PathBuf>,
+        /// The LVM version to move to.
+        #[arg(long)]
+        to: Option<String>,
+        /// Shows the change without writing it.
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 fn main() -> ExitCode {
@@ -49,6 +60,9 @@ fn main() -> ExitCode {
     let result = match cli.command {
         Some(Command::Report { path }) => report(path.or(cli.path)).map(|()| true),
         Some(Command::Check { path, json, fix }) => check(path.or(cli.path), check::Options { json, fix }),
+        Some(Command::Upgrade { path, to, dry_run }) => {
+            upgrade(path.or(cli.path), to.as_deref(), dry_run).map(|()| true)
+        }
         None => interactive(cli.path).map(|()| true),
     };
     match result {
@@ -80,6 +94,12 @@ fn check(path: Option<PathBuf>, options: check::Options) -> Result<bool> {
     let env = Environment::probe(&project.root);
     let errors = check::run(project, &env, options, &mut std::io::stdout().lock())?;
     Ok(!errors)
+}
+
+fn upgrade(path: Option<PathBuf>, to: Option<&str>, dry_run: bool) -> Result<()> {
+    let project = find_project(path)?;
+    let releases = lvm_tui::maven::Releases::maven_central();
+    lvm_tui::upgrade::run(&project, &releases, to, dry_run, &mut std::io::stdout().lock())
 }
 
 fn interactive(path: Option<PathBuf>) -> Result<()> {
