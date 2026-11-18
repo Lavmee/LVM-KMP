@@ -5,7 +5,7 @@
 
 Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS and desktop apps.
 
-> **Status:** early development. The latest release is 0.3.2.
+> **Status:** early development. The latest release is 0.4.0.
 
 ## What's inside
 
@@ -15,9 +15,9 @@ Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS an
 | **runtime** | App machinery: KMP libraries | `lvm-core`, `lvm-coroutines`, `lvm-io`, `lvm-logger*`, `lvm-storage`, `lvm-decompose*`, `lvm-main-context` |
 | **compiler** | Kotlin compiler plugins | `lvm-main-context-compiler` |
 | **versions** | Version catalog and BOM | `lvm-versions`, `lvm-bom` |
-| **tui** | `lvm`, a terminal app for builds that use LVM; see [The lvm command](docs/tui.md) | The `lvm` command, in GitHub Releases |
+| **tui** | `lvm`, a terminal app for builds that use LVM; see [The lvm command](docs/tui.md) | The `lvm` command, in GitHub Releases and as `lvm-tui` on crates.io |
 
-All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version. The `lvm` command has the same version and comes with each GitHub Release.
+All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version. The `lvm` command has the same version: it comes with each GitHub Release and as the crate `lvm-tui` on crates.io.
 
 ### Plugins
 
