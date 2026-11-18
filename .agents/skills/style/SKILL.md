@@ -41,13 +41,13 @@ description: Always use this skill before writing or editing Kotlin or Rust code
 * Report errors at the source position through `IrPluginContext.diagnosticReporter`, never by throwing.
 * Generate only code that Kotlin accepts in source: for example, no suspend call where Kotlin rejects one, such as a default parameter value.
 
-## lvm-tui
+## tui
 
 * Format with `cargo fmt`, which reads `tui/rustfmt.toml`, and keep `cargo clippy --all-targets -- -D warnings` clean. `unsafe` is forbidden.
 * The app follows The Elm Architecture: every key, tick and background event arrives as a `Message` on one channel and goes through `App::update`, and the code in `ui/` only draws the state. Work that blocks, such as Gradle, adb, simctl or a request to Maven Central, runs on its own thread and sends `Message`s back.
 * Reading a build never runs Gradle. Values from `lvmReport` win over what the build files say, and each value keeps where it came from.
 * A change to the build's files is a `ChangeSet`, which the user sees as a diff and confirms before it is applied.
-* Never show, log or write the value of a secret; show only where it is set. lvm-tui never publishes to Maven Central.
+* Never show, log or write the value of a secret; show only where it is set. `lvm` never publishes to Maven Central.
 * Text the user sees says what to do next, as blueprint's errors do: `No adb: set ANDROID_HOME to the Android SDK`.
 * `rust-version` in `tui/Cargo.toml` is the oldest Rust that builds the crate; clippy flags library functions that are newer. A new dependency needs a license that `tui/deny.toml` allows.
 * Doc comments follow the rules of the Documentation section below.

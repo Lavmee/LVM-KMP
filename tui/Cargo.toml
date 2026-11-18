@@ -1,6 +1,6 @@
 [package]
 name = "lvm-tui"
-# Matches VERSION_NAME in ../gradle.properties: lvm-tui is released together with LVM.
+# Matches VERSION_NAME in ../gradle.properties: the lvm command is released together with LVM.
 version = "0.4.0-SNAPSHOT"
 edition = "2024"
 # The oldest Rust that builds it; clippy flags library functions that are newer.
@@ -9,6 +9,11 @@ description = "Terminal app for Gradle builds that use LVM's convention plugins"
 license = "Apache-2.0"
 repository = "https://github.com/Lavmee/LVM-KMP"
 publish = false
+
+# The command is `lvm`; the crate keeps the name of its folder.
+[[bin]]
+name = "lvm"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.104"

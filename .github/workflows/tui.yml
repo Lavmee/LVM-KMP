@@ -1,7 +1,7 @@
 name: TUI
 
-# lvm-tui embeds files from outside tui/: the version, the libraries, the Gradle wrapper, the keys of lvm { } and an
-# example of lvmReport's report. A change to them runs this workflow too.
+# The lvm-tui crate embeds files from outside tui/: the version, the libraries, the Gradle wrapper, the keys of
+# lvm { } and an example of lvmReport's report. A change to them runs this workflow too.
 on:
   push:
     branches: [main]

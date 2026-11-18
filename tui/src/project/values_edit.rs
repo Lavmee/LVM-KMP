@@ -108,7 +108,7 @@ pub fn change(
 fn kotlin_script(project: &Project, file: Option<&Path>, what: &str) -> Result<PathBuf> {
     let Some(file) = file else { bail!("the build has no {what}") };
     if file.extension().is_none_or(|ext| ext != "kts") {
-        bail!("{} uses the Groovy DSL, which lvm-tui doesn't edit", file.display());
+        bail!("{} uses the Groovy DSL, which lvm doesn't edit", file.display());
     }
     Ok(file.strip_prefix(&project.root).unwrap_or(file).to_owned())
 }

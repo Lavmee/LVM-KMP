@@ -1,7 +1,7 @@
 name: Release
 
-# A v* tag publishes both builds to Maven Central, which can't be undone, then creates the GitHub Release with lvm-tui
-# for each platform. RELEASING.md describes the steps.
+# A v* tag publishes both builds to Maven Central, which can't be undone, then creates the GitHub Release with the lvm
+# command for each platform. RELEASING.md describes the steps.
 on:
   push:
     tags: ['v*']
@@ -97,7 +97,8 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
   tui:
-    # lvm-tui for each platform. The binaries wait for the GitHub Release, which comes once both builds are out.
+    # The lvm command for each platform, built from the lvm-tui crate. The binaries wait for the GitHub Release, which
+    # comes once both builds are out.
     strategy:
       matrix:
         include:
@@ -139,8 +140,9 @@ jobs:
           name="lvm-tui-$GITHUB_REF_NAME-${{ matrix.target }}"
           mkdir -p "dist/$name"
           cp LICENSE "dist/$name/"
-          cp tui/target/${{ matrix.target }}/release/lvm-tui* "dist/$name/"
-          rm -f "dist/$name"/*.d "dist/$name"/*.pdb
+          exe=""
+          if [ "$RUNNER_OS" = "Windows" ]; then exe=".exe"; fi
+          cp "tui/target/${{ matrix.target }}/release/lvm$exe" "dist/$name/"
           cd dist
           if [ "$RUNNER_OS" = "Windows" ]; then
             archive="$name.zip"

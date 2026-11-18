@@ -766,7 +766,7 @@ impl App {
         };
         let layers = values_edit::layers(&row.key);
         if layers.is_empty() {
-            self.status = Some(format!("{} is not a value lvm-tui can edit", row.key));
+            self.status = Some(format!("{} can't be edited here", row.key));
             return;
         }
         // A module's own value is edited where it is; any other one most often belongs to the module too.

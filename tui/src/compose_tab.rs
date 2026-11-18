@@ -103,7 +103,7 @@ impl App {
     fn build_compose_reports(&mut self) {
         let Some(module) = self.selected_compose_module() else { return };
         let Some(task) = compose::compile_task(module) else {
-            self.status = Some(format!("{} has no compilation lvm-tui knows: run r first", module.path));
+            self.status = Some(format!("Found no compilation of {}: run r first", module.path));
             return;
         };
         let path = module.path.clone();

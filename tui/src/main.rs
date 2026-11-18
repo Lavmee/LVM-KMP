@@ -22,17 +22,17 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 /// A terminal app for Gradle builds that use LVM's convention plugins.
 #[derive(Parser)]
-#[command(name = "lvm-tui", version = LVM_VERSION)]
+#[command(name = "lvm", version = LVM_VERSION)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Command>,
-    /// A directory of the build; lvm-tui walks up to its settings script. Defaults to the current directory.
+    /// A directory of the build; lvm walks up to its settings script. Defaults to the current directory.
     path: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
 enum Command {
-    /// Prints what lvm-tui reads from the build as JSON, without starting the interface.
+    /// Prints what lvm reads from the build as JSON, without starting the interface.
     Report {
         /// A directory of the build. Defaults to the current directory.
         path: Option<PathBuf>,
@@ -114,7 +114,7 @@ fn main() -> ExitCode {
         Ok(true) => ExitCode::SUCCESS,
         Ok(false) => ExitCode::FAILURE,
         Err(error) => {
-            eprintln!("lvm-tui: {error:#}");
+            eprintln!("lvm: {error:#}");
             ExitCode::FAILURE
         }
     }

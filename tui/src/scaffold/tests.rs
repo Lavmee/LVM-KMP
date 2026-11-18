@@ -182,7 +182,7 @@ fn main_context_comes_as_its_plugin() {
     assert!(script.contains("alias(lvmLibs.plugins.blueprint.main.context)"), "{script}");
     assert!(!script.contains("lvmLibs.lvm.main.context"), "{script}");
     assert!(after(&changes, "build.gradle.kts").contains("alias(lvmLibs.plugins.blueprint.main.context) apply false"));
-    assert!(notes[0].contains("applies the plugin instead"));
+    assert!(notes[0].contains("tech.annexflow.lvm.main-context"), "{notes:?}");
 }
 
 #[test]

@@ -31,7 +31,7 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
                 Line::from("Maven Central can't be reached, and no earlier answer is kept:".red()),
                 Line::from(error.clone()),
                 Line::from(""),
-                Line::from("f asks again. lvm-tui upgrade --to <version> works without it.".dim()),
+                Line::from("f asks again. lvm upgrade --to <version> works without it.".dim()),
             ]);
             frame.render_widget(text.wrap(Wrap { trim: false }).block(Block::bordered().title(" Releases ")), area);
             return;

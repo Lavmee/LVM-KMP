@@ -3,7 +3,7 @@ source: tests/ui.rs
 assertion_line: 385
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                            lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
 "┌ Releases ──────────────────┐┌ 0.3.2 -> 0.4.0 ────────────────────────────────────────────────────────────────────────┐"
 "│> 0.4.0       latest        ││Tested with              The build    0.3.2            0.4.0                            │"
 "│  0.3.2       current       ││Kotlin                   -            2.4.21           2.5.0                            │"

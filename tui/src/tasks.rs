@@ -461,7 +461,7 @@ impl App {
                 let file = test.class.rsplit('.').next().map(|name| format!("{name}.kt"));
                 match file {
                     Some(file) => self.open_location(PathBuf::from(file), 1, Some(test)),
-                    None => self.status = Some("The test has no source lvm-tui can find".to_owned()),
+                    None => self.status = Some("Found no source of the test in the build".to_owned()),
                 }
             }
         }
@@ -485,7 +485,7 @@ impl App {
         };
         match file {
             Some(file) => self.editor = Some(EditorRequest { file, line: Some(line) }),
-            None => self.status = Some("lvm-tui can't find that file in the build".to_owned()),
+            None => self.status = Some("That file isn't in the build".to_owned()),
         }
     }
 

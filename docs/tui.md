@@ -1,10 +1,10 @@
-# lvm-tui
+# The lvm command
 
-`lvm-tui` is a terminal app for Gradle builds that use LVM's plugins. It shows the build's modules and the values of `lvm { }` with where each one comes from, checks the build for what would fail LVM's plugins and fixes it, runs Gradle tasks with their test results and detekt issues, runs apps on devices and follows their logs, moves the build to a new LVM release, and creates builds, modules and dependencies. Each LVM release comes with an `lvm-tui` of the same version. It is built with [Ratatui](https://ratatui.rs) and works in any terminal on macOS, Linux and Windows.
+`lvm` is a terminal app for Gradle builds that use LVM's plugins. It shows the build's modules and the values of `lvm { }` with where each one comes from, checks the build for what would fail LVM's plugins and fixes it, runs Gradle tasks with their test results and detekt issues, runs apps on devices and follows their logs, moves the build to a new LVM release, and creates builds, modules and dependencies. Each LVM release comes with an `lvm` command of the same version. It is built with [Ratatui](https://ratatui.rs) and works in any terminal on macOS, Linux and Windows.
 
 ## Install
 
-Every [GitHub Release](https://github.com/Lavmee/LVM-KMP/releases) of LVM has an archive of `lvm-tui` for macOS (`aarch64-apple-darwin`, `x86_64-apple-darwin`), Linux (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`) and Windows (`x86_64-pc-windows-msvc`), each with its SHA-256 checksum. Download the archive for your machine, check it, and put `lvm-tui` on your `PATH`:
+Every [GitHub Release](https://github.com/Lavmee/LVM-KMP/releases) of LVM has an archive of the `lvm` command for macOS (`aarch64-apple-darwin`, `x86_64-apple-darwin`), Linux (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`) and Windows (`x86_64-pc-windows-msvc`), each with its SHA-256 checksum. Download the archive for your machine, check it, and put `lvm` on your `PATH`:
 
 ```bash
 gh release download vX.Y.Z --repo Lavmee/LVM-KMP --pattern 'lvm-tui-vX.Y.Z-aarch64-apple-darwin.tar.gz*'
@@ -14,7 +14,7 @@ tar -xzf lvm-tui-vX.Y.Z-aarch64-apple-darwin.tar.gz
 
 The binaries are not signed. macOS refuses to open a binary that a browser downloaded until you allow it in System Settings > Privacy & Security; files downloaded with `gh` or `curl` open without that step.
 
-With Rust 1.96 or newer, Cargo builds `lvm-tui` from the tag of a release:
+With Rust 1.96 or newer, Cargo builds `lvm` from the tag of a release. Its crate is `lvm-tui`:
 
 ```bash
 cargo install --git https://github.com/Lavmee/LVM-KMP --tag vX.Y.Z lvm-tui
@@ -22,17 +22,19 @@ cargo install --git https://github.com/Lavmee/LVM-KMP --tag vX.Y.Z lvm-tui
 
 From a checkout of this repository, `cargo install --path tui` builds the version of the checkout.
 
+On Linux, `lvm` is also the command of LVM2, which manages disk volumes. Your shell runs the `lvm` that comes first in your `PATH`: put the directory with LVM's `lvm`, such as `~/.cargo/bin`, before `/usr/sbin` and `/usr/bin`. `sudo lvm` still runs LVM2's.
+
 ## Start
 
-Run `lvm-tui` in any directory of a build, or pass the directory: it walks up to the build's settings script.
+Run `lvm` in any directory of a build, or pass the directory: it walks up to the build's settings script.
 
 ```bash
-lvm-tui path/to/build
+lvm path/to/build
 ```
 
-`lvm-tui` reads the build's files without running Gradle, so it starts at once. For exact values, press `r`: it runs the `lvmReport` task, which LVM 0.4.0 and newer have, and reads what the plugins actually set up. The [Report](../README.md#report) section of the README describes the task. With an older LVM, `lvm-tui` shows what the files say, and Modules marks each value as coming from the build files or from `lvmReport`.
+`lvm` reads the build's files without running Gradle, so it starts at once. For exact values, press `r`: it runs the `lvmReport` task, which LVM 0.4.0 and newer have, and reads what the plugins actually set up. The [Report](../README.md#report) section of the README describes the task. With an older LVM, `lvm` shows what the files say, and Modules marks each value as coming from the build files or from `lvmReport`.
 
-Outside a build, `lvm-tui` offers to create one. It remembers the tab, the module and the device of each build in your data directory, never in the build.
+Outside a build, `lvm` offers to create one. It remembers the tab, the module and the device of each build in your data directory, never in the build.
 
 ## Tabs
 
@@ -62,7 +64,7 @@ These keys work everywhere:
 
 ### Changes to the build
 
-Every action that changes files shows the change as a diff first, and `y` applies it. Files move with `git mv` where git tracks them, so their history stays connected. After a change to the build, `lvm-tui` offers to run `lvmReport` and `build`.
+Every action that changes files shows the change as a diff first, and `y` applies it. Files move with `git mv` where git tracks them, so their history stays connected. After a change to the build, `lvm` offers to run `lvmReport` and `build`.
 
 In Modules, `e` edits the selected value and asks where to set it: `gradle.properties`, the `lvm { }` block of the settings script, or the module's own `lvm { }`. It checks the value against its type and says whether a list is appended to the build-wide list or replaces it. `n` creates a module with the layout and conventions of the build, `d` adds an LVM library with what it needs, such as the serialization plugin for `lvm-storage`, and `m` moves a module's sources to LVM's flat layout.
 
@@ -86,7 +88,7 @@ Updates lists LVM's releases and compares the selected one with the build's: the
 
 ### Library
 
-Library shows the artifact ID and the POM values of each published module with their source, and where the Maven Central credentials and the signing key are set, without their values. `c` runs `checkKotlinAbi` and shows how the ABI changed, with removals as possible breaking changes, `u` updates the dump in `api/`, and `p` publishes to Maven local without signing and lists the files. `lvm-tui` never publishes to Maven Central.
+Library shows the artifact ID and the POM values of each published module with their source, and where the Maven Central credentials and the signing key are set, without their values. `c` runs `checkKotlinAbi` and shows how the ABI changed, with removals as possible breaking changes, `u` updates the dump in `api/`, and `p` publishes to Maven local without signing and lists the files. `lvm` never publishes to Maven Central.
 
 ### Compose
 
@@ -96,22 +98,22 @@ Library shows the artifact ID and the POM values of each published module with t
 
 The commands below run without the interface, for scripts and CI. Each takes the build's directory, by default the current one.
 
-`lvm-tui check` runs the doctor's checks and exits with 1 while errors remain. `--json` prints the findings as JSON, and `--fix` applies every fix, then checks again:
+`lvm check` runs the doctor's checks and exits with 1 while errors remain. `--json` prints the findings as JSON, and `--fix` applies every fix, then checks again:
 
 ```bash
-lvm-tui check --json
+lvm check --json
 ```
 
-`lvm-tui upgrade` moves the build to the latest LVM release, or to the one `--to` names. `--dry-run` prints the change without writing it:
+`lvm upgrade` moves the build to the latest LVM release, or to the one `--to` names. `--dry-run` prints the change without writing it:
 
 ```bash
-lvm-tui upgrade --to 0.4.0 --dry-run
+lvm upgrade --to 0.4.0 --dry-run
 ```
 
-`lvm-tui new` creates a build with LVM: a shared Kotlin Multiplatform module and an Android app that uses it, with the Gradle wrapper of the LVM release. Without `--yes`, it asks for the details in a form. `lvm-tui new --help` lists the options, such as `--targets`, `--compose` and `--no-app`.
+`lvm new` creates a build with LVM: a shared Kotlin Multiplatform module and an Android app that uses it, with the Gradle wrapper of the LVM release. Without `--yes`, it asks for the details in a form. `lvm new --help` lists the options, such as `--targets`, `--compose` and `--no-app`.
 
 ```bash
-lvm-tui new my-app --group com.example.myapp --compose --yes
+lvm new my-app --group com.example.myapp --compose --yes
 ```
 
-`lvm-tui report` prints the build as `lvm-tui` reads it, as JSON.
+`lvm report` prints the build as `lvm` reads it, as JSON.

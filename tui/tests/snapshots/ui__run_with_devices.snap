@@ -3,7 +3,7 @@ source: tests/ui.rs
 assertion_line: 543
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                            lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
 "┌ Apps ──────────────────────────────┐┌─ Log ──────────────────────────────────────────────────────────────────────────┐"
 "│> :app  Android app                 ││enter runs the selected app on the selected device.                             │"
 "│  :shared  iOS framework            ││a follows its log: logcat on Android, the unified log on a simulator.           │"

@@ -9,7 +9,7 @@ on:
       - 'docs/**'
       - '.agents/**'
       - '.claude'
-      # lvm-tui has its own workflow, tui.yml.
+      # tui/ has its own workflow, tui.yml.
       - 'tui/**'
       - '.github/workflows/tui.yml'
   pull_request:
@@ -19,7 +19,7 @@ on:
       - 'docs/**'
       - '.agents/**'
       - '.claude'
-      # lvm-tui has its own workflow, tui.yml.
+      # tui/ has its own workflow, tui.yml.
       - 'tui/**'
       - '.github/workflows/tui.yml'
 

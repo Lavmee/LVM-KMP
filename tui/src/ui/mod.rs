@@ -62,7 +62,7 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
         Tabs::new(titles).select(selected).highlight_style(Style::new().bold().reversed()).divider(" "),
         tabs,
     );
-    let label = Line::from(vec![" lvm-tui ".dim(), Span::raw(app.project.name.clone()).bold()]).right_aligned();
+    let label = Line::from(vec![" lvm ".dim(), Span::raw(app.project.name.clone()).bold()]).right_aligned();
     frame.render_widget(label, name);
 }
 

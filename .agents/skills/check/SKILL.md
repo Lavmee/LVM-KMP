@@ -16,7 +16,7 @@ Run these by default:
 
 Blueprint is an included build, so the root `build` does not run its tests. Run both. Both builds compare each module's public API with its dump in `api/`; after an intended API change, run `updateKotlinAbi` in the same build and commit the dumps.
 
-## lvm-tui
+## tui
 
 Run these in `tui/` when a change touches `tui/` or a file it embeds, such as `gradle.properties`, `settings.gradle.kts`, the Gradle wrapper or `blueprint/common/lvm-keys.json`:
 

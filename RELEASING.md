@@ -1,6 +1,6 @@
 # Releasing
 
-Every artifact, runtime libraries and blueprint plugins alike, is published to Maven Central under `tech.annexflow.lvm` with one shared version. `lvm-tui` has the same version: its binaries go to the GitHub Release of the version.
+Every artifact, runtime libraries and blueprint plugins alike, is published to Maven Central under `tech.annexflow.lvm` with one shared version. The `lvm` command, built from the `lvm-tui` crate in `tui/`, has the same version: its binaries go to the GitHub Release of the version.
 
 ## One-time setup
 
@@ -46,7 +46,7 @@ The username and password are a Central Portal user token, not your account cred
    ```
    Blueprint is an included build, so the root publishing task doesn't reach it: it has its own job, which starts after the libraries are out, since the settings plugin imports `lvm-versions` of its own version. If the blueprint job fails, re-run that job alone: Maven Central refuses to take the libraries' version a second time.
 
-   Meanwhile, the workflow builds `lvm-tui` for each platform. Once both builds are out, it creates the GitHub Release of the tag with notes generated from the pull requests, and attaches an archive of `lvm-tui` and its SHA-256 checksum for each platform. If only this step fails, re-run its job; the release isn't created until it succeeds.
+   Meanwhile, the workflow builds the `lvm` command for each platform. Once both builds are out, it creates the GitHub Release of the tag with notes generated from the pull requests, and attaches an archive of the command, `lvm-tui-vX.Y.Z-<target>`, and its SHA-256 checksum for each platform. If only this step fails, re-run its job; the release isn't created until it succeeds.
 6. Once the artifacts are on Maven Central, set `VERSION_NAME` and the version in `tui/Cargo.toml` to the next snapshot version, such as `0.2.0-SNAPSHOT`, and update `tui/Cargo.lock` as in step 1.
 
 ## What is published
@@ -54,7 +54,7 @@ The username and password are a Central Portal user token, not your account cred
 - The libraries in `runtime/` and the compiler plugin apply `tech.annexflow.lvm.publish`, which publishes each as `lvm-<project name>` with the POM from `gradle.properties`, sources and javadoc jars, signed.
 - The blueprint modules apply `lvm.blueprint-publish` from `blueprint/buildSrc`, which does the same with vanniktech's plugin as `lvm-blueprint-<name>`, plus a marker for every plugin ID. Blueprint can't apply its own publish plugin from its sources.
 - `bom/` publishes `lvm-bom`, a Gradle platform with every library and the compiler plugin; `versions/` publishes `lvm-versions`, the catalog of `gradle/libs.versions.toml` plus LVM's libraries, BOM and blueprint plugins.
-- `tui/` is not published to crates.io. The GitHub Release has its binaries for macOS, Linux and Windows, and `cargo install --git` builds it from the tag; see [lvm-tui](docs/tui.md).
+- `tui/` is not published to crates.io. The GitHub Release has the `lvm` command for macOS, Linux and Windows, and `cargo install --git` builds it from the tag; see [The lvm command](docs/tui.md).
 - The samples are not published.
 
 To check a release locally, publish both builds into a throwaway repository instead of `~/.m2`. Versions ending in `-SNAPSHOT` are not signed; a release version needs `-Plvm.publish.signing=false` without a key.
@@ -66,7 +66,7 @@ To check a release locally, publish both builds into a throwaway repository inst
 
 ## CI runner
 
-The libraries job of the release workflow runs on `macos-latest` because the iOS klibs are built there; the blueprint job has only JVM code and runs on `ubuntu-latest`. `lvm-tui` builds natively on each platform: both macOS targets on `macos-latest`, Linux on the `ubuntu-22.04` images, whose older glibc lets the binaries run on more distributions, and Windows on `windows-latest`. Kotlin can cross-compile klibs for Apple targets on Linux, with limitations, and not when a module uses its own cinterop. Moving to Linux is possible later if no module needs cinterop.
+The libraries job of the release workflow runs on `macos-latest` because the iOS klibs are built there; the blueprint job has only JVM code and runs on `ubuntu-latest`. The `lvm` command builds natively on each platform: both macOS targets on `macos-latest`, Linux on the `ubuntu-22.04` images, whose older glibc lets the binaries run on more distributions, and Windows on `windows-latest`. Kotlin can cross-compile klibs for Apple targets on Linux, with limitations, and not when a module uses its own cinterop. Moving to Linux is possible later if no module needs cinterop.
 
 ## Plugin markers
 

@@ -63,7 +63,7 @@ pub fn add(project: &Project, module: &Module, spec: &DependencySpec) -> Result<
         // The plugin adds the annotation and runs the compiler plugin; the library alone does nothing.
         add_plugin(&mut changes, root, &file, &conventions.plugin("main-context"));
         plugins.push("tech.annexflow.lvm.main-context".into());
-        notes.push("lvm-main-context comes with tech.annexflow.lvm.main-context, which also runs its compiler plugin: lvm-tui applies the plugin instead.".into());
+        notes.push("lvm-main-context comes with tech.annexflow.lvm.main-context, which also runs its compiler plugin, so the module gets the plugin instead.".into());
     } else {
         let notation = match &conventions.catalog {
             Some(catalog) => format!("{catalog}.lvm.{}", spec.artifact.trim_start_matches("lvm-").replace('-', ".")),

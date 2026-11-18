@@ -3,7 +3,7 @@ source: tests/ui.rs
 assertion_line: 617
 expression: render(&mut app)
 ---
-" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                            lvm-tui Consumer"
+" 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
 "┌ Apps ────────────────────────┐┌─ Log: file app.log W+ /net ──────────────────────────────────────────────────────────┐"
 "│> :app  Android app           ││10:15:32.002 W Net slow response                                                      │"
 "│  :shared  iOS framework      ││                                                                                      │"

@@ -45,15 +45,14 @@ fn draw_summary(frame: &mut Frame, app: &App, area: Rect) {
     };
     let mut problems = Vec::new();
     if let Some(schema) = project.reports.newer_schema {
-        problems.push(Line::from(
-            format!("Reports use format {schema}, newer than this lvm-tui knows: update lvm-tui").yellow(),
-        ));
+        problems
+            .push(Line::from(format!("Reports use format {schema}, newer than this lvm knows: update lvm").yellow()));
     }
     if !project.reports.errors.is_empty() {
         problems.push(Line::from(format!("{} report(s) could not be read", project.reports.errors.len()).red()));
     }
     if project.settings.as_ref().is_some_and(|s| s.groovy) {
-        problems.push(Line::from("settings.gradle uses the Groovy DSL, which lvm-tui reads only partly".yellow()));
+        problems.push(Line::from("settings.gradle uses the Groovy DSL, which lvm reads only partly".yellow()));
     }
     let label = |text: &'static str| Span::raw(format!("{text:<10}")).dim();
     let mut lines = vec![
