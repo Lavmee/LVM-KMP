@@ -22,7 +22,7 @@ class LvmAndroidTestPluginTest {
     }
 
     @Test
-    fun `uses default SDK levels, derives the namespace and turns off animations, without desugaring`() {
+    fun `uses default SDK levels, derives the namespace, turns off animations and leaves out duplicate metadata, without desugaring`() {
         val output = testModuleFixture(dir, PRINT_TEST_MODULE_DSL).build(":benchmark:help").output
 
         assertContains(
@@ -30,7 +30,7 @@ class LvmAndroidTestPluginTest {
             "lvm-dsl namespace=com.example.benchmark compileSdk=37 minSdk=24 targetSdk=37 " +
                 "runner=androidx.test.runner.AndroidJUnitRunner",
         )
-        assertContains(output, "lvm-dsl desugaring=false animationsDisabled=true")
+        assertContains(output, "lvm-dsl desugaring=false animationsDisabled=true excludes=[/META-INF/DEPENDENCIES, /META-INF/INDEX.LIST]")
     }
 
     @Test

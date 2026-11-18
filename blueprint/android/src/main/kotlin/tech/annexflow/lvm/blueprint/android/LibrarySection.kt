@@ -17,6 +17,13 @@ abstract class LibrarySection {
     /** Sets `resourcePrefix` to one derived from the module path: `:core:ui` -> `core_ui_`. */
     abstract val resourcePrefix: Property<Boolean>
 
+    /**
+     * Segments that the resource prefix leaves out at the end of the module path, compared without case, while more
+     * than one segment is left. A segment is a run of letters, digits and `_`: with `ui` and `sky`,
+     * `:feature:chat:ui-sky` -> `feature_chat_`. Appended to the build-wide list.
+     */
+    abstract val resourcePrefixDroppedSegments: ListProperty<String>
+
     /** Turns off the instrumented tests of a module without `androidTest` sources. */
     abstract val skipEmptyAndroidTest: Property<Boolean>
 }

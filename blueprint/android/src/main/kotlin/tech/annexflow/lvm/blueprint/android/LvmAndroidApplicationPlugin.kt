@@ -61,8 +61,7 @@ class LvmAndroidApplicationPlugin : Plugin<Project> {
         project.extensions.configure(ApplicationExtension::class.java) {
             setJavaVersion(buildWideJvmTarget)
             testOptions.animationsDisabled = true
-            // Metadata that several jars carry under the same name and that no app needs at runtime.
-            packaging.resources.excludes.addAll(listOf("/META-INF/INDEX.LIST", "/META-INF/DEPENDENCIES"))
+            excludeDuplicateMetadata()
         }
 
         // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.

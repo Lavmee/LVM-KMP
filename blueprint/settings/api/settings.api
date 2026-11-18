@@ -46,6 +46,7 @@ public abstract class tech/annexflow/lvm/blueprint/settings/KotlinDefaults {
 	public abstract fun getExplicitApi ()Lorg/gradle/api/provider/Property;
 	public abstract fun getFlatLayout ()Lorg/gradle/api/provider/Property;
 	public abstract fun getFreeCompilerArgs ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getJvmDefault ()Lorg/gradle/api/provider/Property;
 	public abstract fun getOptIns ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getTestDependencies ()Lorg/gradle/api/provider/Property;
 	public abstract fun getWarningsAsErrors ()Lorg/gradle/api/provider/Property;
@@ -56,6 +57,7 @@ public abstract class tech/annexflow/lvm/blueprint/settings/LibraryDefaults {
 	public abstract fun getConsumerProguardFiles ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getDesugaring ()Lorg/gradle/api/provider/Property;
 	public abstract fun getResourcePrefix ()Lorg/gradle/api/provider/Property;
+	public abstract fun getResourcePrefixDroppedSegments ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getSkipEmptyAndroidTest ()Lorg/gradle/api/provider/Property;
 }
 

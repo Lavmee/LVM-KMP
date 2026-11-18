@@ -165,7 +165,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles` and `library.consumerProguardFiles` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing.
 
 ```kotlin
 // settings.gradle.kts
@@ -209,6 +209,7 @@ Your own convention plugins can read the build-wide values and configure the `lv
 | `kotlin.explicitApi` | `false` | Strict explicit API mode for the main code of libraries and Kotlin/JVM modules; tests keep default visibility |
 | `kotlin.testDependencies` | `true` | Adds `kotlin-test` to tests: to `commonTest` in Kotlin Multiplatform modules, and to the unit tests of Android and Kotlin/JVM modules |
 | `kotlin.flatLayout` | `false` | The flat source layout; see [Source layout](#source-layout) |
+| `kotlin.jvmDefault` | unset | How Kotlin compiles interface functions with a body for JVM and Android, as its `-jvm-default`: `enable`, `no-compatibility` or `disable`. While it is unset, Kotlin's own default applies |
 
 ### Source layout
 
@@ -299,7 +300,7 @@ Compose code needs the Compose compiler, which `tech.annexflow.lvm.compose` appl
 
 ### Android libraries
 
-`tech.annexflow.lvm.android.library` sets up an Android library that doesn't use Kotlin Multiplatform, such as a library with product flavors, which `com.android.kotlin.multiplatform.library` doesn't have. It applies AGP's `com.android.library` with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of instrumented tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, adds `kotlin-test-junit` to unit tests and turns off animations in instrumented tests. Strict explicit API mode follows `kotlin.explicitApi`, as in Kotlin Multiplatform libraries, and covers the main code of every variant. From `lvm { library { } }` it sets core library desugaring, the keep rules that ship in the AAR and a resource prefix, and it turns off the instrumented tests of a module that has no `androidTest` sources.
+`tech.annexflow.lvm.android.library` sets up an Android library that doesn't use Kotlin Multiplatform, such as a library with product flavors, which `com.android.kotlin.multiplatform.library` doesn't have. It applies AGP's `com.android.library` with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of instrumented tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, adds `kotlin-test-junit` to unit tests and turns off animations in instrumented tests. Strict explicit API mode follows `kotlin.explicitApi`, as in Kotlin Multiplatform libraries, and covers the main code of every variant. From `lvm { library { } }` it sets core library desugaring, the keep rules that ship in the AAR and a resource prefix, and it turns off the instrumented tests of a module that has no `androidTest` sources. Like an application, it leaves `/META-INF/INDEX.LIST` and `/META-INF/DEPENDENCIES` out of the APK of instrumented tests.
 
 ```kotlin
 // core/ui/build.gradle.kts
@@ -328,6 +329,7 @@ Flavors are declared with the native `android { }` DSL, and their dependency con
 | `library.desugaring` | `true` | Core library desugaring, with `desugar_jdk_libs` in `coreLibraryDesugaring`. An application that uses the library needs desugaring too |
 | `library.consumerProguardFiles` | `consumer-rules.pro` | Keep rules that ship in the AAR, relative to the module; files that don't exist are skipped |
 | `library.resourcePrefix` | `true` | Sets `resourcePrefix` to the module path: `:core:ui` gives `core_ui_`, `:feature:chat-history:ui` gives `feature_chat_history_ui_` |
+| `library.resourcePrefixDroppedSegments` | empty | Segments that the resource prefix leaves out at the end of the module path; see below |
 | `library.skipEmptyAndroidTest` | `true` | Turns off instrumented tests in a module without `androidTest/`, `androidTest@<name>/` or `src/androidTest*/` |
 
 ```kotlin
@@ -340,13 +342,13 @@ lvm {
 }
 ```
 
-Values set with the native `android { }` DSL win, as in applications: lvm fills in the SDK levels, the namespace, the targets of tests and lint, the runner, the keep rules and the resource prefix only where the build script left them unset, and turns on desugaring only where it is off. The Java version works as in applications. AGP uses `resourcePrefix` only for lint's `ResourceName` check, which then expects every resource name to start with it; a module sets a prefix of its own with `android { resourcePrefix = "..." }`. Instrumented tests are turned off for the whole module or not at all: one `androidTest` directory keeps them for every variant.
+Values set with the native `android { }` DSL win, as in applications: lvm fills in the SDK levels, the namespace, the targets of tests and lint, the runner, the keep rules and the resource prefix only where the build script left them unset, and turns on desugaring only where it is off. The Java version works as in applications. AGP uses `resourcePrefix` only for lint's `ResourceName` check, which then expects every resource name to start with it; a module sets a prefix of its own with `android { resourcePrefix = "..." }`. With `library.resourcePrefixDroppedSegments`, modules share the prefix of their feature: segments in the list are left out at the end of the module path while more than one segment is left, where a segment is a run of letters, digits and `_`, compared without case. With `ui`, `sky` and `tweety`, `:feature:chat:ui-sky` and `:feature:chat:ui` give `feature_chat_`, `:core:ui:tweety` gives `core_`, and `:core:designsystem` keeps `core_designsystem_`. The rest of the path gives the prefix as without the list. Instrumented tests are turned off for the whole module or not at all: one `androidTest` directory keeps them for every variant.
 
 [`samples/android-library`](samples/android-library) is a library with a `tier` dimension, which [`samples/android-app`](samples/android-app) uses.
 
 ### Test modules
 
-`tech.annexflow.lvm.android.test` sets up a module of AGP's `com.android.test`, whose code tests an app from outside of it, such as a macrobenchmark or a baseline profile generator. It applies the plugin with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of the tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler and turns off animations. The module names the app it tests natively, with `targetProjectPath`.
+`tech.annexflow.lvm.android.test` sets up a module of AGP's `com.android.test`, whose code tests an app from outside of it, such as a macrobenchmark or a baseline profile generator. It applies the plugin with its built-in Kotlin and, like an application, sets the SDK levels, the namespace and the runner of the tests from `lvm { android { } }` and the Java version from `lvm { jvm { } }`, passes `lvm { kotlin { } }` to the compiler, turns off animations and leaves `/META-INF/INDEX.LIST` and `/META-INF/DEPENDENCIES` out of the APK. The module names the app it tests natively, with `targetProjectPath`.
 
 ```kotlin
 // benchmark/build.gradle.kts

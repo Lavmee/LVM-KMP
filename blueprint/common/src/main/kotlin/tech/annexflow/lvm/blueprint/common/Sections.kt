@@ -58,6 +58,12 @@ abstract class KotlinSection {
      * root package left out of the directories.
      */
     abstract val flatLayout: Property<Boolean>
+
+    /**
+     * How Kotlin compiles interface functions with a body for JVM and Android: `enable`, `no-compatibility` or
+     * `disable`, as Kotlin's `-jvm-default`. Unset by default, so Kotlin's own default applies.
+     */
+    abstract val jvmDefault: Property<String>
 }
 
 /** The module's `lvm { kotlin { } }`. It exists once a plugin that uses the section is applied. */

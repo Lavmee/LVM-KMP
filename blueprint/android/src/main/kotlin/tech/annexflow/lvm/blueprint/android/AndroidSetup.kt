@@ -64,6 +64,15 @@ internal fun CommonExtension.applyModuleJvmTarget(jvm: JvmSection, buildWideJvmT
     if (jvmTarget != buildWideJvmTarget) setJavaVersion(jvmTarget)
 }
 
+/**
+ * Leaves metadata that several jars carry under the same name, and that no app needs at runtime, out of the APK, or
+ * out of the APK of a library's instrumented tests. A build script removes an entry with
+ * `android { packaging.resources.excludes -= "..." }`.
+ */
+internal fun CommonExtension.excludeDuplicateMetadata() {
+    packaging.resources.excludes.addAll(listOf("/META-INF/INDEX.LIST", "/META-INF/DEPENDENCIES"))
+}
+
 /** Turns core library desugaring on while [enabled]. It never turns it off, so a build script that turns it on keeps it. */
 internal fun CommonExtension.enableDesugaring(enabled: Boolean) {
     if (enabled) compileOptions.isCoreLibraryDesugaringEnabled = true

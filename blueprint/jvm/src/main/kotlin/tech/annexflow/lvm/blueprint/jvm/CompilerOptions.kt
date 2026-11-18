@@ -3,7 +3,9 @@ package tech.annexflow.lvm.blueprint.jvm
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.compile.JavaCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
@@ -11,6 +13,7 @@ import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
+import tech.annexflow.lvm.blueprint.common.LvmValueParsing
 import tech.annexflow.lvm.blueprint.common.lvmValues
 
 /**
@@ -50,6 +53,7 @@ internal fun configureCompilerOptions(kotlin: KotlinJvmProjectExtension, section
         allWarningsAsErrors.set(section.warningsAsErrors)
         optIn.addAll(optIns)
         freeCompilerArgs.addAll(freeArgs)
+        jvmDefault.convention(section.jvmDefaultMode())
     }
 
     val explicitApi = section.explicitApi.map { enabled -> if (enabled) listOf("-Xexplicit-api=strict") else emptyList() }
@@ -57,6 +61,10 @@ internal fun configureCompilerOptions(kotlin: KotlinJvmProjectExtension, section
         compileTaskProvider.configure { compilerOptions.freeCompilerArgs.addAll(explicitApi) }
     }
 }
+
+/** `lvm { kotlin { jvmDefault } }` as Kotlin's mode, absent while unset, so Kotlin's own default applies. */
+private fun KotlinSection.jvmDefaultMode(): Provider<JvmDefaultMode> =
+    jvmDefault.map { mode -> JvmDefaultMode.entries.single { it.compilerArgument == LvmValueParsing.jvmDefault(mode) } }
 
 /**
  * Adds kotlin-test to unit tests. Kotlin picks its variant for the framework of the `test` task: kotlin-test-junit for

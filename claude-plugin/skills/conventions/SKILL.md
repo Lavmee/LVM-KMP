@@ -34,7 +34,7 @@ Every value has a default. A build changes it in four places, weakest first:
 3. An `lvm.*` Gradle property, such as `lvm.android.minSdk=26` in `gradle.properties` or `-Plvm.android.minSdk=26`.
 4. `lvm { }` in the module's build script.
 
-A stronger scalar value replaces a weaker one. For lists, a module's value is appended to the build-wide list for `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles` and `library.consumerProguardFiles`, and replaces it for `ios.architectures`, `quality.source` and `mainContext.platforms`. A list as a Gradle property is comma-separated.
+A stronger scalar value replaces a weaker one. For lists, a module's value is appended to the build-wide list for `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments`, and replaces it for `ios.architectures`, `quality.source` and `mainContext.platforms`. A list as a Gradle property is comma-separated.
 
 Set a value in the narrowest place that covers what the user asked for: one module's value in its own `lvm { }`, a value for every module in the `lvm { }` block of `settings.gradle.kts`, and a value that changes per machine or per CI run as a Gradle property. Values set with the native `android { }` and `kotlin { }` DSL win over `lvm { }`, so use them only for what `lvm { }` doesn't cover.
 

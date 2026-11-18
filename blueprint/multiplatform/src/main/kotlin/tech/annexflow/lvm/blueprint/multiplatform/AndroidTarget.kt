@@ -7,6 +7,7 @@ import org.gradle.api.plugins.ExtensionAware
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import tech.annexflow.lvm.blueprint.common.AndroidSection
 import tech.annexflow.lvm.blueprint.common.JvmSection
+import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 import tech.annexflow.lvm.blueprint.common.reportAndroidValues
 import tech.annexflow.lvm.blueprint.common.reportTool
@@ -17,6 +18,7 @@ internal fun Project.configureAndroidTarget(
     kotlin: KotlinMultiplatformExtension,
     section: AndroidSection,
     jvm: JvmSection,
+    kotlinSection: KotlinSection,
     spec: AndroidTargetSpec,
 ) {
     pluginManager.apply("com.android.kotlin.multiplatform.library")
@@ -35,10 +37,12 @@ internal fun Project.configureAndroidTarget(
 
     val hostTests = spec.hostTests.get()
     val jvmTarget = jvm.kotlinJvmTarget()
+    val jvmDefault = kotlinSection.jvmDefaultMode()
     (kotlin as ExtensionAware).extensions.configure(KotlinMultiplatformAndroidLibraryTarget::class.java) {
         if (hostTests) withHostTest { }
-        // A convention, like the one of JVM targets, so kotlin { android { compilerOptions { jvmTarget = ... } } } wins.
+        // Conventions, like those of JVM targets, so kotlin { android { compilerOptions { jvmTarget = ... } } } wins.
         compilerOptions.jvmTarget.convention(jvmTarget)
+        compilerOptions.jvmDefault.convention(jvmDefault)
     }
 
     // finalizeDsl runs after the build script, so module values set anywhere in lvm { } are visible here.

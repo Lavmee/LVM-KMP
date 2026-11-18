@@ -88,6 +88,30 @@ class LvmJvmPluginTest {
     }
 
     @Test
+    fun `jvmDefault reaches the compiler, Kotlin's own default stays while it is unset and native DSL wins`() {
+        val fixture = jvmFixture(dir)
+        fixture.file("lib/src/main/kotlin/Greeter.kt", "interface Greeter { fun greet(): String = \"hello\" }")
+        val defaultImpls = dir.mainClass("Greeter\$DefaultImpls")
+
+        fixture.build(":lib:classes")
+        assertTrue(defaultImpls.isFile)
+
+        val invalid = fixture.buildAndFail(":lib:classes", "-Plvm.kotlin.jvmDefault=all")
+        assertContains(invalid.output, "lvm.kotlin.jvmDefault")
+
+        fixture.file("lib/build.gradle.kts", JVM_MODULE_HEADER + "lvm { kotlin { jvmDefault = \"no-compatibility\" } }")
+        fixture.build(":lib:classes")
+        assertFalse(defaultImpls.exists())
+
+        fixture.file(
+            "lib/build.gradle.kts",
+            JVM_MODULE_HEADER + "kotlin { compilerOptions { jvmDefault = org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode.ENABLE } }",
+        )
+        fixture.build(":lib:classes", "-Plvm.kotlin.jvmDefault=no-compatibility")
+        assertTrue(defaultImpls.isFile)
+    }
+
+    @Test
     fun `adds kotlin-test in the variant of the test framework, unless switched off`() {
         val fixture = jvmFixture(dir)
         val classpath = arrayOf(":lib:dependencies", "--configuration", "testRuntimeClasspath")

@@ -38,5 +38,6 @@ object LvmDefaults {
     const val LIBRARY_DESUGARING: Boolean = true
     val LIBRARY_CONSUMER_PROGUARD_FILES: List<String> = listOf("consumer-rules.pro")
     const val LIBRARY_RESOURCE_PREFIX: Boolean = true
+    val LIBRARY_RESOURCE_PREFIX_DROPPED_SEGMENTS: List<String> = emptyList()
     const val LIBRARY_SKIP_EMPTY_ANDROID_TEST: Boolean = true
 }
