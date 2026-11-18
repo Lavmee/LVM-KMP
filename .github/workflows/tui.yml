@@ -1,0 +1,107 @@
+name: TUI
+
+# The lvm-tui crate embeds files from outside tui/: the version, the libraries, the Gradle wrapper, the keys of
+# lvm { } and an example of lvmReport's report. A change to them runs this workflow too.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tui/**'
+      - 'gradle.properties'
+      - 'settings.gradle.kts'
+      - 'gradle/wrapper/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'blueprint/common/lvm-keys.json'
+      - 'blueprint/multiplatform/src/test/resources/lvm-report.json'
+      - '.gitattributes'
+      - '.github/workflows/tui.yml'
+  pull_request:
+    paths:
+      - 'tui/**'
+      - 'gradle.properties'
+      - 'settings.gradle.kts'
+      - 'gradle/wrapper/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'blueprint/common/lvm-keys.json'
+      - 'blueprint/multiplatform/src/test/resources/lvm-report.json'
+      - '.gitattributes'
+      - '.github/workflows/tui.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tui-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+    working-directory: tui
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the version
+        run: |
+          crate=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          lvm=$(sed -n 's/^VERSION_NAME=//p' ../gradle.properties)
+          if [ "$crate" != "$lvm" ]; then
+            echo "::error::tui/Cargo.toml has version $crate, but gradle.properties has VERSION_NAME=$lvm."
+            exit 1
+          fi
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy && rustup default stable
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tui/target
+          key: cargo-lint-${{ runner.os }}-${{ hashFiles('tui/Cargo.lock') }}
+          restore-keys: cargo-lint-${{ runner.os }}-
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      # Licenses, advisories and sources of the dependencies, as deny.toml allows them.
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: tui/Cargo.toml
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tui/target
+          key: cargo-test-${{ runner.os }}-${{ hashFiles('tui/Cargo.lock') }}
+          restore-keys: cargo-test-${{ runner.os }}-
+
+      # Every test target runs, so one run shows every failure of an OS.
+      - name: Test
+        run: cargo test --locked --no-fail-fast

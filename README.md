@@ -15,8 +15,9 @@ Kotlin Multiplatform libraries and Gradle convention plugins for Android, iOS an
 | **runtime** | App machinery: KMP libraries | `lvm-core`, `lvm-coroutines`, `lvm-io`, `lvm-logger*`, `lvm-storage`, `lvm-decompose*`, `lvm-main-context` |
 | **compiler** | Kotlin compiler plugins | `lvm-main-context-compiler` |
 | **versions** | Version catalog and BOM | `lvm-versions`, `lvm-bom` |
+| **tui** | `lvm`, a terminal app for builds that use LVM; see [The lvm command](docs/tui.md) | The `lvm` command, in GitHub Releases |
 
-All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version.
+All artifacts are published to Maven Central under the `tech.annexflow.lvm` group and share a single version. The `lvm` command has the same version and comes with each GitHub Release.
 
 ### Plugins
 
@@ -219,6 +220,16 @@ lvm {
     repositories = false
 }
 ```
+
+### Report
+
+Every module with an LVM plugin has the task `lvmReport`, which writes what the plugins set up in the module as JSON, for tools that show or check a build, such as the [`lvm` command](docs/tui.md). Run it for the whole build, then read the reports from one directory of the root project:
+
+```bash
+./gradlew lvmReport
+```
+
+Each module's report is `build/lvm/report/<path>/project.json`, where `<path>` is the module's path with `/` for `:`, so `:feature:chat` writes `build/lvm/report/feature/chat/project.json`. It holds the LVM plugins the module applies, its targets, the versions of Gradle, Kotlin and AGP with the minimum and tested ones, the options of the settings plugin, the declared project and LVM dependencies, the source sets and the tasks. Every value of `lvm { }` that the module uses comes with its source: `default`, `settings` for the `lvm { }` block of `settings.gradle.kts`, `property` for a `lvm.*` Gradle property or `module` for the module's own `lvm { }`. The field `schema` changes when a field changes its meaning.
 
 ## Android
 
@@ -449,6 +460,7 @@ Blueprint's API for your own convention plugins, described in [Build logic](docs
 - [iOS](docs/ios.md): how an iOS app runs a component tree of `lvm-decompose`
 - [Build logic](docs/build-logic.md): your own convention plugins on top of LVM's
 - [Continuous integration](docs/ci.md): the CI jobs and the self-hosted macOS runner
+- [The lvm command](docs/tui.md): a terminal app that shows, checks, runs and upgrades a build that uses LVM
 
 ## License
 

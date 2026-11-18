@@ -1,4 +1,6 @@
 * text=auto
 *.bat text eol=crlf
 /gradlew text eol=lf
+# lvm-tui embeds its templates and compares its fixtures byte for byte, on Windows too.
+/tui/** eol=lf
 *.jar binary

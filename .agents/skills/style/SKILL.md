@@ -1,6 +1,6 @@
 ---
 name: style
-description: Always use this skill before writing or editing Kotlin code, Gradle build logic or KDoc in the LVM-KMP repository
+description: Always use this skill before writing or editing Kotlin or Rust code, Gradle build logic or KDoc in the LVM-KMP repository
 ---
 
 # Code Style
@@ -18,6 +18,7 @@ description: Always use this skill before writing or editing Kotlin code, Gradle
 * Configure lazily. Apply values with `Property.convention()` so a value set in a build script wins, pass `Provider`s instead of reading values early, and configure AGP in `androidComponents.finalizeDsl`. Never use `afterEvaluate`: the order of blocks in a build script must not matter.
 * Stay compatible with the configuration cache and Isolated Projects. A project never reads the state of another project, and task actions never use `Project`.
 * Every value a plugin sets has a default and can be changed. A build-wide value resolves through `LvmValues`: the `lvm.<section>.<name>` Gradle property, then the value forwarded from the settings `lvm { }` block, then the default in `LvmDefaults`. A module's own `lvm { }` block is stronger than all of them. A new value needs its key in `LvmKeys`, its default in `LvmDefaults` and a forwarding line in `LvmSettingsExtension.forwardedValues()`; a new list also goes into its settings section's `startWithoutValue(...)`, so that `emptyList()` in settings is forwarded and an untouched list is not. A value of the `android`, `jvm` or `kotlin` section also gets its property on `AndroidValues`, `JvmValues` or `KotlinValues`, through which plugins read those sections (`project.lvmValues`).
+* Every value, plugin, target and tool version a plugin sets up goes into the module's `lvmReport`: a value through `LvmValues.report(key, effective, buildWide)`, where `buildWide` is the convention the plugin applied, and the rest through `reportPlugin`, `reportTool` or `lvmReport { }`. A new key also gets its entry in `blueprint/common/lvm-keys.json`, which tools read to know the keys without running Gradle; `LvmKeysFileTest` fails until it is there.
 * Lists set in a module are appended to the build-wide list. Scalars replace the build-wide value.
 * Every automatic behavior can be switched off, including dependencies a plugin adds.
 * Values set with the native `kotlin { }` and `android { }` DSL win over `lvm { }`.
@@ -39,6 +40,18 @@ description: Always use this skill before writing or editing Kotlin code, Gradle
 * A compiler plugin compiles against `kotlin-compiler-embeddable` as `compileOnly`, at the Kotlin version of `gradle/libs.versions.toml`. Moving to a new Kotlin version moves kotlin-compile-testing with it.
 * Report errors at the source position through `IrPluginContext.diagnosticReporter`, never by throwing.
 * Generate only code that Kotlin accepts in source: for example, no suspend call where Kotlin rejects one, such as a default parameter value.
+
+## tui
+
+* Format with `cargo fmt`, which reads `tui/rustfmt.toml`, and keep `cargo clippy --all-targets -- -D warnings` clean. `unsafe` is forbidden.
+* The app follows The Elm Architecture: every key, tick and background event arrives as a `Message` on one channel and goes through `App::update`, and the code in `ui/` only draws the state. Work that blocks, such as Gradle, adb, simctl or a request to Maven Central, runs on its own thread and sends `Message`s back.
+* Reading a build never runs Gradle. Values from `lvmReport` win over what the build files say, and each value keeps where it came from.
+* A change to the build's files is a `ChangeSet`, which the user sees as a diff and confirms before it is applied.
+* Never show, log or write the value of a secret; show only where it is set. `lvm` never publishes to Maven Central.
+* Text the user sees says what to do next, as blueprint's errors do: `No adb: set ANDROID_HOME to the Android SDK`.
+* `rust-version` in `tui/Cargo.toml` is the oldest Rust that builds the crate; clippy flags library functions that are newer. A new dependency needs a license that `tui/deny.toml` allows.
+* Doc comments follow the rules of the Documentation section below.
+* Test parsers and other pure logic with unit tests next to the code. Test screens in `tui/tests/ui.rs`: they drive the `App` with keys on a copy of `tests/fixtures/consumer` and compare the screen with an insta snapshot, and shell scripts stand in for Gradle, adb and other programs. The rules of the Tests section apply, with test names in snake case.
 
 ## Documentation
 

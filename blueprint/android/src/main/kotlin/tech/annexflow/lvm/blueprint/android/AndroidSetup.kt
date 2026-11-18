@@ -8,17 +8,31 @@ import org.gradle.api.provider.Provider
 import tech.annexflow.lvm.blueprint.common.AndroidSection
 import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
+import tech.annexflow.lvm.blueprint.common.lvmReport
+import tech.annexflow.lvm.blueprint.common.reportAndroidValues
+import tech.annexflow.lvm.blueprint.common.reportPlugin
+import tech.annexflow.lvm.blueprint.common.reportTool
 import tech.annexflow.lvm.blueprint.common.requireSupported
 
 /** Fails below the oldest AGP that LVM supports, and warns above the one it was tested with. */
 internal fun Project.requireSupportedAgp(androidComponents: AndroidComponentsExtension<*, *, *>) {
     val agp = androidComponents.pluginVersion
+    val agpVersion = "${agp.major}.${agp.minor}.${agp.micro}"
     requireSupported(
         tool = "Android Gradle plugin",
-        actual = "${agp.major}.${agp.minor}.${agp.micro}",
+        actual = agpVersion,
         minimum = LvmBuildInfo.MIN_AGP,
         tested = LvmBuildInfo.TESTED_AGP,
     )
+    reportTool("agp", agpVersion, LvmBuildInfo.MIN_AGP, LvmBuildInfo.TESTED_AGP)
+}
+
+/** Adds the plugin [pluginId], the values of `lvm { android { } }` and the source sets of [extension] to the module's report. */
+internal fun Project.reportAndroidModule(pluginId: String, android: AndroidSection, extension: CommonExtension) {
+    reportPlugin(pluginId)
+    reportAndroidValues(android)
+    val sourceSets = provider { extension.sourceSets.names.sorted() }
+    lvmReport { fields.put("sourceSets", sourceSets) }
 }
 
 /** Fills in the compile and minimum SDK levels and the namespace where the build script left them unset. */

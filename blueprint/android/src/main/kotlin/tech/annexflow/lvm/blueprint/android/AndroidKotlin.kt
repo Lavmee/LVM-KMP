@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
+import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
+import tech.annexflow.lvm.blueprint.common.reportTool
 
 /**
  * Compiler options of the Kotlin that AGP builds in, and kotlin-test for unit tests. The JVM target follows the Java
@@ -14,6 +16,7 @@ import tech.annexflow.lvm.blueprint.common.KotlinValues
  * Unit tests run on JUnit 4, so they get kotlin-test-junit: kotlin-test alone has no `@Test` for the JVM.
  */
 internal fun Project.configureKotlin(section: KotlinSection, values: KotlinValues) {
+    reportTool("kotlin", getKotlinPluginVersion(), LvmBuildInfo.MIN_KOTLIN, LvmBuildInfo.TESTED_KOTLIN)
     val optIns = values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }
     val freeArgs = values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
     extensions.configure(KotlinAndroidProjectExtension::class.java) {

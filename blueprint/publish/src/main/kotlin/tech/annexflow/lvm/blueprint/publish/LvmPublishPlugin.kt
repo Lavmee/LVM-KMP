@@ -4,8 +4,11 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePluginExtension
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.GenerateMavenPom
 import org.gradle.plugins.signing.Sign
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
@@ -14,6 +17,9 @@ import tech.annexflow.lvm.blueprint.common.LvmDefaults
 import tech.annexflow.lvm.blueprint.common.LvmKeys
 import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
+import tech.annexflow.lvm.blueprint.common.lvmReport
+import tech.annexflow.lvm.blueprint.common.reportModuleValue
+import tech.annexflow.lvm.blueprint.common.reportPlugin
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 /**
@@ -29,7 +35,8 @@ class LvmPublishPlugin : Plugin<Project> {
         val artifactId = values.raw(LvmKeys.PUBLISH_ARTIFACT_ID_PREFIX)
             .getOrElse(LvmDefaults.PUBLISH_ARTIFACT_ID_PREFIX) + project.name
         val section = project.lvm.extensions.create("publish", PublishSection::class.java)
-        section.applyConventions(values, artifactId)
+        section.applyConventions(project, values, artifactId)
+        reportPublication(project, values, section, artifactId)
 
         project.pluginManager.apply("com.vanniktech.maven.publish")
         val publishing = project.extensions.getByType(MavenPublishBaseExtension::class.java)
@@ -55,19 +62,66 @@ class LvmPublishPlugin : Plugin<Project> {
         }
     }
 
-    private fun PublishSection.applyConventions(values: LvmValues, artifactId: String) {
+    /** Sets the build-wide values as conventions of the section, and adds each value to the module's report. */
+    private fun PublishSection.applyConventions(project: Project, values: LvmValues, artifactId: String) {
+        fun <T : Any> convention(key: String, property: Property<T>, buildWide: Provider<T>) {
+            property.convention(buildWide)
+            values.report(key, property, buildWide)
+        }
         name.convention(artifactId)
-        description.convention(values.raw(LvmKeys.PUBLISH_DESCRIPTION))
-        url.convention(values.raw(LvmKeys.PUBLISH_URL))
-        signing.convention(values.boolean(LvmKeys.PUBLISH_SIGNING, LvmDefaults.PUBLISH_SIGNING))
-        license.name.convention(values.raw(LvmKeys.PUBLISH_LICENSE_NAME))
-        license.url.convention(values.raw(LvmKeys.PUBLISH_LICENSE_URL))
-        developer.id.convention(values.raw(LvmKeys.PUBLISH_DEVELOPER_ID))
-        developer.name.convention(values.raw(LvmKeys.PUBLISH_DEVELOPER_NAME))
-        developer.url.convention(values.raw(LvmKeys.PUBLISH_DEVELOPER_URL))
-        scm.url.convention(values.raw(LvmKeys.PUBLISH_SCM_URL).orElse(url))
-        scm.connection.convention(values.raw(LvmKeys.PUBLISH_SCM_CONNECTION).orElse(scm.url.map { "scm:git:$it.git" }))
-        scm.developerConnection.convention(values.raw(LvmKeys.PUBLISH_SCM_DEVELOPER_CONNECTION).orElse(scm.connection))
+        project.reportModuleValue("publish.name", name, project.provider { artifactId })
+        convention(LvmKeys.PUBLISH_DESCRIPTION, description, values.raw(LvmKeys.PUBLISH_DESCRIPTION))
+        convention(LvmKeys.PUBLISH_URL, url, values.raw(LvmKeys.PUBLISH_URL))
+        convention(LvmKeys.PUBLISH_SIGNING, signing, values.boolean(LvmKeys.PUBLISH_SIGNING, LvmDefaults.PUBLISH_SIGNING))
+        convention(LvmKeys.PUBLISH_LICENSE_NAME, license.name, values.raw(LvmKeys.PUBLISH_LICENSE_NAME))
+        convention(LvmKeys.PUBLISH_LICENSE_URL, license.url, values.raw(LvmKeys.PUBLISH_LICENSE_URL))
+        convention(LvmKeys.PUBLISH_DEVELOPER_ID, developer.id, values.raw(LvmKeys.PUBLISH_DEVELOPER_ID))
+        convention(LvmKeys.PUBLISH_DEVELOPER_NAME, developer.name, values.raw(LvmKeys.PUBLISH_DEVELOPER_NAME))
+        convention(LvmKeys.PUBLISH_DEVELOPER_URL, developer.url, values.raw(LvmKeys.PUBLISH_DEVELOPER_URL))
+        convention(LvmKeys.PUBLISH_SCM_URL, scm.url, values.raw(LvmKeys.PUBLISH_SCM_URL).orElse(url))
+        convention(
+            LvmKeys.PUBLISH_SCM_CONNECTION,
+            scm.connection,
+            values.raw(LvmKeys.PUBLISH_SCM_CONNECTION).orElse(scm.url.map { "scm:git:$it.git" }),
+        )
+        convention(
+            LvmKeys.PUBLISH_SCM_DEVELOPER_CONNECTION,
+            scm.developerConnection,
+            values.raw(LvmKeys.PUBLISH_SCM_DEVELOPER_CONNECTION).orElse(scm.connection),
+        )
+    }
+
+    /** Adds the plugin, the build-wide values that only settings and Gradle properties set, and the coordinates to the report. */
+    private fun reportPublication(project: Project, values: LvmValues, section: PublishSection, artifactId: String) {
+        project.reportPlugin("tech.annexflow.lvm.publish")
+        val prefix = values.raw(LvmKeys.PUBLISH_ARTIFACT_ID_PREFIX).orElse(LvmDefaults.PUBLISH_ARTIFACT_ID_PREFIX)
+        values.report(LvmKeys.PUBLISH_ARTIFACT_ID_PREFIX, prefix, prefix)
+        val abiEnabled = values.boolean(LvmKeys.PUBLISH_ABI_ENABLED, LvmDefaults.PUBLISH_ABI_ENABLED)
+        values.report(LvmKeys.PUBLISH_ABI_ENABLED, abiEnabled, abiEnabled)
+        val excludedNames = values.list(LvmKeys.PUBLISH_ABI_EXCLUDED_NAMES, LvmDefaults.PUBLISH_ABI_EXCLUDED_NAMES)
+        values.report(
+            LvmKeys.PUBLISH_ABI_EXCLUDED_NAMES,
+            excludedNames.zip(section.abi.excludedNames) { buildWide, module -> buildWide + module },
+            excludedNames,
+        )
+        val excludedAnnotations = values.list(LvmKeys.PUBLISH_ABI_EXCLUDED_ANNOTATIONS, LvmDefaults.PUBLISH_ABI_EXCLUDED_ANNOTATIONS)
+        values.report(
+            LvmKeys.PUBLISH_ABI_EXCLUDED_ANNOTATIONS,
+            excludedAnnotations.zip(section.abi.excludedAnnotations) { buildWide, module -> buildWide + module },
+            excludedAnnotations,
+        )
+        // vanniktech's plugin may take the group and version from its own Gradle properties rather than the project's,
+        // and the build script sets them after the plugin is applied, so they come from a publication once it has run.
+        val coordinates = project.provider {
+            val publication = project.extensions.getByType(PublishingExtension::class.java)
+                .publications.withType(MavenPublication::class.java).firstOrNull()
+            linkedMapOf(
+                "group" to (publication?.groupId ?: project.group.toString()),
+                "artifactId" to artifactId,
+                "version" to (publication?.version ?: project.version.toString()),
+            )
+        }
+        project.lvmReport { fields.put("publication", coordinates) }
     }
 
     private fun MavenPom.configure(section: PublishSection) {

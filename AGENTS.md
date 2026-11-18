@@ -8,6 +8,7 @@ LVM-KMP holds Gradle convention plugins and Kotlin Multiplatform libraries for A
 - A module with Compose Multiplatform keeps code out of `iosMain`: with Compose Multiplatform 1.12.2 its metadata compilation sees two builds of lifecycle, savedstate and navigationevent and warns about their klibs, which fails under warnings as errors. Code for JVM and iOS goes to a `nonAndroid` source set, as `runtime/decompose-compose/build.gradle.kts` sets up.
 - Every library and the compiler apply `tech.annexflow.lvm.publish`: the artifact ID is `lvm-<project name>`, and the POM comes from the `lvm.publish.*` values in `gradle.properties`, which blueprint's `lvm.blueprint-publish` script in `blueprint/buildSrc` reads as well. `bom/` (`lvm-bom`) and `versions/` (`lvm-versions`) list every published library, and each module commits its ABI dump in `api/`.
 - `samples/` holds modules that apply the plugins the way a consumer would. CI builds them for every target.
+- `tui/` holds the Rust crate `lvm-tui`, which builds the `lvm` command, a terminal app for builds that use LVM, described in [`docs/tui.md`](docs/tui.md). Its version is `VERSION_NAME`, and it embeds files from the rest of the repository: `gradle.properties`, `settings.gradle.kts`, the Gradle wrapper, `blueprint/common/lvm-keys.json` and the report example of `blueprint/multiplatform`. It reads builds through their files and `lvmReport`, so a change to the DSL, the keys or the report of the plugins needs a change in `tui/` too. `.github/workflows/tui.yml` checks it; `ci.yml` ignores `tui/`.
 - A module of this build that applies `tech.annexflow.lvm.main-context` substitutes `lvm-main-context` and `lvm-main-context-compiler` with their projects, as `samples/main-context-sample/build.gradle.kts` does: the plugin adds the published artifacts.
 - `gradle/libs.versions.toml` is published as the `lvm-versions` catalog, so it lists only what consumers need.
 - The repository is public. Write in English, and never commit `local.properties`, keys or other secrets.
@@ -17,7 +18,7 @@ Use the skills in [`.agents/skills`](.agents/skills):
 - `check` before committing or opening a pull request.
 - `commit` before writing a commit message.
 - `pr` before opening a pull request.
-- `style` before writing or editing Kotlin or Gradle code.
+- `style` before writing or editing Kotlin, Gradle or Rust code.
 - `prose` before writing documentation.
 
 Update this file and the skills when a change affects what they say.

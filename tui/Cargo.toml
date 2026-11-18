@@ -1,0 +1,44 @@
+[package]
+name = "lvm-tui"
+# Matches VERSION_NAME in ../gradle.properties: the lvm command is released together with LVM.
+version = "0.4.0-SNAPSHOT"
+edition = "2024"
+# The oldest Rust that builds it; clippy flags library functions that are newer.
+rust-version = "1.96"
+description = "Terminal app for Gradle builds that use LVM's convention plugins"
+license = "Apache-2.0"
+repository = "https://github.com/Lavmee/LVM-KMP"
+publish = false
+
+# The command is `lvm`; the crate keeps the name of its folder.
+[[bin]]
+name = "lvm"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.8", features = ["derive"] }
+directories = "6.0.0"
+quick-xml = "0.42.0"
+ratatui = "0.30.2"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+similar = "3.2.1"
+toml_edit = "0.25.19"
+ureq = "3.5.2"
+
+[dev-dependencies]
+insta = "1.49.0"
+tempfile = "3.27.0"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+
+# The binaries of the GitHub Release: smaller, without symbols.
+[profile.release]
+lto = "thin"
+strip = true

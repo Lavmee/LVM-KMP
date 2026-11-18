@@ -1,6 +1,7 @@
 name: Release
 
-# A v* tag publishes both builds to Maven Central, which can't be undone. RELEASING.md describes the steps.
+# A v* tag publishes both builds to Maven Central, which can't be undone, then creates the GitHub Release with the lvm
+# command for each platform. RELEASING.md describes the steps.
 on:
   push:
     tags: ['v*']
@@ -84,3 +85,91 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+  tui:
+    # The lvm command for each platform, built from the lvm-tui crate. The binaries wait for the GitHub Release, which
+    # comes once both builds are out.
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          # The oldest Ubuntu images, so the binaries run with older versions of glibc too.
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04-arm
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' tui/Cargo.toml | head -n 1)
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME doesn't match version $version in tui/Cargo.toml."
+            exit 1
+          fi
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }} && rustup default stable
+
+      - name: Build
+        run: cargo build --manifest-path tui/Cargo.toml --release --locked --target ${{ matrix.target }}
+
+      - name: Package
+        run: |
+          name="lvm-tui-$GITHUB_REF_NAME-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          cp LICENSE "dist/$name/"
+          exe=""
+          if [ "$RUNNER_OS" = "Windows" ]; then exe=".exe"; fi
+          cp "tui/target/${{ matrix.target }}/release/lvm$exe" "dist/$name/"
+          cd dist
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            archive="$name.zip"
+            7z a -tzip "$archive" "$name" > /dev/null
+          else
+            archive="$name.tar.gz"
+            tar -czf "$archive" "$name"
+          fi
+          if command -v sha256sum > /dev/null; then sha256sum "$archive"; else shasum -a 256 "$archive"; fi > "$archive.sha256"
+          rm -r "$name"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lvm-tui-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  github-release:
+    # After both builds are on Maven Central, so the release never announces a version that can't be resolved.
+    needs: [libraries, blueprint, tui]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: lvm-tui-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create the release
+        run: >-
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --repo "$GITHUB_REPOSITORY"
+          --title "LVM ${GITHUB_REF_NAME#v}"
+          --generate-notes
+          --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}

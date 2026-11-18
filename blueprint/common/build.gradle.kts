@@ -81,4 +81,6 @@ buildConfig {
 
 tasks.test {
     useJUnitPlatform()
+    // LvmKeysFileTest reads it from the module directory, the working directory of tests.
+    inputs.file("lvm-keys.json").withPathSensitivity(PathSensitivity.RELATIVE)
 }

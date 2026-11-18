@@ -13,6 +13,7 @@ import tech.annexflow.lvm.blueprint.common.LvmValues
 import tech.annexflow.lvm.blueprint.common.lvm
 import tech.annexflow.lvm.blueprint.common.lvmJvm
 import tech.annexflow.lvm.blueprint.common.lvmKotlin
+import tech.annexflow.lvm.blueprint.common.reportPlugin
 import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 class LvmQualityPlugin : Plugin<Project> {
@@ -25,15 +26,14 @@ class LvmQualityPlugin : Plugin<Project> {
         val jvm = project.lvmJvm()
         val section = project.lvm.extensions.create("quality", QualitySection::class.java, project)
         val flatLayout = project.lvmKotlin().flatLayout
-        section.source.convention(
-            flatLayout.flatMap { flat ->
-                val default = if (flat) LvmDefaults.QUALITY_SOURCE_FLAT else LvmDefaults.QUALITY_SOURCE
-                values.list(LvmKeys.QUALITY_SOURCE, default)
-            },
-        )
-        section.buildUponDefaultConfig.convention(
-            values.boolean(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, LvmDefaults.QUALITY_BUILD_UPON_DEFAULT_CONFIG),
-        )
+        val buildWideSource = flatLayout.flatMap { flat ->
+            val default = if (flat) LvmDefaults.QUALITY_SOURCE_FLAT else LvmDefaults.QUALITY_SOURCE
+            values.list(LvmKeys.QUALITY_SOURCE, default)
+        }
+        val buildWideBuildUponDefaultConfig =
+            values.boolean(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, LvmDefaults.QUALITY_BUILD_UPON_DEFAULT_CONFIG)
+        section.source.convention(buildWideSource)
+        section.buildUponDefaultConfig.convention(buildWideBuildUponDefaultConfig)
         section.composeRules.convention(values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, LvmDefaults.QUALITY_COMPOSE_RULES))
         // A Compose module gets the Compose rules and config by default; withPlugin also fires when compose comes later.
         // The Compose compiler plugin marks one, whether tech.annexflow.lvm.compose applies it or the module does.
@@ -42,6 +42,17 @@ class LvmQualityPlugin : Plugin<Project> {
             compose.set(true)
             section.composeRules.convention(values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, true))
         }
+
+        project.reportPlugin("tech.annexflow.lvm.quality")
+        val buildWideConfig = values.list(LvmKeys.QUALITY_CONFIG, LvmDefaults.QUALITY_CONFIG)
+        values.report(LvmKeys.QUALITY_CONFIG, buildWideConfig.zip(section.config) { buildWide, module -> buildWide + module }, buildWideConfig)
+        values.report(LvmKeys.QUALITY_SOURCE, section.source, buildWideSource)
+        values.report(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, section.buildUponDefaultConfig, buildWideBuildUponDefaultConfig)
+        values.report(
+            LvmKeys.QUALITY_COMPOSE_RULES,
+            section.composeRules,
+            compose.flatMap { on -> values.boolean(LvmKeys.QUALITY_COMPOSE_RULES, on || LvmDefaults.QUALITY_COMPOSE_RULES) },
+        )
 
         @Suppress("UnstableApiUsage")
         val rootDirectory = project.isolated.rootProject.projectDirectory

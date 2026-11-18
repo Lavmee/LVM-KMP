@@ -29,4 +29,18 @@ class LvmValues(private val project: Project) {
 
     fun list(key: String, default: List<String>): Provider<List<String>> =
         raw(key).map(LvmValueParsing::list).orElse(default)
+
+    /** Where the build-wide value of [key] comes from: `property`, `settings` or `default`. */
+    fun source(key: String): Provider<String> {
+        val withoutProperty = if (LvmKeys.property(key) in fromSettings) "settings" else "default"
+        return project.providers.gradleProperty(LvmKeys.property(key)).map { "property" }.orElse(withoutProperty)
+    }
+
+    /**
+     * Adds the value of [key] to the module's `lvmReport`: [effective] is the value the plugins use, and [buildWide] the
+     * one the module gets without its own `lvm { }`.
+     */
+    fun <T : Any> report(key: String, effective: Provider<T>, buildWide: Provider<T>) {
+        project.reportValue(key, effective, buildWide, source(key))
+    }
 }

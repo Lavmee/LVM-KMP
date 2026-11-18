@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import tech.annexflow.lvm.blueprint.common.AndroidSection
 import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
+import tech.annexflow.lvm.blueprint.common.reportAndroidValues
+import tech.annexflow.lvm.blueprint.common.reportTool
 import tech.annexflow.lvm.blueprint.common.requireSupported
 
 /** The only file that references AGP classes, so projects without AGP never load them. */
@@ -21,12 +23,15 @@ internal fun Project.configureAndroidTarget(
 
     val androidComponents = extensions.getByType(KotlinMultiplatformAndroidComponentsExtension::class.java)
     val agp = androidComponents.pluginVersion
+    val agpVersion = "${agp.major}.${agp.minor}.${agp.micro}"
     requireSupported(
         tool = "Android Gradle plugin",
-        actual = "${agp.major}.${agp.minor}.${agp.micro}",
+        actual = agpVersion,
         minimum = LvmBuildInfo.MIN_AGP,
         tested = LvmBuildInfo.TESTED_AGP,
     )
+    reportTool("agp", agpVersion, LvmBuildInfo.MIN_AGP, LvmBuildInfo.TESTED_AGP)
+    reportAndroidValues(section)
 
     val hostTests = spec.hostTests.get()
     val jvmTarget = jvm.kotlinJvmTarget()
