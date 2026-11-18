@@ -40,10 +40,11 @@ pub fn android_directory(source_set: &str) -> String {
     if source_set == "main" { "src".to_owned() } else { format!("src@{source_set}") }
 }
 
-/// Whether blueprint compiles the Java files in the flat directory of [source_set]: in a Kotlin Multiplatform module,
-/// those of the JVM target and, after `withJava()`, of the Android target.
+/// Whether blueprint compiles the Java files in the flat directory of [source_set]: those of every source set of a module
+/// without Kotlin Multiplatform, and in a Kotlin Multiplatform module, those of the JVM target and, after `withJava()`,
+/// of the Android target.
 fn holds_java(kmp: bool, source_set: &str) -> bool {
-    kmp && ["jvmMain", "jvmTest", "androidMain", "androidHostTest", "androidDeviceTest"].contains(&source_set)
+    !kmp || ["jvmMain", "jvmTest", "androidMain", "androidHostTest", "androidDeviceTest"].contains(&source_set)
 }
 
 fn lower_first(text: &str) -> String {
@@ -74,7 +75,8 @@ pub fn flat_layout(project: &Project, module: &Module, changes: &mut ChangeSet) 
                 && files.iter().any(|file| file.extension().is_some_and(|ext| ext == "java"))
             {
                 bail!(
-                    "{} has Java sources in src/{source_set}/{language}, which the flat layout can't hold",
+                    "{} has Java sources in src/{source_set}/{language}, which the flat layout of a Kotlin \
+                     Multiplatform module holds only in the source sets of its JVM and Android targets",
                     module.path
                 );
             }
@@ -258,15 +260,19 @@ mod tests {
     }
 
     #[test]
-    fn refuses_java_sources() {
+    fn moves_java_sources_next_to_the_kotlin_sources_of_an_android_module() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
         write(root, "settings.gradle.kts", "include(\":app\")\n");
         write(root, "app/build.gradle.kts", "plugins { id(\"tech.annexflow.lvm.android.application\") }\n");
-        write(root, "app/src/main/java/com/example/Main.java", "package com.example;\n");
+        write(root, "app/src/main/java/com/example/NativeMarkdown.java", "package com.example;\n");
+        write(root, "app/src/main/kotlin/com/example/Markdown.kt", "package com.example\n");
         let project = Project::load(root);
 
-        let error = flat_layout(&project, project.module(":app").unwrap(), &mut ChangeSet::default()).unwrap_err();
-        assert!(error.to_string().contains("Java"), "{error}");
+        let mut changes = ChangeSet::default();
+        flat_layout(&project, project.module(":app").unwrap(), &mut changes).unwrap();
+
+        let destinations: Vec<_> = changes.moves.iter().map(|m| m.to.to_string_lossy().into_owned()).collect();
+        assert_eq!(destinations, ["app/src/NativeMarkdown.java", "app/src/Markdown.kt"]);
     }
 }

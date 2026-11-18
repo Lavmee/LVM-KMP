@@ -73,7 +73,7 @@ A module uses the standard layout, `src/commonMain/kotlin/...`, unless `kotlin.f
 | `test@<name>/` | `<name>Test`, such as `test@jvm/` |
 | `androidTest/`, `androidTest@<name>/` | Instrumented tests of an Android module |
 
-A module can't mix the layouts: with the flat layout, the build fails while `src/<sourceSet>/kotlin` still exists. Resources, Android `res` and the manifest keep their usual directories. The `layout` of a module in `lvm report` says which one it uses; put new files where the module's existing files are.
+A module can't mix the layouts: with the flat layout, the build fails while `src/<sourceSet>/kotlin` still exists. Java files of a module without Kotlin Multiplatform go in the same directories as its Kotlin files. Resources, Android `res` and the manifest keep their usual directories. The `layout` of a module in `lvm report` says which one it uses; put new files where the module's existing files are.
 
 With the flat layout, a Kotlin Multiplatform module keeps Java files in the directories of its JVM target, `src@jvm/` and `test@jvm/`, and of its Android target, `src@android/` and `test@androidHost/`. The Android target compiles them only after `withJava()` in `kotlin { android { } }`. The build fails on Java files in any other directory, such as `src/`.
 
