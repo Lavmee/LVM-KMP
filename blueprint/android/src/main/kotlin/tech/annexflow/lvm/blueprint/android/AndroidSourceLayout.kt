@@ -24,9 +24,11 @@ internal fun flatSourceDirectory(sourceSetName: String): String {
 }
 
 /**
- * Adds the flat layout's directory to the Kotlin sources of every source set. Resources, `res` and the manifest keep
- * their conventional directories. A module that still has Kotlin or Java sources in `src/<sourceSet>/kotlin` or
- * `src/<sourceSet>/java` fails, because `src` would compile those files a second time.
+ * Adds the flat layout's directory to the Kotlin and the Java sources of every source set. Kotlin reads Java files
+ * from its own directories too, but only javac compiles them into the APK, so a Java file in the flat directory needs
+ * both. Resources, `res` and the manifest keep their conventional directories. A module that still has Kotlin or Java
+ * sources in `src/<sourceSet>/kotlin` or `src/<sourceSet>/java` fails, because `src` would compile those files a
+ * second time.
  */
 internal fun Project.configureSourceLayout(extension: CommonExtension, flatLayout: Boolean) {
     if (!flatLayout) return
@@ -41,5 +43,6 @@ internal fun Project.configureSourceLayout(extension: CommonExtension, flatLayou
             }
         }
         kotlin.directories.add(directory)
+        java.directories.add(directory)
     }
 }
