@@ -31,7 +31,7 @@ Note `toolchain`: the build's Gradle, Kotlin and AGP versions. `actual` is `null
 
 ## 2. Pick the release
 
-LVM's releases are the tags `v<version>` of https://github.com/Lavmee/LVM-KMP. Without a version in the arguments, take the latest release from `gh release list --repo Lavmee/LVM-KMP --exclude-pre-releases --limit 1`, or from https://repo1.maven.org/maven2/tech/annexflow/lvm/lvm-versions/maven-metadata.xml when `gh` is missing. Always pass the version to `lvm upgrade` with `--to`: lvm keeps the list of releases for a day, so right after a release it may not know the latest one yet, and may say that the version is not on Maven Central when it is.
+LVM's releases are the tags `v<version>` of https://github.com/Lavmee/LVM-KMP. Without a version in the arguments, take the latest release from `gh release list --repo Lavmee/LVM-KMP --exclude-pre-releases --limit 1`, or from https://repo1.maven.org/maven2/tech/annexflow/lvm/lvm-versions/maven-metadata.xml when `gh` is missing. Always pass the version to `lvm upgrade` with `--to`: lvm 0.4.0 and older keep the list of releases for a day, so right after a release they may not know the latest one yet, and may say that the version is not on Maven Central when it is.
 
 If the target is older than the current release, confirm with the user that they want to move back.
 
