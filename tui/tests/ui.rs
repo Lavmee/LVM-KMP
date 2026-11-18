@@ -543,7 +543,11 @@ fn the_run_tab_lists_apps_and_the_devices_of_their_platform() {
     assert_snapshot!("run_with_devices", render(&mut app));
 
     press(&mut app, "lj\n");
-    assert_eq!(app.status.as_deref(), Some("Pixel 9 (AVD) isn't running: s starts it"));
+    assert!(app.runs.is_empty(), "the AVD isn't running");
+    // Windows has no shell for the steps of an Android run, so it says that first.
+    if cfg!(unix) {
+        assert_eq!(app.status.as_deref(), Some("Pixel 9 (AVD) isn't running: s starts it"));
+    }
     press(&mut app, "s");
     assert_eq!(app.status.as_deref(), Some("No emulator in the Android SDK"));
     // The iOS framework builds for the simulator, with no device to pick.

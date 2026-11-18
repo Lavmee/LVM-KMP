@@ -241,7 +241,7 @@ pub fn module_files(spec: &ModuleSpec, conventions: &Conventions) -> Vec<(PathBu
         let manifest = "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">\n    <application />\n</manifest>\n";
         files.push((dir.join("src/main/AndroidManifest.xml"), manifest.to_owned()));
     }
-    files
+    files.into_iter().map(|(path, text)| (crate::edit::portable(&path), text)).collect()
 }
 
 /// Adds [spec] to [project]: its files, its `include(...)`, and the root build script's declarations of its plugins.
