@@ -1,0 +1,24 @@
+{
+  "name": "lvm-kmp",
+  "owner": {
+    "name": "Lavmee",
+    "url": "https://github.com/Lavmee"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for Gradle builds that use LVM's convention plugins"
+  },
+  "plugins": [
+    {
+      "name": "lvm",
+      "description": "Reads, checks, upgrades and creates Gradle builds that use LVM's convention plugins, with the lvm command",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Lavmee/LVM-KMP.git",
+        "path": "claude-plugin",
+        "ref": "v0.5.0"
+      },
+      "category": "development",
+      "homepage": "https://github.com/Lavmee/LVM-KMP/blob/main/docs/claude-code.md"
+    }
+  ]
+}

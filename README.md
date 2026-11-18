@@ -461,6 +461,7 @@ Blueprint's API for your own convention plugins, described in [Build logic](docs
 - [Build logic](docs/build-logic.md): your own convention plugins on top of LVM's
 - [Continuous integration](docs/ci.md): the CI jobs and the self-hosted macOS runner
 - [The lvm command](docs/tui.md): a terminal app that shows, checks, runs and upgrades a build that uses LVM
+- [The Claude Code plugin](docs/claude-code.md): skills that let Claude read, check, upgrade and create builds that use LVM
 
 ## License
 

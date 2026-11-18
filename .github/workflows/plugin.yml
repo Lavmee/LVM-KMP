@@ -1,0 +1,62 @@
+name: Claude Code plugin
+
+# The marketplace in .claude-plugin/ and the plugin in claude-plugin/. The plugin's version follows VERSION_NAME, so a
+# change to gradle.properties runs this workflow too.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.claude-plugin/**'
+      - 'claude-plugin/**'
+      - 'gradle.properties'
+      - '.github/workflows/plugin.yml'
+  pull_request:
+    paths:
+      - '.claude-plugin/**'
+      - 'claude-plugin/**'
+      - 'gradle.properties'
+      - '.github/workflows/plugin.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the versions
+        run: |
+          lvm=$(sed -n 's/^VERSION_NAME=//p' gradle.properties)
+          plugin=$(jq -r .version claude-plugin/.claude-plugin/plugin.json)
+          if [ "$plugin" != "$lvm" ]; then
+            echo "::error::claude-plugin/.claude-plugin/plugin.json has version $plugin, but gradle.properties has VERSION_NAME=$lvm."
+            exit 1
+          fi
+          # Users install the plugin at a release tag, which a release commit names.
+          ref=$(jq -r '.plugins[] | select(.name == "lvm") | .source.ref' .claude-plugin/marketplace.json)
+          case "$lvm" in
+            *-SNAPSHOT) ;;
+            *)
+              if [ "$ref" != "v$lvm" ]; then
+                echo "::error::.claude-plugin/marketplace.json installs the plugin at $ref, but this release is v$lvm."
+                exit 1
+              fi
+              ;;
+          esac
+
+      - name: Install Claude Code
+        run: npm install --global @anthropic-ai/claude-code@2.1.325
+
+      - name: Validate
+        env:
+          DISABLE_AUTOUPDATER: '1'
+        run: |
+          claude plugin validate --strict .
+          claude plugin validate --strict claude-plugin

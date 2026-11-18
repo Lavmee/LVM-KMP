@@ -123,3 +123,5 @@ lvm new my-app --group com.example.myapp --compose --yes
 ```
 
 `lvm report` prints the build as `lvm` reads it, as JSON.
+
+The [Claude Code plugin](claude-code.md) lets Claude use these commands to read, check, upgrade and create builds.
