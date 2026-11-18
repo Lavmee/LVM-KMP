@@ -14,7 +14,13 @@ tar -xzf lvm-tui-vX.Y.Z-aarch64-apple-darwin.tar.gz
 
 The binaries are not signed. macOS refuses to open a binary that a browser downloaded until you allow it in System Settings > Privacy & Security; files downloaded with `gh` or `curl` open without that step.
 
-With Rust 1.96 or newer, Cargo builds `lvm` from the tag of a release. Its crate is `lvm-tui`:
+With Rust 1.96 or newer, Cargo builds `lvm` from its crate on crates.io, `lvm-tui`:
+
+```bash
+cargo install lvm-tui
+```
+
+Cargo also builds it from any commit of the repository, such as the tag of a release:
 
 ```bash
 cargo install --git https://github.com/Lavmee/LVM-KMP --tag vX.Y.Z lvm-tui

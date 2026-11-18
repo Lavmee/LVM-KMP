@@ -25,6 +25,7 @@ cargo fmt --check
 cargo clippy --all-targets --locked -- -D warnings
 cargo test --locked
 cargo deny check # licenses and advisories of the dependencies; needs cargo-deny
+./embed-files.sh && cargo package --locked --allow-dirty # builds the crate from its package for crates.io
 ```
 
 The UI tests compare screens with the snapshots in `tui/tests/snapshots`. After an intended change to a screen, review each new `.snap.new` file and accept it with `cargo insta accept`, or run `INSTA_UPDATE=always cargo test`. The `version` in `tui/Cargo.toml` must equal `VERSION_NAME`.

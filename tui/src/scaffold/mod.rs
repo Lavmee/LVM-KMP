@@ -21,11 +21,11 @@ const ROOT: &str = include_str!("templates/root.gradle.kts");
 const GRADLE_PROPERTIES: &str = include_str!("templates/gradle.properties");
 const GITIGNORE: &str = include_str!("templates/gitignore");
 
-// The wrapper of LVM's own build, which uses the Gradle version that LVM is tested with.
-const WRAPPER_JAR: &[u8] = include_bytes!("../../../gradle/wrapper/gradle-wrapper.jar");
-const WRAPPER_PROPERTIES: &str = include_str!("../../../gradle/wrapper/gradle-wrapper.properties");
-const GRADLEW: &str = include_str!("../../../gradlew");
-const GRADLEW_BAT: &str = include_str!("../../../gradlew.bat");
+// The wrapper of LVM's own build, which uses the Gradle version that LVM is tested with. build.rs copies it there.
+const WRAPPER_JAR: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/gradle-wrapper.jar"));
+const WRAPPER_PROPERTIES: &str = include_str!(concat!(env!("OUT_DIR"), "/gradle-wrapper.properties"));
+const GRADLEW: &str = include_str!(concat!(env!("OUT_DIR"), "/gradlew"));
+const GRADLEW_BAT: &str = include_str!(concat!(env!("OUT_DIR"), "/gradlew.bat"));
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModuleKind {

@@ -5,7 +5,8 @@ use std::sync::OnceLock;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-const KEYS_JSON: &str = include_str!("../../../blueprint/common/lvm-keys.json");
+// build.rs copies blueprint/common/lvm-keys.json there.
+const KEYS_JSON: &str = include_str!(concat!(env!("OUT_DIR"), "/lvm-keys.json"));
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct KeysFile {

@@ -1,20 +1,36 @@
-//! Embeds what lvm-tui knows about the LVM release it ships with: its version and the Gradle version it was tested
-//! with. Both come from the LVM repository around this crate, so a build from a checkout or `cargo install --git`
-//! always matches the plugins of the same commit.
+//! Embeds what the lvm command knows about the LVM release it ships with: its version, the Gradle version it was tested
+//! with, its libraries, the keys of `lvm { }` and the Gradle wrapper that new builds get.
+//!
+//! The files come from the LVM repository around this crate, so a build from a checkout or `cargo install --git` always
+//! matches the plugins of the same commit. The package on crates.io holds only `tui/`, so `embed-files.sh` copies the
+//! files into `embedded/` before it is packaged, and a build from the package reads them there.
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+/// Each file by its name in `embedded/` and in `OUT_DIR`, and its path in the repository, relative to this crate.
+const FILES: [(&str, &str); 7] = [
+    ("gradle.properties", "../gradle.properties"),
+    ("settings.gradle.kts", "../settings.gradle.kts"),
+    ("gradle-wrapper.properties", "../gradle/wrapper/gradle-wrapper.properties"),
+    ("gradle-wrapper.jar", "../gradle/wrapper/gradle-wrapper.jar"),
+    ("gradlew", "../gradlew"),
+    ("gradlew.bat", "../gradlew.bat"),
+    ("lvm-keys.json", "../blueprint/common/lvm-keys.json"),
+];
 
 fn main() {
-    let gradle_properties = Path::new("../gradle.properties");
-    let wrapper_properties = Path::new("../gradle/wrapper/gradle-wrapper.properties");
-    let settings = Path::new("../settings.gradle.kts");
-    for file in [gradle_properties, wrapper_properties, settings] {
-        println!("cargo:rerun-if-changed={}", file.display());
+    let out = PathBuf::from(std::env::var_os("OUT_DIR").expect("Cargo sets OUT_DIR"));
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=embedded");
+    for (name, in_repository) in FILES {
+        let from = source(name, in_repository);
+        println!("cargo:rerun-if-changed={}", from.display());
+        fs::copy(&from, out.join(name)).unwrap_or_else(|error| panic!("Cannot copy {}: {error}", from.display()));
     }
 
-    let version = property(gradle_properties, "VERSION_NAME");
-    let distribution = property(wrapper_properties, "distributionUrl");
+    let version = property(&out.join("gradle.properties"), "VERSION_NAME");
+    let distribution = property(&out.join("gradle-wrapper.properties"), "distributionUrl");
     let gradle = distribution
         .rsplit('/')
         .next()
@@ -25,7 +41,21 @@ fn main() {
 
     println!("cargo:rustc-env=LVM_VERSION={version}");
     println!("cargo:rustc-env=LVM_TESTED_GRADLE={gradle}");
-    println!("cargo:rustc-env=LVM_LIBRARIES={}", libraries(settings).join(","));
+    println!("cargo:rustc-env=LVM_LIBRARIES={}", libraries(&out.join("settings.gradle.kts")).join(","));
+}
+
+/// The file in the repository when the crate is built inside it, otherwise its copy in `embedded/`. The repository
+/// wins, so a copy left in `embedded/` never hides a change to the original.
+fn source(name: &str, in_repository: &str) -> PathBuf {
+    let original = Path::new(in_repository);
+    if original.is_file() {
+        return original.to_owned();
+    }
+    let copy = Path::new("embedded").join(name);
+    if copy.is_file() {
+        return copy;
+    }
+    panic!("Found neither {in_repository} nor embedded/{name}: build inside the LVM repository, or run embed-files.sh");
 }
 
 /// LVM's libraries: one module in runtime/ per artifact, named lvm-<module>.
