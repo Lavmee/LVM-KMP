@@ -14,6 +14,7 @@ import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
 import tech.annexflow.lvm.blueprint.common.LvmValueParsing
+import tech.annexflow.lvm.blueprint.common.effectiveOptIns
 import tech.annexflow.lvm.blueprint.common.lvmValues
 
 /**
@@ -47,7 +48,7 @@ private const val JAVA_8 = 8
 
 /** Passes `lvm { kotlin { } }` to every compilation, and strict explicit API mode to the main one: tests keep default visibility. */
 internal fun configureCompilerOptions(kotlin: KotlinJvmProjectExtension, section: KotlinSection, values: KotlinValues) {
-    val optIns = values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }
+    val optIns = section.effectiveOptIns(values)
     val freeArgs = values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
     kotlin.compilerOptions {
         allWarningsAsErrors.set(section.warningsAsErrors)

@@ -32,11 +32,21 @@ impl Layer {
 }
 
 /// Keys that only a module sets, and the type of their value.
-const MODULE_ONLY: &[&str] = &["android.namespace", "publish.name"];
+const MODULE_ONLY: &[(&str, KeyType)] = &[
+    ("android.namespace", KeyType::String),
+    ("publish.name", KeyType::String),
+    ("kotlin.excludedOptIns", KeyType::List),
+];
+
+/// The type of [key]'s value, whether it is a build-wide key or one that only a module sets.
+fn kind(key: &str) -> Option<KeyType> {
+    let module_only = MODULE_ONLY.iter().find(|(name, _)| *name == key).map(|(_, kind)| *kind);
+    module_only.or_else(|| keys::find(key).map(|known| known.kind))
+}
 
 /// The layers that can hold [key]: a module-only key lives in the module, a build-wide-only key never does.
 pub fn layers(key: &str) -> Vec<Layer> {
-    if MODULE_ONLY.contains(&key) {
+    if MODULE_ONLY.iter().any(|(name, _)| *name == key) {
         return vec![Layer::Module];
     }
     match keys::find(key) {
@@ -50,6 +60,7 @@ pub fn layers(key: &str) -> Vec<Layer> {
 pub fn parse_input(key: &str, input: &str) -> Result<Value, String> {
     match keys::find(key) {
         Some(known) => known.parse(input),
+        None if kind(key) == Some(KeyType::List) => Ok(keys::parse_list(input)),
         None => Ok(Value::String(input.to_owned())),
     }
 }
@@ -132,7 +143,7 @@ fn script_edits(source: &str, key: &str, blocks: &[&str], name: &str, value: Opt
         None => kts_edit::remove_value(source, blocks, name),
         Some(value) => {
             let code = kts_edit::kotlin_literal(value);
-            if keys::find(key).is_some_and(|k| k.kind == KeyType::List) {
+            if kind(key) == Some(KeyType::List) {
                 kts_edit::set_list(source, blocks, name, &code)
             } else {
                 kts_edit::set_value(source, blocks, name, &code)
@@ -248,6 +259,23 @@ mod tests {
         let kotlin = change(&project, Some(module), "kotlin.explicitApi", Layer::Module, Some(&true.into())).unwrap();
         assert!(
             after(&kotlin, "lib/build.gradle.kts").contains("    kotlin {\n        explicitApi = true\n    }\n}\n")
+        );
+    }
+
+    #[test]
+    fn writes_a_list_that_only_a_module_sets_as_a_list() {
+        let (_dir, project) = project();
+        let module = project.module(":lib").unwrap();
+        let value = parse_input("kotlin.excludedOptIns", "a.B, c.D").unwrap();
+
+        let set = change(&project, Some(module), "kotlin.excludedOptIns", Layer::Module, Some(&value)).unwrap();
+
+        assert_eq!(layers("kotlin.excludedOptIns"), [Layer::Module]);
+        assert!(
+            after(&set, "lib/build.gradle.kts")
+                .contains("    kotlin {\n        excludedOptIns = listOf(\"a.B\", \"c.D\")\n    }\n"),
+            "{}",
+            after(&set, "lib/build.gradle.kts")
         );
     }
 

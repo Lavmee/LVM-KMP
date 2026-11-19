@@ -13,10 +13,11 @@ import tech.annexflow.lvm.blueprint.common.JvmSection
 import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
 import tech.annexflow.lvm.blueprint.common.LvmValueParsing
+import tech.annexflow.lvm.blueprint.common.effectiveOptIns
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 internal fun configureKotlinCompilerOptions(kotlin: KotlinMultiplatformExtension, section: KotlinSection, values: KotlinValues) {
-    val optIns = values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }
+    val optIns = section.effectiveOptIns(values)
     val freeArgs = values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
 
     kotlin.compilerOptions {
