@@ -854,7 +854,7 @@ dependencies = [
 
 [[package]]
 name = "lvm-tui"
-version = "0.5.0"
+version = "0.6.0-SNAPSHOT"
 dependencies = [
  "anyhow",
  "clap",
