@@ -65,6 +65,10 @@ class KotlinValues internal constructor(values: LvmValues) {
     /** Whether modules use the flat source layout: `src`, `test`, `src@<name>` and `test@<name>`. */
     val flatLayout: Provider<Boolean> = values.boolean(LvmKeys.KOTLIN_FLAT_LAYOUT, LvmDefaults.KOTLIN_FLAT_LAYOUT)
 
+    /** Whether modules with the flat layout check that their Kotlin and Java files sit in the directory of their package. */
+    val checkSourceLayout: Provider<Boolean> =
+        values.boolean(LvmKeys.KOTLIN_CHECK_SOURCE_LAYOUT, LvmDefaults.KOTLIN_CHECK_SOURCE_LAYOUT)
+
     /**
      * How Kotlin compiles interface functions with a body for JVM and Android: `enable`, `no-compatibility` or
      * `disable`. Absent unless set, so Kotlin's own default applies.

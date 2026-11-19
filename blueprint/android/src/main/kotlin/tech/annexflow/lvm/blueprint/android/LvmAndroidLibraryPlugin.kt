@@ -94,6 +94,7 @@ class LvmAndroidLibraryPlugin : Plugin<Project> {
         project.addKotlinTestToUnitTests(kotlin)
         project.configureExplicitApi(kotlin, androidComponents)
         project.addDesugaringDependency(library.desugaring)
+        project.configureSourceLayoutCheck(project.extensions.getByType(LibraryExtension::class.java), kotlin)
     }
 
     /** AGP has no target SDK level for a library itself, only for its instrumented tests and lint. */

@@ -55,5 +55,6 @@ class LvmAndroidTestPlugin : Plugin<Project> {
         }
 
         project.configureKotlin(kotlin, project.lvmValues.kotlin)
+        project.configureSourceLayoutCheck(project.extensions.getByType(TestExtension::class.java), kotlin)
     }
 }

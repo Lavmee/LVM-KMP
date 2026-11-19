@@ -66,6 +66,12 @@ abstract class KotlinSection {
     abstract val flatLayout: Property<Boolean>
 
     /**
+     * With the flat layout, `lvmCheckSourceLayout` runs before the module compiles and fails while a Kotlin or Java file
+     * sits outside the directory of its package or declares none.
+     */
+    abstract val checkSourceLayout: Property<Boolean>
+
+    /**
      * How Kotlin compiles interface functions with a body for JVM and Android: `enable`, `no-compatibility` or
      * `disable`, as Kotlin's `-jvm-default`. Unset by default, so Kotlin's own default applies.
      */

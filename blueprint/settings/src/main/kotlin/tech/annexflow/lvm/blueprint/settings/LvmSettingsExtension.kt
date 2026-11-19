@@ -74,6 +74,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.KOTLIN_EXPLICIT_API, kotlin.explicitApi)
         scalar(LvmKeys.KOTLIN_TEST_DEPENDENCIES, kotlin.testDependencies)
         scalar(LvmKeys.KOTLIN_FLAT_LAYOUT, kotlin.flatLayout)
+        scalar(LvmKeys.KOTLIN_CHECK_SOURCE_LAYOUT, kotlin.checkSourceLayout)
         scalar(LvmKeys.KOTLIN_JVM_DEFAULT, kotlin.jvmDefault)
         list(LvmKeys.IOS_ARCHITECTURES, ios.architectures)
         list(LvmKeys.QUALITY_CONFIG, quality.config)
@@ -141,6 +142,9 @@ abstract class KotlinDefaults {
     abstract val explicitApi: Property<Boolean>
     abstract val testDependencies: Property<Boolean>
     abstract val flatLayout: Property<Boolean>
+
+    /** Whether modules with the flat layout check that their files sit in the directory of their package. */
+    abstract val checkSourceLayout: Property<Boolean>
 
     /** `enable`, `no-compatibility` or `disable`, as Kotlin's `-jvm-default`. */
     abstract val jvmDefault: Property<String>

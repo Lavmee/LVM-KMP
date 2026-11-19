@@ -29,6 +29,7 @@ public final class tech/annexflow/lvm/blueprint/common/JvmValues {
 
 public abstract class tech/annexflow/lvm/blueprint/common/KotlinSection {
 	public fun <init> ()V
+	public abstract fun getCheckSourceLayout ()Lorg/gradle/api/provider/Property;
 	public abstract fun getExcludedOptIns ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getExplicitApi ()Lorg/gradle/api/provider/Property;
 	public abstract fun getFlatLayout ()Lorg/gradle/api/provider/Property;
@@ -40,6 +41,7 @@ public abstract class tech/annexflow/lvm/blueprint/common/KotlinSection {
 }
 
 public final class tech/annexflow/lvm/blueprint/common/KotlinValues {
+	public final fun getCheckSourceLayout ()Lorg/gradle/api/provider/Provider;
 	public final fun getExplicitApi ()Lorg/gradle/api/provider/Provider;
 	public final fun getFlatLayout ()Lorg/gradle/api/provider/Provider;
 	public final fun getFreeCompilerArgs ()Lorg/gradle/api/provider/Provider;
