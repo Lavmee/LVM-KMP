@@ -459,18 +459,34 @@ fn file_values(path: &str, script: &ModuleScript, plugins: &[String], context: &
         let name = path.rsplit(':').next().unwrap_or_default();
         rows.push(module_only(script, "publish.name", Some(Value::String(format!("{prefix}{name}")))));
     }
+    if sections.contains("kotlin") {
+        let excluded = module_only(script, "kotlin.excludedOptIns", Some(Value::Array(Vec::new())));
+        if let Some(Value::Array(excluded)) = &excluded.value {
+            exclude_opt_ins(&mut rows, excluded);
+        }
+        rows.push(excluded);
+    }
     rows.sort_by(|a, b| a.key.cmp(&b.key));
     rows
 }
 
 /// A value without a build-wide key: the module's own, else [derived].
 fn module_only(script: &ModuleScript, key: &str, derived: Option<Value>) -> ValueRow {
-    let explicit = script.values.iter().rev().find(|v| v.key == key).and_then(|v| match &v.op {
-        super::lvm_block::ValueOp::Set(value) => Some(value.clone()),
-        super::lvm_block::ValueOp::Add(_) => None,
-    });
+    let explicit = apply_writes(&script.values, key, None);
     let source = if explicit.is_some() { Source::Module } else { Source::Default };
     ValueRow { key: key.to_owned(), value: explicit.or(derived), source, origin: Origin::Files }
+}
+
+/// Leaves [excluded] out of the module's opt-ins, build-wide ones included, as blueprint does.
+fn exclude_opt_ins(rows: &mut [ValueRow], excluded: &[Value]) {
+    let Some(row) = rows.iter_mut().find(|row| row.key == "kotlin.optIns") else { return };
+    let Some(Value::Array(opt_ins)) = &mut row.value else { return };
+    let before = opt_ins.len();
+    opt_ins.retain(|opt_in| !excluded.contains(opt_in));
+    // The list now differs from the build-wide one, so it is the module's.
+    if opt_ins.len() != before {
+        row.source = Source::Module;
+    }
 }
 
 fn file_value(key: &Key, script: &ModuleScript, plugins: &[String], context: &FileContext) -> ValueRow {
@@ -727,6 +743,27 @@ kotlin { sourceSets.commonMain.dependencies { implementation(projects.coreData) 
         let own = shared(&Project::load(root));
         assert_eq!(row(&own, "android.compileSdkMinor").value, None);
         assert_eq!(row(&own, "android.compileSdkMinor").source, Source::Module);
+    }
+
+    #[test]
+    fn a_module_leaves_out_the_opt_ins_it_excludes_and_the_others_keep_them() {
+        let dir = consumer();
+        write(
+            dir.path(),
+            "core-data/build.gradle.kts",
+            "plugins { alias(lvmLibs.plugins.blueprint.multiplatform) }\nlvm {\n    targets { jvm() }\n    kotlin { excludedOptIns.add(\"a.Settings\") }\n}\n",
+        );
+        let project = Project::load(dir.path());
+        let core = project.module(":core-data").unwrap();
+        let shared = project.module(":shared").unwrap();
+
+        assert_eq!(row(core, "kotlin.optIns").value, Some(serde_json::json!([])));
+        assert_eq!(row(core, "kotlin.optIns").source, Source::Module);
+        assert_eq!(row(core, "kotlin.excludedOptIns").value, Some(serde_json::json!(["a.Settings"])));
+        assert_eq!(row(core, "kotlin.excludedOptIns").source, Source::Module);
+        assert_eq!(row(shared, "kotlin.optIns").value, Some(serde_json::json!(["a.Settings", "b.Module"])));
+        assert_eq!(row(shared, "kotlin.excludedOptIns").value, Some(serde_json::json!([])));
+        assert_eq!(row(shared, "kotlin.excludedOptIns").source, Source::Default);
     }
 
     #[test]

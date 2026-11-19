@@ -48,7 +48,7 @@ Each plugin does one thing. Apply only the ones you need.
 | `lvm-logger-file` | Rolling file logger |
 | `lvm-storage` | `createDataStore`: a `DataStore` in the app's data directory or at any path, with serializers for JSON, kotlinx-serialization's binary formats and other formats, such as Wire's protos |
 | `lvm-decompose` | `AppComponentContext` on top of [Decompose](https://github.com/arkivanov/Decompose): component locals, a coroutine scope per component, instances shared by the component tree, `EventBus`, a context for previews and tests, state keeping and paging |
-| `lvm-decompose-permissions` | moko-permissions' `PermissionsController` for components, kept across activity recreation on Android. Android and iOS only |
+| `lvm-decompose-permissions` | moko-permissions' `PermissionsController` for components, and Android roots that provide it and keep it across activity recreation. Android and iOS only |
 | `lvm-decompose-compose` | Back handling, stack animations, and a bottom sheet, an overlay and plain content for a slot's child in Compose |
 | `lvm-decompose-fetcher` | `Fetcher`: network reads for components through the app's Ktor `HttpClient`, with a file cache that serves the last responses offline and states that retry a read and can be refreshed |
 | `lvm-main-context` | `@MainContext`: calls to the annotated function from coroutines run on the main thread |
@@ -77,9 +77,25 @@ val preferences = createDataStore(
 
 The root shares an instance with the whole tree through `getOrCreateScoped { ... }`, and any component reads it with `getScoped<Type>()`. The key is the type argument as written, so an instance created as `MutableStateFlow<Settings>` is not found as `StateFlow<Settings>`. A `StateFlow` that components read without knowing how the root built it is shared by its value type instead. The root keeps the flow it creates, as in `val settings = getOrCreateScopedStateFlow { MutableStateFlow(Settings()) }`, and a component in another module reads it as `val settings: StateFlow<Settings> get() = getScopedStateFlow()`. The value type is the one of the flow that the factory returns, so `getOrCreateScopedStateFlow { MutableStateFlow(Session.SignedIn(user)) }` shares a flow of `Session.SignedIn`, and `getOrCreateScopedStateFlow<Session, _> { ... }` shares it as a flow of `Session`.
 
-`lvm-decompose` also keeps a component's state across process death with `mutableState { ... }`, gives lists a `paging(flow)` that shows the last page when a screen comes back, and gives previews `stubPaging(items)` and `loadedPagingFlow(items)`. Its `DecomposeNavigationHandler` and its stack and slot navigation functions are `@MainContext` functions, so in a module that applies `tech.annexflow.lvm.main-context` their calls from coroutines run on the main thread; see [Decompose navigation](#decompose-navigation). `lvm-decompose-permissions` passes moko-permissions' `PermissionsController` to components through the component local `LocalPermissionsController`, and on Android `retainedPermissionsController()` keeps it across activity recreation. On Android, `openAppNotificationSettings(context)` and `openAppLocaleSettings(context)` on the controller open the system settings of the app's notifications and language, and open the app's settings instead where the system has no such screen.
+`lvm-decompose` also keeps a component's state across process death with `mutableState { ... }`, gives lists a `paging(flow)` that shows the last page when a screen comes back, and gives previews `stubPaging(items)` and `loadedPagingFlow(items)`. Its `DecomposeNavigationHandler` and its stack and slot navigation functions are `@MainContext` functions, so in a module that applies `tech.annexflow.lvm.main-context` their calls from coroutines run on the main thread; see [Decompose navigation](#decompose-navigation).
 
 Every component tree starts from a root context: `retainedAppComponent(logger) { context -> ... }` or `defaultAppComponent(logger)` in an Android activity, `AppComponentRoot` on iOS, and `rootAppComponentContext(componentContext, logger)` on JVM, for example on a `DefaultComponentContext` with a `LifecycleRegistry`. [iOS](docs/ios.md) shows how an iOS app builds its root, saves its state and forwards back gestures.
+
+`lvm-decompose-permissions` gives components moko-permissions' `PermissionsController` through the component local `LocalPermissionsController`, and a component reads it as `permissionsController`. In an Android activity, `retainedAppComponentWithPermissions` creates the root as `retainedAppComponent` does, with the same parameters, on a root context that provides the activity's controller:
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val root = retainedAppComponentWithPermissions(logger) { context -> DefaultRootComponent(context) }
+        setContent { RootContent(root) }
+    }
+}
+```
+
+The activity keeps the controller across recreation, and every `onCreate` binds it to the new activity, while the factory runs only once. A request that was waiting for the user when the activity was recreated gets the answer through the new activity. `defaultAppComponentWithPermissions(logger)` provides the same controller to a tree that `defaultAppComponent` creates again with every activity. A root built in another way calls `retainedPermissionsController()` in every `onCreate`, outside the factory of a retained component, and provides the controller with `provideLocals(LocalPermissionsController provides controller)`. On iOS, the root provides a `PermissionsController()` from moko-permissions' `dev.icerock.moko.permissions.ios` package the same way, and previews and tests provide `StubPermissionsController(state)`, which answers every request with `state` and shows nothing.
+
+A component that hands its controller to the UI, for example to moko-permissions' `BindEffect(component.permissionsController)`, implements `PermissionsControllerOwner` with `override val permissionsController get() = locals[LocalPermissionsController]`. Inside the component, this member wins over the `permissionsController` extension, so the getter reads the local itself: `get() = permissionsController` would call the getter again. On Android, `openAppNotificationSettings(context)` and `openAppLocaleSettings(context)` on the controller open the system settings of the app's notifications and language, and open the app's settings instead where the system has no such screen.
 
 `lvm-decompose-compose` connects Decompose components with Compose. `BackHandler(backHandler) { ... }` handles back with a component's `backHandler` while it is in the composition. A dialog or a bottom sheet takes the back gestures of its window, so a component shown in one handles back with `rememberWindowBackHandler()` instead: back reaches the component while it handles back, and closes the dialog otherwise. `stackAnimation { ... }` animates Decompose's `ChildStack` with an animator for each child that enters or leaves. Its selector reads the change from a `SelectorContext`, for example with `animate<SettingsComponent>(child = { ... }, other = { ... })` by the type of one screen, or with `animate<HistoryComponent, ChatComponent>(child = { ... }, other = { ... })` for a change between two types of screens, and returns an animator such as `slide(invert = false)`, `verticalSlide()`, `slowFade()` or `none()`. Like Decompose's stack animations, they need an opt-in to `ExperimentalDecomposeApi`.
 
@@ -183,7 +199,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing. A module can't take an entry out of a build-wide list it appends to; for opt-ins, `kotlin.excludedOptIns` does that, see [Kotlin and JVM](#kotlin-and-jvm).
 
 ```kotlin
 // settings.gradle.kts
@@ -223,11 +239,23 @@ Your own convention plugins can read the build-wide values and configure the `lv
 | `jvm.target` | `21` | Bytecode version of JVM and Android compilations, for Kotlin and Java |
 | `kotlin.warningsAsErrors` | `false` | Turns compiler warnings into errors |
 | `kotlin.optIns` | empty | Opt-ins of every compilation, such as `kotlin.time.ExperimentalTime` |
+| `kotlin.excludedOptIns` | empty | Opt-ins that the module's compilations leave out, whether they come from the build-wide `kotlin.optIns` or the module's own. Only in a module's `lvm { }` |
 | `kotlin.freeCompilerArgs` | empty | Further arguments of the Kotlin compiler |
 | `kotlin.explicitApi` | `false` | Strict explicit API mode for the main code of libraries and Kotlin/JVM modules; tests keep default visibility |
 | `kotlin.testDependencies` | `true` | Adds `kotlin-test` to tests: to `commonTest` in Kotlin Multiplatform modules, and to the unit tests of Android and Kotlin/JVM modules |
 | `kotlin.flatLayout` | `false` | The flat source layout; see [Source layout](#source-layout) |
 | `kotlin.jvmDefault` | unset | How Kotlin compiles interface functions with a body for JVM and Android, as its `-jvm-default`: `enable`, `no-compatibility` or `disable`. While it is unset, Kotlin's own default applies |
+
+An opt-in whose marker the compiler can't find gives the warning that the marker is unresolved, which fails the build with `kotlin.warningsAsErrors`. So a build that opts in to `kotlinx.coroutines.ExperimentalCoroutinesApi` everywhere breaks each module without kotlinx-coroutines, such as a Kotlin/JVM tool. Such a module leaves the opt-in out, and the other modules keep it:
+
+```kotlin
+// tools/build.gradle.kts
+lvm {
+    kotlin { excludedOptIns.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
+}
+```
+
+The module's report lists the excluded opt-ins as `kotlin.excludedOptIns`, and as `kotlin.optIns` the opt-ins that reach the compiler.
 
 ### Source layout
 
@@ -531,17 +559,21 @@ The plugin adds `lvm-main-context`, which holds the annotation, and runs the com
 - Overrides of an annotated function inherit the annotation, also from other modules.
 - A call whose receiver or arguments `return`, `break` or `continue` out of it, as in `push(screen ?: return)`, is a compile error. Compute the value in a variable first.
 
-`Dispatchers.Main` comes from `kotlinx-coroutines-android` on Android, which `lvm-main-context` depends on, and from `kotlinx-coroutines-core` on Apple platforms. On JVM it needs `kotlinx-coroutines-swing` or `kotlinx-coroutines-javafx`; Compose Desktop adds the first. Without a main dispatcher, a moved call fails with an `IllegalStateException`. Tests set one with `Dispatchers.setMain` from `kotlinx-coroutines-test`.
+`Dispatchers.Main` comes from `kotlinx-coroutines-android` on Android, which `lvm-main-context` depends on, and from `kotlinx-coroutines-core` on Apple platforms. On JVM it needs `kotlinx-coroutines-swing` or `kotlinx-coroutines-javafx`; Compose Desktop adds the first. Without a main dispatcher, a moved call fails with an `IllegalStateException`. Tests set one with `Dispatchers.setMain` from `kotlinx-coroutines-test`. With `testCompilations = false`, calls in tests run where they are made, so a test can call a `@MainContext` function from `runTest` without a main dispatcher. Calls in main code still move, so a test of code that makes such calls, such as a component, still needs `Dispatchers.setMain`.
 
 | Setting | Default | Effect |
 |---|---|---|
-| `platforms` | `android`, `ios`, `jvm` | Platforms whose main and test compilations run the compiler plugin. An empty list turns it off |
+| `platforms` | `android`, `ios`, `jvm` | Platforms whose compilations run the compiler plugin. An empty list turns it off |
+| `testCompilations` | `true` | Runs the compiler plugin on test compilations too. `false` keeps it to main code: unit tests, instrumented tests, test fixtures and other source sets, such as `src@integrationTest`, compile without it |
 | `dependency` | `true` | Adds `lvm-main-context` to `commonMain`, or to `implementation` in a module without Kotlin Multiplatform |
 
 ```kotlin
 // feature/build.gradle.kts
 lvm {
-    mainContext { platforms.set(listOf("android", "ios")) }
+    mainContext {
+        platforms.set(listOf("android", "ios"))
+        testCompilations = false
+    }
 }
 ```
 

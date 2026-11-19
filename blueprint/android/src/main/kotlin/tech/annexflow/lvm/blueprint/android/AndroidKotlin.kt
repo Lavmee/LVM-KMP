@@ -10,6 +10,7 @@ import tech.annexflow.lvm.blueprint.common.KotlinSection
 import tech.annexflow.lvm.blueprint.common.KotlinValues
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
 import tech.annexflow.lvm.blueprint.common.LvmValueParsing
+import tech.annexflow.lvm.blueprint.common.effectiveOptIns
 import tech.annexflow.lvm.blueprint.common.reportTool
 
 /**
@@ -18,7 +19,7 @@ import tech.annexflow.lvm.blueprint.common.reportTool
  */
 internal fun Project.configureKotlin(section: KotlinSection, values: KotlinValues) {
     reportTool("kotlin", getKotlinPluginVersion(), LvmBuildInfo.MIN_KOTLIN, LvmBuildInfo.TESTED_KOTLIN)
-    val optIns = values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }
+    val optIns = section.effectiveOptIns(values)
     val freeArgs = values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module }
     extensions.configure(KotlinAndroidProjectExtension::class.java) {
         compilerOptions {

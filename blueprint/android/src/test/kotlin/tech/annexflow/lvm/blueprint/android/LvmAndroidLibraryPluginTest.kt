@@ -201,11 +201,17 @@ class LvmAndroidLibraryPluginTest {
     }
 
     @Test
-    fun `passes lvm kotlin options to the compiler and adds kotlin-test to unit tests`() {
+    fun `passes lvm kotlin options to the compiler without the excluded opt-ins, and adds kotlin-test to unit tests`() {
         val fixture = libraryFixture(
             dir,
             """
-            lvm { kotlin { optIns.add("kotlin.ExperimentalStdlibApi"); freeCompilerArgs.add("-Xsuppress-version-warnings") } }
+            lvm {
+                kotlin {
+                    optIns.add("kotlin.ExperimentalStdlibApi")
+                    excludedOptIns.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                    freeCompilerArgs.add("-Xsuppress-version-warnings")
+                }
+            }
             tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
                 val options = compilerOptions
                 val taskName = name
@@ -217,7 +223,7 @@ class LvmAndroidLibraryPluginTest {
                 }
             }
             """,
-            settingsLvm = "catalog = false\nkotlin { warningsAsErrors = true }",
+            settingsLvm = "catalog = false\nkotlin { warningsAsErrors = true; optIns.add(\"kotlinx.coroutines.ExperimentalCoroutinesApi\") }",
         )
 
         val compile = fixture.build(":core:ui:compileDebugKotlin").output

@@ -82,6 +82,7 @@ abstract class LvmSettingsExtension @Inject constructor(objects: ObjectFactory) 
         scalar(LvmKeys.QUALITY_BUILD_UPON_DEFAULT_CONFIG, quality.buildUponDefaultConfig)
         scalar(LvmKeys.QUALITY_COMPOSE_RULES, quality.composeRules)
         list(LvmKeys.MAIN_CONTEXT_PLATFORMS, mainContext.platforms)
+        scalar(LvmKeys.MAIN_CONTEXT_TEST_COMPILATIONS, mainContext.testCompilations)
         scalar(LvmKeys.MAIN_CONTEXT_DEPENDENCY, mainContext.dependency)
         scalar(LvmKeys.COMPOSE_METRICS, compose.metrics)
         scalar(LvmKeys.COMPOSE_REPORTS, compose.reports)
@@ -180,6 +181,9 @@ abstract class QualityDefaults {
 abstract class MainContextDefaults {
     /** `android`, `ios`, `jvm`. */
     abstract val platforms: ListProperty<String>
+
+    /** Whether test compilations run the compiler plugin too, or only main ones. */
+    abstract val testCompilations: Property<Boolean>
     abstract val dependency: Property<Boolean>
 
     init {

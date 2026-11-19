@@ -1,6 +1,17 @@
+public final class tech/annexflow/lvm/decompose/permissions/ComponentActivitiesKt {
+	public static final fun defaultAppComponentWithPermissions (Landroidx/activity/ComponentActivity;Ltech/annexflow/lvm/logger/Logger;ZLkotlin/jvm/functions/Function0;)Ltech/annexflow/lvm/decompose/AppComponentContext;
+	public static synthetic fun defaultAppComponentWithPermissions$default (Landroidx/activity/ComponentActivity;Ltech/annexflow/lvm/logger/Logger;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ltech/annexflow/lvm/decompose/AppComponentContext;
+	public static final fun retainedAppComponentWithPermissions (Landroidx/activity/ComponentActivity;Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static synthetic fun retainedAppComponentWithPermissions$default (Landroidx/activity/ComponentActivity;Ltech/annexflow/lvm/logger/Logger;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class tech/annexflow/lvm/decompose/permissions/LocalPermissionsControllerKt {
 	public static final fun getLocalPermissionsController ()Ltech/annexflow/lvm/decompose/ComponentLocal;
 	public static final fun getPermissionsController (Ltech/annexflow/lvm/decompose/AppComponentContext;)Ldev/icerock/moko/permissions/PermissionsController;
+}
+
+public abstract interface class tech/annexflow/lvm/decompose/permissions/PermissionsControllerOwner {
+	public abstract fun getPermissionsController ()Ldev/icerock/moko/permissions/PermissionsController;
 }
 
 public final class tech/annexflow/lvm/decompose/permissions/PermissionsControllersKt {

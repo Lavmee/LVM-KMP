@@ -52,7 +52,8 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     val layers = LvmValues(this)
     layers.report(LvmKeys.KOTLIN_WARNINGS_AS_ERRORS, section.warningsAsErrors, values.warningsAsErrors)
     // A module appends to these lists, so its value is the build-wide list followed by its own entries.
-    layers.report(LvmKeys.KOTLIN_OPT_INS, values.optIns.zip(section.optIns) { buildWide, module -> buildWide + module }, values.optIns)
+    layers.report(LvmKeys.KOTLIN_OPT_INS, section.effectiveOptIns(values), values.optIns)
+    reportModuleValue(KOTLIN_EXCLUDED_OPT_INS, section.excludedOptIns, provider { emptyList<String>() })
     layers.report(
         LvmKeys.KOTLIN_FREE_COMPILER_ARGS,
         values.freeCompilerArgs.zip(section.freeCompilerArgs) { buildWide, module -> buildWide + module },
@@ -63,6 +64,18 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     layers.report(LvmKeys.KOTLIN_FLAT_LAYOUT, section.flatLayout, values.flatLayout)
     layers.report(LvmKeys.KOTLIN_JVM_DEFAULT, section.jvmDefault, values.jvmDefault)
 }
+
+/**
+ * The opt-ins of the module's compilations: the build-wide ones of [values], followed by the module's own, without
+ * those in [KotlinSection.excludedOptIns].
+ */
+@InternalBlueprintApi
+fun KotlinSection.effectiveOptIns(values: KotlinValues): Provider<List<String>> =
+    values.optIns.zip(optIns) { buildWide, module -> buildWide + module }
+        .zip(excludedOptIns) { optIns, excluded -> optIns.filterNot(excluded.toSet()::contains) }
+
+/** Only a module sets it, so it has no build-wide key in [LvmKeys]. */
+private const val KOTLIN_EXCLUDED_OPT_INS = "kotlin.excludedOptIns"
 
 /** The namespace of a module that sets none: its group followed by its path. Reading it fails without a group. */
 @Suppress("UnstableApiUsage") // Project.isolated: reads only the root name, safe under Isolated Projects.

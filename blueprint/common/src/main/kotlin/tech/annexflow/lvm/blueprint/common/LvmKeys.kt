@@ -25,6 +25,7 @@ object LvmKeys {
     const val QUALITY_BUILD_UPON_DEFAULT_CONFIG: String = "quality.buildUponDefaultConfig"
     const val QUALITY_COMPOSE_RULES: String = "quality.composeRules"
     const val MAIN_CONTEXT_PLATFORMS: String = "mainContext.platforms"
+    const val MAIN_CONTEXT_TEST_COMPILATIONS: String = "mainContext.testCompilations"
     const val MAIN_CONTEXT_DEPENDENCY: String = "mainContext.dependency"
     const val COMPOSE_METRICS: String = "compose.metrics"
     const val COMPOSE_REPORTS: String = "compose.reports"

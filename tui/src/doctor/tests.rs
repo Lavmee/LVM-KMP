@@ -114,6 +114,22 @@ fn finds_and_fixes_mistakes_in_the_build_scripts() {
 }
 
 #[test]
+fn knows_the_values_that_only_a_module_sets() {
+    let dir = consumer();
+    let root = dir.path();
+    replace(
+        root,
+        "shared/build.gradle.kts",
+        "lvm {\n",
+        "lvm {\n    kotlin { excludedOptIns.add(\"kotlin.time.ExperimentalTime\") }\n",
+    );
+
+    let findings = diagnose(&Project::load(root), &healthy(root));
+
+    assert!(findings.iter().all(|f| f.rule != "unknown-key"), "{:?}", rules(&findings));
+}
+
+#[test]
 fn takes_root_plugins_that_the_build_names_in_its_own_catalog_and_leaves_them_alone() {
     let dir = consumer();
     let root = dir.path();

@@ -93,17 +93,20 @@ class CompilerOptionsTest {
     }
 
     @Test
-    fun `opt-ins from settings and the module are combined`() {
+    fun `opt-ins from settings and the module are combined, without those the module excludes`() {
         val fixture = kmpFixture(
             dir,
             module = """
                 plugins { id("tech.annexflow.lvm.multiplatform") }
                 lvm {
                     targets { jvm() }
-                    kotlin { optIns.add("FromModule") }
+                    kotlin {
+                        optIns.add("FromModule")
+                        excludedOptIns.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                    }
                 }
             """,
-            settingsLvm = "catalog = false\nkotlin { optIns.add(\"FromSettings\") }",
+            settingsLvm = "catalog = false\nkotlin { warningsAsErrors = true; optIns.addAll(\"FromSettings\", \"kotlinx.coroutines.ExperimentalCoroutinesApi\") }",
         )
         fixture.file(
             "lib/src/commonMain/kotlin/OptIns.kt",

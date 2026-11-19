@@ -20,6 +20,7 @@ androidxActivity = "1.13.0"
 androidxNavigationevent = "1.0.0"
 androidxPaging = "3.5.3"
 mokoPermissions = "0.20.1"
+robolectric = "4.17"
 composeMultiplatform = "1.12.2"
 navigationevent = "1.1.0"
 composeUnstyled = "2.10.2"
@@ -67,6 +68,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "androidxNavigationevent" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "androidxPaging" }
 moko-permissions = { module = "dev.icerock.moko:permissions", version.ref = "mokoPermissions" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 kotlin-retry = { module = "com.michael-bull.kotlin-retry:kotlin-retry", version.ref = "kotlinRetry" }
