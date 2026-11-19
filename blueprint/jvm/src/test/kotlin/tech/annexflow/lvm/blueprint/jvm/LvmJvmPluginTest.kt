@@ -88,6 +88,31 @@ class LvmJvmPluginTest {
     }
 
     @Test
+    fun `a module leaves out the build-wide opt-ins it excludes, while other modules keep them`() {
+        // The marker of a library that neither module depends on: with warnings as errors, its opt-in fails a compilation.
+        val marker = "kotlinx.coroutines.ExperimentalCoroutinesApi"
+        val fixture = jvmFixture(
+            dir,
+            "lvm { kotlin { excludedOptIns.add(\"$marker\") } }",
+            settingsLvm = "catalog = false\nkotlin { warningsAsErrors = true; optIns.addAll(\"kotlin.ExperimentalStdlibApi\", \"$marker\") }",
+        )
+        dir.resolve("settings.gradle.kts").appendText("include(\":other\")\n")
+        fixture.file("other/build.gradle.kts", JVM_MODULE_HEADER)
+        fixture.file("other/src/main/kotlin/Other.kt", "class Other")
+
+        fixture.build(":lib:compileKotlin", ":lib:lvmReport", ":other:lvmReport")
+        val other = fixture.buildAndFail(":other:compileKotlin")
+
+        assertContains(other.output, marker)
+        val lib = reportValues("lib")
+        assertEquals(mapOf("value" to listOf("kotlin.ExperimentalStdlibApi"), "source" to "module"), lib["kotlin.optIns"])
+        assertEquals(mapOf("value" to listOf(marker), "source" to "module"), lib["kotlin.excludedOptIns"])
+        val otherValues = reportValues("other")
+        assertEquals(mapOf("value" to listOf("kotlin.ExperimentalStdlibApi", marker), "source" to "settings"), otherValues["kotlin.optIns"])
+        assertEquals(mapOf("value" to emptyList<String>(), "source" to "default"), otherValues["kotlin.excludedOptIns"])
+    }
+
+    @Test
     fun `jvmDefault reaches the compiler, Kotlin's own default stays while it is unset and native DSL wins`() {
         val fixture = jvmFixture(dir)
         fixture.file("lib/src/main/kotlin/Greeter.kt", "interface Greeter { fun greet(): String = \"hello\" }")
@@ -144,5 +169,11 @@ class LvmJvmPluginTest {
         assertEquals(mapOf("value" to true, "source" to "module"), values["kotlin.explicitApi"])
         assertEquals(listOf("main", "test"), report["sourceSets"])
         assertEquals(setOf("gradle", "kotlin"), toolchain.keys)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun reportValues(module: String): Map<String, Map<String, Any?>> {
+        val report = JsonSlurper().parse(dir.resolve("build/lvm/report/$module/project.json")) as Map<String, Any?>
+        return report.getValue("values") as Map<String, Map<String, Any?>>
     }
 }

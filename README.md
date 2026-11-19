@@ -169,7 +169,7 @@ Every value blueprint sets has a default and can be changed. Values are resolved
 3. `lvm.*` Gradle properties in `gradle.properties` or `-P`.
 4. `lvm { }` in a module's build script.
 
-A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing.
+A stronger scalar value replaces a weaker one. List values differ by setting: `kotlin.optIns`, `kotlin.freeCompilerArgs`, `quality.config`, `compose.stabilityConfigurationFiles`, `application.proguardFiles`, `library.consumerProguardFiles` and `library.resourcePrefixDroppedSegments` set in a module are appended to the build-wide list, while `ios.architectures`, `quality.source` and `mainContext.platforms` set in a module replace it. As Gradle properties, list values are comma-separated, so a single value can't contain a comma. A build-wide empty list replaces the default, so `application { proguardFiles = emptyList() }` in `settings.gradle.kts` or `lvm.application.proguardFiles=` in `gradle.properties` leaves out `proguard-rules.pro`, and `library { consumerProguardFiles = emptyList() }` leaves out `consumer-rules.pro`; an empty list in a module that appends adds nothing. A module can't take an entry out of a build-wide list it appends to; for opt-ins, `kotlin.excludedOptIns` does that, see [Kotlin and JVM](#kotlin-and-jvm).
 
 ```kotlin
 // settings.gradle.kts
@@ -209,11 +209,23 @@ Your own convention plugins can read the build-wide values and configure the `lv
 | `jvm.target` | `21` | Bytecode version of JVM and Android compilations, for Kotlin and Java |
 | `kotlin.warningsAsErrors` | `false` | Turns compiler warnings into errors |
 | `kotlin.optIns` | empty | Opt-ins of every compilation, such as `kotlin.time.ExperimentalTime` |
+| `kotlin.excludedOptIns` | empty | Opt-ins that the module's compilations leave out, whether they come from the build-wide `kotlin.optIns` or the module's own. Only in a module's `lvm { }` |
 | `kotlin.freeCompilerArgs` | empty | Further arguments of the Kotlin compiler |
 | `kotlin.explicitApi` | `false` | Strict explicit API mode for the main code of libraries and Kotlin/JVM modules; tests keep default visibility |
 | `kotlin.testDependencies` | `true` | Adds `kotlin-test` to tests: to `commonTest` in Kotlin Multiplatform modules, and to the unit tests of Android and Kotlin/JVM modules |
 | `kotlin.flatLayout` | `false` | The flat source layout; see [Source layout](#source-layout) |
 | `kotlin.jvmDefault` | unset | How Kotlin compiles interface functions with a body for JVM and Android, as its `-jvm-default`: `enable`, `no-compatibility` or `disable`. While it is unset, Kotlin's own default applies |
+
+An opt-in whose marker the compiler can't find gives the warning that the marker is unresolved, which fails the build with `kotlin.warningsAsErrors`. So a build that opts in to `kotlinx.coroutines.ExperimentalCoroutinesApi` everywhere breaks each module without kotlinx-coroutines, such as a Kotlin/JVM tool. Such a module leaves the opt-in out, and the other modules keep it:
+
+```kotlin
+// tools/build.gradle.kts
+lvm {
+    kotlin { excludedOptIns.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
+}
+```
+
+The module's report lists the excluded opt-ins as `kotlin.excludedOptIns`, and as `kotlin.optIns` the opt-ins that reach the compiler.
 
 ### Source layout
 

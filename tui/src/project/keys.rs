@@ -82,9 +82,7 @@ impl Key {
                 _ => Err(format!("{property} must be true or false, but was '{raw}'")),
             },
             KeyType::String => Ok(Value::String(raw.to_owned())),
-            KeyType::List => Ok(Value::Array(
-                raw.split(',').map(str::trim).filter(|s| !s.is_empty()).map(|s| Value::String(s.to_owned())).collect(),
-            )),
+            KeyType::List => Ok(parse_list(raw)),
         }
     }
 
@@ -95,6 +93,11 @@ impl Key {
             _ => value,
         }
     }
+}
+
+/// A comma-separated list without blank entries, as blueprint reads a list from a Gradle property.
+pub fn parse_list(raw: &str) -> Value {
+    Value::Array(raw.split(',').map(str::trim).filter(|s| !s.is_empty()).map(|s| Value::String(s.to_owned())).collect())
 }
 
 #[cfg(test)]
