@@ -6,6 +6,11 @@
 // - Show declarations: true
 
 // Library unique name: <tech.annexflow.lvm:lvm-decompose-permissions>
+abstract interface tech.annexflow.lvm.decompose.permissions/PermissionsControllerOwner { // tech.annexflow.lvm.decompose.permissions/PermissionsControllerOwner|null[0]
+    abstract val permissionsController // tech.annexflow.lvm.decompose.permissions/PermissionsControllerOwner.permissionsController|{}permissionsController[0]
+        abstract fun <get-permissionsController>(): dev.icerock.moko.permissions.ios/PermissionsControllerProtocol // tech.annexflow.lvm.decompose.permissions/PermissionsControllerOwner.permissionsController.<get-permissionsController>|<get-permissionsController>(){}[0]
+}
+
 final val tech.annexflow.lvm.decompose.permissions/LocalPermissionsController // tech.annexflow.lvm.decompose.permissions/LocalPermissionsController|{}LocalPermissionsController[0]
     final fun <get-LocalPermissionsController>(): tech.annexflow.lvm.decompose/ComponentLocal<dev.icerock.moko.permissions.ios/PermissionsControllerProtocol> // tech.annexflow.lvm.decompose.permissions/LocalPermissionsController.<get-LocalPermissionsController>|<get-LocalPermissionsController>(){}[0]
 final val tech.annexflow.lvm.decompose.permissions/permissionsController // tech.annexflow.lvm.decompose.permissions/permissionsController|@tech.annexflow.lvm.decompose.AppComponentContext{}permissionsController[0]
