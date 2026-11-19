@@ -496,17 +496,21 @@ The plugin adds `lvm-main-context`, which holds the annotation, and runs the com
 - Overrides of an annotated function inherit the annotation, also from other modules.
 - A call whose receiver or arguments `return`, `break` or `continue` out of it, as in `push(screen ?: return)`, is a compile error. Compute the value in a variable first.
 
-`Dispatchers.Main` comes from `kotlinx-coroutines-android` on Android, which `lvm-main-context` depends on, and from `kotlinx-coroutines-core` on Apple platforms. On JVM it needs `kotlinx-coroutines-swing` or `kotlinx-coroutines-javafx`; Compose Desktop adds the first. Without a main dispatcher, a moved call fails with an `IllegalStateException`. Tests set one with `Dispatchers.setMain` from `kotlinx-coroutines-test`.
+`Dispatchers.Main` comes from `kotlinx-coroutines-android` on Android, which `lvm-main-context` depends on, and from `kotlinx-coroutines-core` on Apple platforms. On JVM it needs `kotlinx-coroutines-swing` or `kotlinx-coroutines-javafx`; Compose Desktop adds the first. Without a main dispatcher, a moved call fails with an `IllegalStateException`. Tests set one with `Dispatchers.setMain` from `kotlinx-coroutines-test`. With `testCompilations = false`, calls in tests run where they are made, so a test can call a `@MainContext` function from `runTest` without a main dispatcher. Calls in main code still move, so a test of code that makes such calls, such as a component, still needs `Dispatchers.setMain`.
 
 | Setting | Default | Effect |
 |---|---|---|
-| `platforms` | `android`, `ios`, `jvm` | Platforms whose main and test compilations run the compiler plugin. An empty list turns it off |
+| `platforms` | `android`, `ios`, `jvm` | Platforms whose compilations run the compiler plugin. An empty list turns it off |
+| `testCompilations` | `true` | Runs the compiler plugin on test compilations too. `false` keeps it to main code: unit tests, instrumented tests, test fixtures and other source sets, such as `src@integrationTest`, compile without it |
 | `dependency` | `true` | Adds `lvm-main-context` to `commonMain`, or to `implementation` in a module without Kotlin Multiplatform |
 
 ```kotlin
 // feature/build.gradle.kts
 lvm {
-    mainContext { platforms.set(listOf("android", "ios")) }
+    mainContext {
+        platforms.set(listOf("android", "ios"))
+        testCompilations = false
+    }
 }
 ```
 

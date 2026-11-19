@@ -100,6 +100,7 @@ public abstract class tech/annexflow/lvm/blueprint/settings/MainContextDefaults 
 	public fun <init> ()V
 	public abstract fun getDependency ()Lorg/gradle/api/provider/Property;
 	public abstract fun getPlatforms ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getTestCompilations ()Lorg/gradle/api/provider/Property;
 }
 
 public abstract class tech/annexflow/lvm/blueprint/settings/PomDeveloperDefaults {

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
 import tech.annexflow.lvm.blueprint.common.LvmBuildInfo
@@ -23,7 +24,7 @@ import tech.annexflow.lvm.blueprint.common.requireMinimumGradle
 
 /**
  * Runs the `@MainContext` compiler plugin of the same LVM version on the compilations of the selected platforms, in
- * Kotlin Multiplatform, Android and Kotlin/JVM modules.
+ * Kotlin Multiplatform, Android and Kotlin/JVM modules: on main and test compilations, or on main ones only.
  */
 class LvmMainContextPlugin : KotlinCompilerPluginSupportPlugin {
 
@@ -35,11 +36,15 @@ class LvmMainContextPlugin : KotlinCompilerPluginSupportPlugin {
         val values = LvmValues(target)
         section = target.lvm.extensions.create("mainContext", MainContextSection::class.java)
         val platforms = values.list(LvmKeys.MAIN_CONTEXT_PLATFORMS, LvmDefaults.MAIN_CONTEXT_PLATFORMS)
+        val testCompilations =
+            values.boolean(LvmKeys.MAIN_CONTEXT_TEST_COMPILATIONS, LvmDefaults.MAIN_CONTEXT_TEST_COMPILATIONS)
         val dependency = values.boolean(LvmKeys.MAIN_CONTEXT_DEPENDENCY, LvmDefaults.MAIN_CONTEXT_DEPENDENCY)
         section.platforms.convention(platforms)
+        section.testCompilations.convention(testCompilations)
         section.dependency.convention(dependency)
         target.reportPlugin("tech.annexflow.lvm.main-context")
         values.report(LvmKeys.MAIN_CONTEXT_PLATFORMS, section.platforms, platforms)
+        values.report(LvmKeys.MAIN_CONTEXT_TEST_COMPILATIONS, section.testCompilations, testCompilations)
         values.report(LvmKeys.MAIN_CONTEXT_DEPENDENCY, section.dependency, dependency)
 
         val annotation = target.dependencies.create(
@@ -65,7 +70,8 @@ class LvmMainContextPlugin : KotlinCompilerPluginSupportPlugin {
                     "Supported: ${LvmDefaults.MAIN_CONTEXT_PLATFORMS.joinToString()}.",
             )
         }
-        val applicable = kotlinCompilation.lvmPlatform() in platforms
+        val applicable = kotlinCompilation.lvmPlatform() in platforms &&
+            (section.testCompilations.get() || kotlinCompilation.isMain())
         // The version matters only where the compiler plugin runs. One check per module keeps the warning to one.
         if (applicable && !kotlinChecked) {
             val project = kotlinCompilation.target.project
@@ -96,6 +102,25 @@ private fun KotlinCompilation<*>.lvmPlatform(): String? = when (platformType) {
     KotlinPlatformType.native -> "ios".takeIf { (target as KotlinNativeTarget).konanTarget.family == Family.IOS }
     else -> null
 }
+
+/**
+ * Whether [KotlinCompilation] compiles main code. AGP's built-in Kotlin compiles a variant's main code in the compilation
+ * named after the variant, and its unit tests, instrumented tests and test fixtures in the compilations with the
+ * suffixes of [AGP_TEST_COMPILATIONS]. Kotlin Multiplatform targets, AGP's Android target among them, and Kotlin/JVM
+ * compile main code in `main`, and tests, test fixtures and custom source sets such as `integrationTest` in others.
+ *
+ * The name is what tells them apart: AGP's built-in Kotlin associates no compilation with another, and Kotlin associates
+ * a custom compilation such as `integrationTest` only when the build script does.
+ */
+private fun KotlinCompilation<*>.isMain(): Boolean =
+    if (this is KotlinJvmAndroidCompilation) {
+        AGP_TEST_COMPILATIONS.none(name::endsWith)
+    } else {
+        name == KotlinCompilation.MAIN_COMPILATION_NAME
+    }
+
+/** Suffixes that AGP adds to a variant's name for its unit tests, instrumented tests and test fixtures. */
+private val AGP_TEST_COMPILATIONS = listOf("UnitTest", "AndroidTest", "TestFixtures")
 
 /**
  * Fails unless [actual] is the Kotlin version that the compiler plugin was built with, or a version whose patch number
