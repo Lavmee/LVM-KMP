@@ -20,6 +20,7 @@
     { "key": "quality.buildUponDefaultConfig", "type": "boolean", "default": true },
     { "key": "quality.composeRules", "type": "boolean", "default": false },
     { "key": "mainContext.platforms", "type": "list", "default": ["android", "ios", "jvm"], "module": "replace" },
+    { "key": "mainContext.testCompilations", "type": "boolean", "default": true },
     { "key": "mainContext.dependency", "type": "boolean", "default": true },
     { "key": "compose.metrics", "type": "boolean", "default": false },
     { "key": "compose.reports", "type": "boolean", "default": false },

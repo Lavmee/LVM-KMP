@@ -31,6 +31,13 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
+// A fixture runs tests with the compiler plugin, so it builds the plugin and the annotation from their sources.
+tasks.named<Sync>("blueprintFixtureSources") {
+    from(rootDir.parentFile) {
+        include("compiler/main-context-compiler/src/**", "runtime/main-context/src/**")
+    }
+}
+
 gradlePlugin {
     plugins {
         register("lvmMainContext") {

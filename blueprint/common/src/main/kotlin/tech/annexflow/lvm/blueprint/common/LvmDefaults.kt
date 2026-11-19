@@ -23,6 +23,7 @@ object LvmDefaults {
     const val QUALITY_BUILD_UPON_DEFAULT_CONFIG: Boolean = true
     const val QUALITY_COMPOSE_RULES: Boolean = false
     val MAIN_CONTEXT_PLATFORMS: List<String> = listOf("android", "ios", "jvm")
+    const val MAIN_CONTEXT_TEST_COMPILATIONS: Boolean = true
     const val MAIN_CONTEXT_DEPENDENCY: Boolean = true
     const val COMPOSE_METRICS: Boolean = false
     const val COMPOSE_REPORTS: Boolean = false
