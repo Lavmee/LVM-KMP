@@ -1,9 +1,61 @@
-//! The build's own version catalogs, such as `gradle/libs.versions.toml`.
+//! Version catalogs: the build's own, such as `gradle/libs.versions.toml`, and the plugin aliases of `lvm-versions`.
 
 use std::collections::BTreeMap;
 use std::path::Path;
 
 use toml_edit::{DocumentMut, Item};
+
+/// LVM's project plugins by the alias that `lvm-versions` gives them after `plugins.`.
+pub const BLUEPRINT_ALIASES: &[(&str, &str)] = &[
+    ("blueprint.multiplatform", "tech.annexflow.lvm.multiplatform"),
+    ("blueprint.jvm", "tech.annexflow.lvm.jvm"),
+    ("blueprint.compose", "tech.annexflow.lvm.compose"),
+    ("blueprint.quality", "tech.annexflow.lvm.quality"),
+    ("blueprint.publish", "tech.annexflow.lvm.publish"),
+    ("blueprint.main.context", "tech.annexflow.lvm.main-context"),
+    ("blueprint.android.application", "tech.annexflow.lvm.android.application"),
+    ("blueprint.android.library", "tech.annexflow.lvm.android.library"),
+    ("blueprint.android.test", "tech.annexflow.lvm.android.test"),
+];
+
+/// External plugins by their alias in `lvm-versions`, with their IDs.
+const EXTERNAL_PLUGINS: &[(&str, &str)] = &[
+    ("kotlin.multiplatform", "org.jetbrains.kotlin.multiplatform"),
+    ("kotlin.jvm", "org.jetbrains.kotlin.jvm"),
+    ("kotlin.serialization", "org.jetbrains.kotlin.plugin.serialization"),
+    ("android.application", "com.android.application"),
+    ("android.library", "com.android.library"),
+    ("android.kmp.library", "com.android.kotlin.multiplatform.library"),
+    ("android.test", "com.android.test"),
+    ("kotlin.compose", "org.jetbrains.kotlin.plugin.compose"),
+    ("compose.multiplatform", "org.jetbrains.compose"),
+    ("detekt", "io.gitlab.arturbosch.detekt"),
+    ("vanniktech.mavenPublish", "com.vanniktech.maven.publish"),
+];
+
+/// The ID of the plugin that `lvm-versions` names [alias].
+pub fn alias_to_id(alias: &str) -> Option<&'static str> {
+    EXTERNAL_PLUGINS.iter().chain(BLUEPRINT_ALIASES).find(|(name, _)| *name == alias).map(|(_, id)| *id)
+}
+
+/// The alias that `lvm-versions` gives the plugin [id].
+pub fn id_to_alias(id: &str) -> Option<String> {
+    EXTERNAL_PLUGINS
+        .iter()
+        .chain(BLUEPRINT_ALIASES)
+        .find(|(_, plugin)| *plugin == id)
+        .map(|(alias, _)| (*alias).to_owned())
+}
+
+/// The plugin IDs of the build's own version catalogs, by the catalog's name and the plugin's accessor, as [plugins]
+/// reads them.
+pub type Plugins = BTreeMap<String, BTreeMap<String, String>>;
+
+/// The ID of the plugin that `alias(<catalog>.plugins.<alias>)` names: the entry of the build's own [catalog], else the
+/// alias of `lvm-versions`, whose catalog the settings plugin creates without a file in `gradle`.
+pub fn plugin_id<'a>(plugins: &'a Plugins, catalog: &str, alias: &str) -> Option<&'a str> {
+    plugins.get(catalog).and_then(|entries| entries.get(alias)).map(String::as_str).or_else(|| alias_to_id(alias))
+}
 
 /// The `[versions]` of `gradle/libs.versions.toml` in [root], where they are plain strings.
 pub fn versions(root: &Path) -> BTreeMap<String, String> {
@@ -25,9 +77,9 @@ pub fn parse_versions(text: &str) -> BTreeMap<String, String> {
 
 /// The plugin IDs in the `[plugins]` of each version catalog in the `gradle` directory of [root], by the catalog's
 /// name and the plugin's accessor. A catalog is named after its file, as `libs` for `gradle/libs.versions.toml`.
-pub fn plugins(root: &Path) -> BTreeMap<String, BTreeMap<String, String>> {
+pub fn plugins(root: &Path) -> Plugins {
     let Ok(entries) = std::fs::read_dir(root.join("gradle")) else {
-        return BTreeMap::new();
+        return Plugins::new();
     };
     entries
         .filter_map(Result::ok)
@@ -87,5 +139,21 @@ mod tests {
                 ("kotlin.jvm".to_owned(), "org.jetbrains.kotlin.jvm".to_owned()),
             ])
         );
+    }
+
+    #[test]
+    fn takes_the_build_s_own_entry_before_the_alias_of_lvm_versions() {
+        let plugins = Plugins::from([(
+            "libs".to_owned(),
+            BTreeMap::from([
+                ("lvm.jvm".to_owned(), "tech.annexflow.lvm.jvm".to_owned()),
+                ("blueprint.quality".to_owned(), "com.example.quality".to_owned()),
+            ]),
+        )]);
+
+        assert_eq!(plugin_id(&plugins, "libs", "lvm.jvm"), Some("tech.annexflow.lvm.jvm"));
+        assert_eq!(plugin_id(&plugins, "libs", "blueprint.quality"), Some("com.example.quality"));
+        assert_eq!(plugin_id(&plugins, "libs", "blueprint.compose"), Some("tech.annexflow.lvm.compose"));
+        assert_eq!(plugin_id(&plugins, "lvmLibs", "lvm.jvm"), None);
     }
 }

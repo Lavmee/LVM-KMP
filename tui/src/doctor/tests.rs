@@ -174,6 +174,42 @@ fn takes_a_catalog_entry_for_its_plugin_id_not_its_name() {
 }
 
 #[test]
+fn checks_a_module_that_applies_lvm_s_plugins_through_the_build_s_own_catalog() {
+    let dir = consumer();
+    let root = dir.path();
+    fs::write(root.join("core/data/build.gradle.kts"), "plugins {\n    alias(libs.plugins.lvm.jvm)\n}\n").unwrap();
+    fs::write(
+        root.join("gradle/libs.versions.toml"),
+        "[plugins]\nlvm-jvm = { id = \"tech.annexflow.lvm.jvm\", version = \"0.5.0\" }\nkotlin-jvm = { id = \"org.jetbrains.kotlin.jvm\", version = \"2.4.21\" }\n",
+    )
+    .unwrap();
+    let project = Project::load(root);
+
+    let findings = diagnose(&project, &healthy(root));
+
+    // :core:data keeps the standard layout, and the root build script lacks what tech.annexflow.lvm.jvm needs.
+    assert_eq!(
+        rules(&findings),
+        [("root-plugins", Severity::Error), ("flat-layout", Severity::Error), ("root-plugins", Severity::Warning)]
+    );
+    let fixes: Vec<_> = findings.iter().filter(|f| f.rule == "root-plugins").filter_map(|f| f.fix.clone()).collect();
+    assert_eq!(
+        fixes,
+        [
+            Fix::DeclareRootPlugins { lines: vec!["alias(lvmLibs.plugins.blueprint.jvm) apply false".into()] },
+            Fix::DeclareRootPlugins { lines: vec!["alias(lvmLibs.plugins.kotlin.jvm) apply false".into()] },
+        ]
+    );
+    replace(
+        root,
+        "build.gradle.kts",
+        "plugins {\n",
+        "plugins {\n    alias(libs.plugins.lvm.jvm) apply false\n    alias(libs.plugins.kotlin.jvm) apply false\n",
+    );
+    assert_eq!(rules(&diagnose(&Project::load(root), &healthy(root))), [("flat-layout", Severity::Error)]);
+}
+
+#[test]
 fn only_notes_a_missing_test_runner_when_a_plugin_that_lvm_doesnt_know_may_add_it() {
     let dir = consumer();
     let root = dir.path();
