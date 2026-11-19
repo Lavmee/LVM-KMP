@@ -11,11 +11,12 @@ use serde_json::Value;
 
 use crate::edit::{ChangeSet, TextEdit};
 use crate::migrate;
+use crate::project::catalog::{BLUEPRINT_ALIASES, alias_to_id, id_to_alias};
 use crate::project::keys;
 use crate::project::kts_edit;
 use crate::project::lvm_block::ScriptValue;
 use crate::project::model::{Module, Project};
-use crate::project::module::{BLUEPRINT_ALIASES, Layout};
+use crate::project::module::Layout;
 use crate::version::Support;
 pub use env::Environment;
 
@@ -180,21 +181,6 @@ impl Finding {
     }
 }
 
-/// External plugins by their alias in `lvm-versions`, with their IDs.
-const EXTERNAL_PLUGINS: &[(&str, &str)] = &[
-    ("kotlin.multiplatform", "org.jetbrains.kotlin.multiplatform"),
-    ("kotlin.jvm", "org.jetbrains.kotlin.jvm"),
-    ("kotlin.serialization", "org.jetbrains.kotlin.plugin.serialization"),
-    ("android.application", "com.android.application"),
-    ("android.library", "com.android.library"),
-    ("android.kmp.library", "com.android.kotlin.multiplatform.library"),
-    ("android.test", "com.android.test"),
-    ("kotlin.compose", "org.jetbrains.kotlin.plugin.compose"),
-    ("compose.multiplatform", "org.jetbrains.compose"),
-    ("detekt", "io.gitlab.arturbosch.detekt"),
-    ("vanniktech.mavenPublish", "com.vanniktech.maven.publish"),
-];
-
 /// The plugins that the root build script must put on the build classpath for the modules' LVM plugins, by alias.
 fn required_root_plugins(project: &Project) -> BTreeSet<&'static str> {
     project
@@ -258,38 +244,7 @@ fn root_line(project: &Project, alias: &str) -> Option<String> {
 /// The aliases that the root build script declares, from `alias(...)`, `id(...)` and `kotlin(...)`.
 fn declared_root_plugins(project: &Project) -> BTreeSet<String> {
     let Some(script) = &project.root_script else { return BTreeSet::new() };
-    script.plugins.iter().filter_map(|plugin| id_to_alias(&plugin_id(project, &plugin.notation)?)).collect()
-}
-
-/// The ID of the plugin that a `plugins { }` entry names, where lvm-tui can tell. `alias(libs.plugins.compose)` looks
-/// `compose` up in the build's own catalog `libs`, and in the aliases of `lvm-versions` when that catalog has no such
-/// entry.
-fn plugin_id(project: &Project, notation: &str) -> Option<String> {
-    let (kind, name) = notation.split_once(':')?;
-    match kind {
-        "alias" => {
-            let (catalog, alias) = name.split_once(".plugins.")?;
-            match project.catalog_plugins.get(catalog).and_then(|plugins| plugins.get(alias)) {
-                Some(id) => Some(id.clone()),
-                None => alias_to_id(alias).map(str::to_owned),
-            }
-        }
-        "id" => Some(name.to_owned()),
-        "kotlin" => Some(format!("org.jetbrains.kotlin.{name}")),
-        _ => None,
-    }
-}
-
-fn id_to_alias(id: &str) -> Option<String> {
-    EXTERNAL_PLUGINS
-        .iter()
-        .chain(BLUEPRINT_ALIASES.iter())
-        .find(|(_, plugin)| *plugin == id)
-        .map(|(alias, _)| (*alias).to_owned())
-}
-
-fn alias_to_id(alias: &str) -> Option<&'static str> {
-    EXTERNAL_PLUGINS.iter().chain(BLUEPRINT_ALIASES.iter()).find(|(name, _)| *name == alias).map(|(_, id)| *id)
+    script.plugins.iter().filter_map(|plugin| id_to_alias(plugin.id.as_deref()?)).collect()
 }
 
 fn root_plugins(project: &Project, findings: &mut Vec<Finding>) {
@@ -581,7 +536,7 @@ fn test_runner(project: &Project, module: &Module, findings: &mut Vec<Finding>) 
             module.path
         );
         // lvm-tui can't see what a convention plugin adds, so with one the dependencies may well be there.
-        let severity = if applies_unknown_plugins(project, module) { Severity::Info } else { Severity::Warning };
+        let severity = if applies_unknown_plugins(module) { Severity::Info } else { Severity::Warning };
         let mut f = finding("test-runner", severity, message).in_module(module);
         if let Some(file) = build_file(project, module) {
             f = f.at(file, None);
@@ -592,13 +547,13 @@ fn test_runner(project: &Project, module: &Module, findings: &mut Vec<Finding>) 
 
 /// Whether [module] applies a plugin that is neither LVM's, Kotlin's nor one that LVM's plugins need, such as a
 /// convention plugin of the build's own build logic, which can add dependencies that the module's script doesn't show.
-fn applies_unknown_plugins(project: &Project, module: &Module) -> bool {
+fn applies_unknown_plugins(module: &Module) -> bool {
     let Some(script) = &module.script else { return false };
     script.plugins.iter().filter(|plugin| plugin.applied).any(|plugin| {
-        plugin_id(project, &plugin.notation).is_none_or(|id| {
+        plugin.id.as_deref().is_none_or(|id| {
             !id.starts_with("tech.annexflow.lvm.")
                 && !id.starts_with("org.jetbrains.kotlin.")
-                && id_to_alias(&id).is_none()
+                && id_to_alias(id).is_none()
         })
     })
 }

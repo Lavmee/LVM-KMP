@@ -10,8 +10,8 @@ use anyhow::{Result, bail};
 use crate::doctor;
 use crate::edit::{ChangeSet, TextEdit};
 use crate::project::Project;
+use crate::project::catalog::BLUEPRINT_ALIASES;
 use crate::project::kts::{Form, Script};
-use crate::project::module::BLUEPRINT_ALIASES;
 
 const MULTIPLATFORM: &str = include_str!("templates/multiplatform.gradle.kts");
 const ANDROID_APPLICATION: &str = include_str!("templates/android-application.gradle.kts");

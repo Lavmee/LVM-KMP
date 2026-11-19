@@ -51,9 +51,6 @@ pub struct Project {
     /// The root project's build script.
     #[serde(skip)]
     pub root_script: Option<ModuleScript>,
-    /// The plugin IDs of the build's own version catalogs, by catalog and accessor, as [catalog::plugins] reads them.
-    #[serde(skip)]
-    pub catalog_plugins: BTreeMap<String, BTreeMap<String, String>>,
 }
 
 /// Which LVM the build uses.
@@ -175,7 +172,8 @@ impl Project {
         let properties = Properties::read(&root.join("gradle.properties")).unwrap_or_default();
         let reports = Reports::load(root);
         let catalog_versions = catalog::versions(root);
-        let root_script = ModuleScript::read(&root.join("build.gradle.kts"));
+        let catalogs = catalog::plugins(root);
+        let root_script = ModuleScript::read(&root.join("build.gradle.kts"), &catalogs);
 
         let name = settings
             .as_ref()
@@ -192,11 +190,16 @@ impl Project {
             paths.insert(":".to_owned());
         }
         let accessors: BTreeMap<String, String> = paths.iter().map(|p| (accessor(p), p.clone())).collect();
-        let context = FileContext { settings: settings.as_ref(), properties: &properties, accessors: &accessors };
+        let context = FileContext {
+            settings: settings.as_ref(),
+            properties: &properties,
+            accessors: &accessors,
+            catalogs: &catalogs,
+        };
         let modules: Vec<Module> = paths
             .iter()
             .map(|path| match reports.modules.get(path) {
-                Some(report) => from_report(root, report),
+                Some(report) => from_report(root, report, &catalogs),
                 None => from_files(root, path, &context),
             })
             .collect();
@@ -216,7 +219,6 @@ impl Project {
             settings,
             properties,
             root_script,
-            catalog_plugins: catalog::plugins(root),
         }
     }
 
@@ -266,7 +268,7 @@ fn lvm_version(settings: Option<&SettingsScript>, root_script: Option<&ModuleScr
             None if settings.is_some_and(|s| !s.plugin_builds.is_empty()) => LvmVersion::FromSource,
             None => LvmVersion::Unpinned,
         },
-        None if root_script.is_some_and(|s| s.plugins.iter().any(|p| p.lvm.is_some())) => LvmVersion::Unpinned,
+        None if root_script.is_some_and(|s| s.plugins.iter().any(|p| p.lvm().is_some())) => LvmVersion::Unpinned,
         None => LvmVersion::None,
     }
 }
@@ -292,7 +294,7 @@ fn options(settings: Option<&SettingsScript>, reports: &Reports) -> Options {
     }
 }
 
-fn from_report(root: &Path, report: &ModuleReport) -> Module {
+fn from_report(root: &Path, report: &ModuleReport, catalogs: &catalog::Plugins) -> Module {
     let mut targets = Vec::new();
     if report.targets.android.is_some() {
         targets.push("android".to_owned());
@@ -317,7 +319,7 @@ fn from_report(root: &Path, report: &ModuleReport) -> Module {
     Module {
         path: report.path.clone(),
         dir: report.project_dir.clone(),
-        script: build_file.as_deref().and_then(ModuleScript::read),
+        script: build_file.as_deref().and_then(|file| ModuleScript::read(file, catalogs)),
         build_file,
         plugins: report.plugins.clone(),
         targets,
@@ -347,13 +349,14 @@ struct FileContext<'a> {
     properties: &'a Properties,
     /// Project paths by their typesafe accessor, such as `projects.feature.chatHistory`.
     accessors: &'a BTreeMap<String, String>,
+    catalogs: &'a catalog::Plugins,
 }
 
 fn from_files(root: &Path, path: &str, context: &FileContext) -> Module {
     let dir = path.trim_start_matches(':').replace(':', "/");
     let dir_path = root.join(&dir);
     let build_file = build_file(&dir_path);
-    let script = build_file.as_deref().and_then(ModuleScript::read).unwrap_or_default();
+    let script = build_file.as_deref().and_then(|file| ModuleScript::read(file, context.catalogs)).unwrap_or_default();
     let plugins = script.lvm_plugins();
     let mut targets = Vec::new();
     for (on, name) in [(script.targets.android, "android"), (script.targets.ios, "ios"), (script.targets.jvm, "jvm")] {
@@ -697,6 +700,38 @@ kotlin { sourceSets.commonMain.dependencies { implementation(projects.coreData) 
         assert_eq!(project.dependents(":core-data"), [":shared"]);
         assert_eq!(project.affected(":core-data"), [":shared"]);
         assert!(project.affected(":shared").is_empty());
+    }
+
+    #[test]
+    fn takes_lvm_s_plugins_that_the_build_names_in_its_own_catalog() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write(root, "settings.gradle.kts", "include(\":shared\")\n");
+        write(
+            root,
+            "gradle/libs.versions.toml",
+            r#"[plugins]
+lvm-multiplatform = { id = "tech.annexflow.lvm.multiplatform", version = "0.5.0" }
+lvm-quality = { id = "tech.annexflow.lvm.quality", version = "0.5.0" }
+"#,
+        );
+        write(
+            root,
+            "build.gradle.kts",
+            r#"plugins {
+    alias(libs.plugins.lvm.multiplatform) apply false
+    alias(libs.plugins.lvm.quality)
+}
+"#,
+        );
+        write(root, "shared/build.gradle.kts", "plugins { alias(libs.plugins.lvm.multiplatform) }\n");
+
+        let project = Project::load(root);
+
+        assert_eq!(project.module(":shared").unwrap().plugins, ["tech.annexflow.lvm.multiplatform"]);
+        let root_module = project.module(":").expect("the root project applies an LVM plugin");
+        assert_eq!(root_module.plugins, ["tech.annexflow.lvm.quality"]);
+        assert_eq!(project.lvm, LvmVersion::Unpinned);
     }
 
     #[test]

@@ -7,21 +7,9 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::Value;
 
+use super::catalog;
 use super::kts::{Form, Kind, Literal, Script, Statement};
 use super::lvm_block::{ScriptValue, ValueOp, read_values};
-
-/// LVM's project plugins by the alias that `lvm-versions` gives them after `plugins.`.
-pub const BLUEPRINT_ALIASES: &[(&str, &str)] = &[
-    ("blueprint.multiplatform", "tech.annexflow.lvm.multiplatform"),
-    ("blueprint.jvm", "tech.annexflow.lvm.jvm"),
-    ("blueprint.compose", "tech.annexflow.lvm.compose"),
-    ("blueprint.quality", "tech.annexflow.lvm.quality"),
-    ("blueprint.publish", "tech.annexflow.lvm.publish"),
-    ("blueprint.main.context", "tech.annexflow.lvm.main-context"),
-    ("blueprint.android.application", "tech.annexflow.lvm.android.application"),
-    ("blueprint.android.library", "tech.annexflow.lvm.android.library"),
-    ("blueprint.android.test", "tech.annexflow.lvm.android.test"),
-];
 
 const LVM_PLUGIN_PREFIX: &str = "tech.annexflow.lvm.";
 const LVM_GROUP: &str = "tech.annexflow.lvm";
@@ -50,11 +38,19 @@ pub struct ModuleScript {
 pub struct PluginRef {
     /// How the script names it: `id:org.jetbrains.kotlin.multiplatform`, `alias:libs.plugins.detekt`, `kotlin:jvm`.
     pub notation: String,
-    /// The plugin ID of an LVM plugin.
-    pub lvm: Option<String>,
+    /// The plugin's ID, where lvm-tui can tell. An alias takes it from the build's own catalogs, as
+    /// [catalog::plugin_id] does.
+    pub id: Option<String>,
     /// False for `apply false`, which only puts the plugin on the build classpath.
     pub applied: bool,
     pub line: usize,
+}
+
+impl PluginRef {
+    /// The plugin ID of an LVM plugin.
+    pub fn lvm(&self) -> Option<&str> {
+        self.id.as_deref().filter(|id| id.starts_with(LVM_PLUGIN_PREFIX))
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
@@ -75,17 +71,18 @@ pub struct Dependency {
 }
 
 impl ModuleScript {
-    pub fn read(file: &Path) -> Option<Self> {
+    /// Reads [file], with the plugins that its aliases name in the build's own [catalogs].
+    pub fn read(file: &Path, catalogs: &catalog::Plugins) -> Option<Self> {
         let source = fs::read_to_string(file).ok()?;
-        Some(Self { file: file.to_owned(), ..Self::parse(&source) })
+        Some(Self { file: file.to_owned(), ..Self::parse(&source, catalogs) })
     }
 
-    pub fn parse(source: &str) -> Self {
+    pub fn parse(source: &str, catalogs: &catalog::Plugins) -> Self {
         let script = Script::parse(source);
         let mut module = Self { source: source.to_owned(), ..Self::default() };
         for statement in script.statements(script.all()) {
             match (statement.chain.join(".").as_str(), &statement.form) {
-                ("plugins", Form::Block { body }) => module.plugins = plugins(&script, body.clone()),
+                ("plugins", Form::Block { body }) => module.plugins = plugins(&script, body.clone(), catalogs),
                 ("group", Form::Assign { value }) => {
                     if let Some(Literal::Str(group)) = script.literal(value.clone()) {
                         module.group = Some(group);
@@ -109,14 +106,15 @@ impl ModuleScript {
     }
 
     pub fn lvm_plugins(&self) -> Vec<String> {
-        let mut ids: Vec<String> = self.plugins.iter().filter(|p| p.applied).filter_map(|p| p.lvm.clone()).collect();
+        let mut ids: Vec<String> =
+            self.plugins.iter().filter(|p| p.applied).filter_map(|p| p.lvm().map(str::to_owned)).collect();
         ids.sort();
         ids.dedup();
         ids
     }
 }
 
-fn plugins(script: &Script, body: Range<usize>) -> Vec<PluginRef> {
+fn plugins(script: &Script, body: Range<usize>, catalogs: &catalog::Plugins) -> Vec<PluginRef> {
     script
         .statements(body)
         .into_iter()
@@ -126,7 +124,7 @@ fn plugins(script: &Script, body: Range<usize>) -> Vec<PluginRef> {
                 // `kotlin-dsl` and other backticked plugins
                 return (statement.chain.len() == 1 && statement.form == Form::Other).then(|| PluginRef {
                     notation: format!("id:{}", statement.chain[0]),
-                    lvm: None,
+                    id: Some(statement.chain[0].clone()),
                     applied: true,
                     line,
                 });
@@ -136,27 +134,26 @@ fn plugins(script: &Script, body: Range<usize>) -> Vec<PluginRef> {
                 .zip(rest.clone().skip(1))
                 .any(|(a, b)| script.text(a) == "apply" && script.text(b) == "false");
             let first = args.first()?;
-            match statement.chain.join(".").as_str() {
+            let (notation, id) = match statement.chain.join(".").as_str() {
                 "id" => {
                     let id = script.string_args(std::slice::from_ref(first))?.pop()?;
-                    let lvm = id.starts_with(LVM_PLUGIN_PREFIX).then(|| id.clone());
-                    Some(PluginRef { notation: format!("id:{id}"), lvm, applied, line })
+                    (format!("id:{id}"), Some(id))
                 }
                 "alias" => {
                     let chain = script.chain_at(first.start);
-                    let after_plugins =
-                        chain.iter().position(|part| part == "plugins").map(|i| chain[i + 1..].join("."));
-                    let lvm = after_plugins.and_then(|alias| {
-                        BLUEPRINT_ALIASES.iter().find(|(name, _)| *name == alias).map(|(_, id)| (*id).to_owned())
-                    });
-                    Some(PluginRef { notation: format!("alias:{}", chain.join(".")), lvm, applied, line })
+                    let id = chain
+                        .iter()
+                        .position(|part| part == "plugins")
+                        .and_then(|i| catalog::plugin_id(catalogs, &chain[..i].join("."), &chain[i + 1..].join(".")));
+                    (format!("alias:{}", chain.join(".")), id.map(str::to_owned))
                 }
                 "kotlin" => {
                     let name = script.string_args(std::slice::from_ref(first))?.pop()?;
-                    Some(PluginRef { notation: format!("kotlin:{name}"), lvm: None, applied, line })
+                    (format!("kotlin:{name}"), Some(format!("org.jetbrains.kotlin.{name}")))
                 }
-                _ => None,
-            }
+                _ => return None,
+            };
+            Some(PluginRef { notation, id, applied, line })
         })
         .collect()
 }
@@ -401,6 +398,10 @@ pub fn apply_writes(values: &[ScriptValue], key: &str, base: Option<Value>) -> O
 mod tests {
     use super::*;
 
+    fn parse(source: &str) -> ModuleScript {
+        ModuleScript::parse(source, &catalog::Plugins::new())
+    }
+
     const MODULE: &str = r#"
 plugins {
     alias(lvmCatalog.plugins.blueprint.multiplatform)
@@ -445,7 +446,7 @@ dependencies {
 
     #[test]
     fn reads_plugins_by_alias_and_id() {
-        let module = ModuleScript::parse(MODULE);
+        let module = parse(MODULE);
         assert_eq!(
             module.lvm_plugins(),
             ["tech.annexflow.lvm.main-context", "tech.annexflow.lvm.multiplatform", "tech.annexflow.lvm.quality"]
@@ -458,15 +459,14 @@ dependencies {
 
     #[test]
     fn a_plugin_with_apply_false_is_not_applied() {
-        let module =
-            ModuleScript::parse("plugins {\n    alias(lvmLibs.plugins.blueprint.multiplatform) apply false\n}\n");
+        let module = parse("plugins {\n    alias(lvmLibs.plugins.blueprint.multiplatform) apply false\n}\n");
         assert_eq!(module.plugins.len(), 1);
         assert!(module.lvm_plugins().is_empty());
     }
 
     #[test]
     fn reads_targets_and_their_values() {
-        let module = ModuleScript::parse(MODULE);
+        let module = parse(MODULE);
         assert_eq!(
             module.targets,
             ScriptTargets { android: true, ios: true, jvm: true, framework: Some("SharedKit".into()) }
@@ -477,7 +477,7 @@ dependencies {
 
     #[test]
     fn reads_dependencies_with_source_set_configurations() {
-        let module = ModuleScript::parse(MODULE);
+        let module = parse(MODULE);
         let projects: Vec<_> =
             module.project_dependencies.iter().map(|d| (d.configuration.as_str(), d.target.as_str())).collect();
         assert_eq!(
