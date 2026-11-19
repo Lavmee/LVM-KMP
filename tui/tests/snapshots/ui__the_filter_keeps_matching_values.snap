@@ -1,6 +1,5 @@
 ---
 source: tests/ui.rs
-assertion_line: 128
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -12,12 +11,12 @@ expression: render(&mut app)
 "│                ││From      build files                                                                               │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values  /sdk  (3) ─────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values  /sdk  (4) ─────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                ││android.compileSdk                   37                                                    default  │"
+"│                ││android.compileSdkMinor              -                                                     default  │"
 "│                ││android.minSdk                       26                                                    settings │"
 "│                ││android.targetSdk                    37                                                    default  │"
-"│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"

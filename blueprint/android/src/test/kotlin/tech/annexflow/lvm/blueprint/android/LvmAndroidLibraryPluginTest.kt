@@ -107,6 +107,14 @@ class LvmAndroidLibraryPluginTest {
     }
 
     @Test
+    fun `the minor level of the compile SDK reaches AGP, which otherwise uses minor level 0`() {
+        val fixture = libraryFixture(dir, PRINT_COMPILE_SDK)
+
+        assertEquals("android-37.0", compileSdkIn(fixture.build(":core:ui:help").output))
+        assertEquals("android-37.1", compileSdkIn(fixture.build(":core:ui:help", "-Plvm.android.compileSdkMinor=1").output))
+    }
+
+    @Test
     fun `native preview SDK levels are left alone`() {
         val fixture = libraryFixture(
             dir,

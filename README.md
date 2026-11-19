@@ -283,6 +283,27 @@ Each module's report is `build/lvm/report/<path>/project.json`, where `<path>` i
   The namespace defaults to the module's `group` followed by its path (`com.example` and `:feature:user-profile` give `com.example.feature.user_profile`), so library modules should set `group` or `lvm { android { namespace = "..." } }`.
   Modules that configure the Android target with the native `kotlin { android { } }` DSL also add `alias(lvmLibs.plugins.android.kmp.library)` to their `plugins { }`; lvm then reuses the applied plugin, and values set natively win over `lvm { android { } }`.
 
+Every Android module, whichever of these sets it up, takes its SDK levels and namespace from `lvm { android { } }`:
+
+| Setting | Default | Effect |
+|---|---|---|
+| `android.compileSdk` | `37` | Compile SDK level |
+| `android.compileSdkMinor` | unset | Minor level of the compile SDK: `compileSdk = 37` with `compileSdkMinor = 1` compiles against 37.1. While it is unset, modules compile against `compileSdk` itself. A module whose own `compileSdk` differs from the build-wide one doesn't take the build-wide minor level |
+| `android.minSdk` | `24` | Minimum SDK level |
+| `android.namespace` | the module's `group` followed by its path | Namespace of the module |
+
+```kotlin
+// settings.gradle.kts
+lvm {
+    android {
+        compileSdk = 37
+        compileSdkMinor = 1
+    }
+}
+```
+
+A minor level is a platform of its own in the Android SDK, such as `android-37.1`. AGP installs a missing platform when the licenses of the SDK are accepted; otherwise install it with `sdkmanager "platforms;android-37.1"`. A compile SDK set with the native DSL, such as `compileSdk = 36` or `compileSdk { version = release(37) { minorApiLevel = 1 } }`, wins over both values.
+
 ### Applications
 
 `tech.annexflow.lvm.android.application` applies AGP's `com.android.application` with its built-in Kotlin. It sets the SDK levels and the namespace from `lvm { android { } }`, the Java version from `lvm { jvm { } }`, and the application from `lvm { application { } }`: its ID and version, R8 and resource shrinking in the release build type with the keep rules, and core library desugaring with `desugar_jdk_libs`. It also passes `lvm { kotlin { } }` to the compiler, adds `kotlin-test-junit` to unit tests, sets the runner of instrumented tests and turns off their animations, and leaves `/META-INF/INDEX.LIST` and `/META-INF/DEPENDENCIES` out of the APK.
@@ -305,7 +326,7 @@ lvm {
 
 | Setting | Default | Effect |
 |---|---|---|
-| `android.targetSdk` | `37` | Target SDK level. `compileSdk`, `minSdk` and `namespace` work as for libraries |
+| `android.targetSdk` | `37` | Target SDK level. `compileSdk`, `compileSdkMinor`, `minSdk` and `namespace` work as described in [Android](#android) |
 | `android.testInstrumentationRunner` | `androidx.test.runner.AndroidJUnitRunner` | Runner of instrumented tests. A module with instrumented tests declares `androidx.test:runner`, or Espresso, which depends on it |
 | `application.applicationId` | unset | Application ID; AGP uses the namespace while it is unset |
 | `application.versionCode` | unset | Version code, which CI can pass as `-Plvm.application.versionCode=42` |
@@ -383,7 +404,7 @@ android {
 
 | Setting | Default | Effect |
 |---|---|---|
-| `android.targetSdk` | `37` | Target SDK level. `compileSdk`, `minSdk` and `namespace` work as for libraries |
+| `android.targetSdk` | `37` | Target SDK level. `compileSdk`, `compileSdkMinor`, `minSdk` and `namespace` work as described in [Android](#android) |
 | `android.testInstrumentationRunner` | `androidx.test.runner.AndroidJUnitRunner` | Runner of the module's tests |
 
 Values set with the native `android { }` DSL win, and the Java version works as in applications. With the flat layout, the module's code is in `src/`, and in `src@<name>/` for a build type; see [Source layout](#source-layout). The module's code is all test code, so it gets no unit tests, no `kotlin-test` and no explicit API mode. Core library desugaring stays off: the module's APK only drives the app, which has desugaring of its own, and a module whose code calls Java APIs newer than its `minSdk` turns it on with `android { compileOptions { isCoreLibraryDesugaringEnabled = true } }` and adds `desugar_jdk_libs` to `coreLibraryDesugaring` itself.

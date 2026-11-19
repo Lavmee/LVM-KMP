@@ -8,6 +8,7 @@ public abstract class tech/annexflow/lvm/blueprint/settings/AbiDefaults {
 public abstract class tech/annexflow/lvm/blueprint/settings/AndroidDefaults {
 	public fun <init> ()V
 	public abstract fun getCompileSdk ()Lorg/gradle/api/provider/Property;
+	public abstract fun getCompileSdkMinor ()Lorg/gradle/api/provider/Property;
 	public abstract fun getHostTests ()Lorg/gradle/api/provider/Property;
 	public abstract fun getMinSdk ()Lorg/gradle/api/provider/Property;
 	public abstract fun getTargetSdk ()Lorg/gradle/api/provider/Property;

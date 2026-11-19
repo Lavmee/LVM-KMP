@@ -1,6 +1,7 @@
 public abstract class tech/annexflow/lvm/blueprint/common/AndroidSection {
 	public fun <init> ()V
 	public abstract fun getCompileSdk ()Lorg/gradle/api/provider/Property;
+	public abstract fun getCompileSdkMinor ()Lorg/gradle/api/provider/Property;
 	public abstract fun getMinSdk ()Lorg/gradle/api/provider/Property;
 	public abstract fun getNamespace ()Lorg/gradle/api/provider/Property;
 	public abstract fun getTargetSdk ()Lorg/gradle/api/provider/Property;
@@ -9,6 +10,7 @@ public abstract class tech/annexflow/lvm/blueprint/common/AndroidSection {
 
 public final class tech/annexflow/lvm/blueprint/common/AndroidValues {
 	public final fun getCompileSdk ()Lorg/gradle/api/provider/Provider;
+	public final fun getCompileSdkMinor ()Lorg/gradle/api/provider/Provider;
 	public final fun getHostTests ()Lorg/gradle/api/provider/Provider;
 	public final fun getMinSdk ()Lorg/gradle/api/provider/Provider;
 	public final fun getTargetSdk ()Lorg/gradle/api/provider/Provider;

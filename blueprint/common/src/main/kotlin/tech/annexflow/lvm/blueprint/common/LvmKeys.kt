@@ -6,6 +6,7 @@ object LvmKeys {
     const val PREFIX: String = "lvm."
 
     const val ANDROID_COMPILE_SDK: String = "android.compileSdk"
+    const val ANDROID_COMPILE_SDK_MINOR: String = "android.compileSdkMinor"
     const val ANDROID_MIN_SDK: String = "android.minSdk"
     const val ANDROID_TARGET_SDK: String = "android.targetSdk"
     const val ANDROID_TEST_INSTRUMENTATION_RUNNER: String = "android.testInstrumentationRunner"

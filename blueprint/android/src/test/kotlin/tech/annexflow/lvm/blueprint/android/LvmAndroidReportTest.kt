@@ -27,7 +27,7 @@ class LvmAndroidReportTest {
             """
             lvm { application { applicationId = "com.example.custom" } }
             """,
-            settingsLvm = "catalog = false\nandroid { minSdk = 26 }\napplication { versionCode = 2 }",
+            settingsLvm = "catalog = false\nandroid { minSdk = 26; compileSdkMinor = 1 }\napplication { versionCode = 2 }",
         )
 
         fixture.build(":app:lvmReport", "-Plvm.application.versionName=2.0")
@@ -38,6 +38,7 @@ class LvmAndroidReportTest {
         val values = report.getValue("values") as Map<String, Map<String, Any?>>
         assertEquals(listOf("tech.annexflow.lvm.android.application"), report["plugins"])
         assertEquals(mapOf("value" to 37, "source" to "default"), values["android.compileSdk"])
+        assertEquals(mapOf("value" to 1, "source" to "settings"), values["android.compileSdkMinor"])
         assertEquals(mapOf("value" to 26, "source" to "settings"), values["android.minSdk"])
         assertEquals(mapOf("value" to "com.example.app", "source" to "default"), values["android.namespace"])
         assertEquals(mapOf("value" to "com.example.custom", "source" to "module"), values["application.applicationId"])

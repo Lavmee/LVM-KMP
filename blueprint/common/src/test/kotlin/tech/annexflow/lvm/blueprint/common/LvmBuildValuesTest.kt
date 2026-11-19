@@ -2,6 +2,7 @@ package tech.annexflow.lvm.blueprint.common
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import org.gradle.testfixtures.ProjectBuilder
 
 class LvmBuildValuesTest {
@@ -11,6 +12,7 @@ class LvmBuildValuesTest {
         val project = ProjectBuilder.builder().build()
         val forwarded = mapOf(
             "lvm.android.compileSdk" to "31",
+            "lvm.android.compileSdkMinor" to "1",
             "lvm.android.minSdk" to "32",
             "lvm.android.targetSdk" to "33",
             "lvm.android.testInstrumentationRunner" to "com.example.Runner",
@@ -27,6 +29,7 @@ class LvmBuildValuesTest {
 
         val values = project.lvmValues
         assertEquals(31, values.android.compileSdk.get())
+        assertEquals(1, values.android.compileSdkMinor.get())
         assertEquals(32, values.android.minSdk.get())
         assertEquals(33, values.android.targetSdk.get())
         assertEquals("com.example.Runner", values.android.testInstrumentationRunner.get())
@@ -44,6 +47,7 @@ class LvmBuildValuesTest {
     fun `an unset value is its own default`() {
         val values = ProjectBuilder.builder().build().lvmValues
         assertEquals(LvmDefaults.ANDROID_COMPILE_SDK, values.android.compileSdk.get())
+        assertFalse(values.android.compileSdkMinor.isPresent)
         assertEquals(LvmDefaults.ANDROID_MIN_SDK, values.android.minSdk.get())
         assertEquals(LvmDefaults.ANDROID_TARGET_SDK, values.android.targetSdk.get())
         assertEquals(LvmDefaults.ANDROID_TEST_INSTRUMENTATION_RUNNER, values.android.testInstrumentationRunner.get())

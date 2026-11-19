@@ -23,6 +23,7 @@ class LvmSettingsPluginTest {
                 catalog = false
                 android {
                     minSdk = 26
+                    compileSdkMinor = 1
                     testInstrumentationRunner = "com.example.Runner"
                 }
                 library {
@@ -41,7 +42,7 @@ class LvmSettingsPluginTest {
             """.trimIndent(),
         )
         val printer = """
-            val line = "lvm " + path + ": minSdk=" + extra["lvm.android.minSdk"] + " optIns=" + extra["lvm.kotlin.optIns"] + " hasCompileSdk=" + extra.has("lvm.android.compileSdk") + " hasArchitectures=" + extra.has("lvm.ios.architectures") + " runner=" + extra["lvm.android.testInstrumentationRunner"] + " library=" + extra["lvm.library.desugaring"] + "," + extra["lvm.library.resourcePrefix"] + "," + extra["lvm.library.skipEmptyAndroidTest"] + " hasConsumerProguardFiles=" + extra.has("lvm.library.consumerProguardFiles")
+            val line = "lvm " + path + ": minSdk=" + extra["lvm.android.minSdk"] + " optIns=" + extra["lvm.kotlin.optIns"] + " hasCompileSdk=" + extra.has("lvm.android.compileSdk") + " compileSdkMinor=" + extra["lvm.android.compileSdkMinor"] + " hasArchitectures=" + extra.has("lvm.ios.architectures") + " runner=" + extra["lvm.android.testInstrumentationRunner"] + " library=" + extra["lvm.library.desugaring"] + "," + extra["lvm.library.resourcePrefix"] + "," + extra["lvm.library.skipEmptyAndroidTest"] + " hasConsumerProguardFiles=" + extra.has("lvm.library.consumerProguardFiles")
             tasks.register("printLvm") {
                 // Task actions can't capture script-level values under the configuration cache.
                 val text = line
@@ -53,8 +54,8 @@ class LvmSettingsPluginTest {
 
         val result = fixture.build("printLvm", "-Dorg.gradle.unsafe.isolated-projects=true")
 
-        assertContains(result.output, "lvm :a: minSdk=26 optIns=a.B,c.D hasCompileSdk=false hasArchitectures=false runner=com.example.Runner library=false,false,false hasConsumerProguardFiles=false")
-        assertContains(result.output, "lvm :b:c: minSdk=26 optIns=a.B,c.D hasCompileSdk=false hasArchitectures=false runner=com.example.Runner library=false,false,false hasConsumerProguardFiles=false")
+        assertContains(result.output, "lvm :a: minSdk=26 optIns=a.B,c.D hasCompileSdk=false compileSdkMinor=1 hasArchitectures=false runner=com.example.Runner library=false,false,false hasConsumerProguardFiles=false")
+        assertContains(result.output, "lvm :b:c: minSdk=26 optIns=a.B,c.D hasCompileSdk=false compileSdkMinor=1 hasArchitectures=false runner=com.example.Runner library=false,false,false hasConsumerProguardFiles=false")
     }
 
     @Test

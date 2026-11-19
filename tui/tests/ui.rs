@@ -124,8 +124,23 @@ fn the_filter_keeps_matching_values() {
     let mut app = app(dir.path());
     press(&mut app, "2jj/sdk\n");
     let keys: Vec<_> = app.visible_values().iter().map(|row| row.key.clone()).collect();
-    assert_eq!(keys, ["android.compileSdk", "android.minSdk", "android.targetSdk"]);
+    assert_eq!(keys, ["android.compileSdk", "android.compileSdkMinor", "android.minSdk", "android.targetSdk"]);
     assert_snapshot!(render(&mut app));
+}
+
+#[test]
+fn the_compile_sdk_shows_its_minor_level() {
+    let dir = consumer();
+    let properties = dir.path().join("gradle.properties");
+    let text = fs::read_to_string(&properties).unwrap();
+    fs::write(&properties, text + "lvm.android.compileSdkMinor=1\n").unwrap();
+    let mut app = app(dir.path());
+    press(&mut app, "2jj/compileSdk\n");
+
+    let screen = render(&mut app);
+    let line = |key: &str| screen.lines().find(|line| line.contains(&format!("{key} "))).unwrap().to_owned();
+    assert!(line("android.compileSdk").contains(" 37.1 "), "{screen}");
+    assert!(line("android.compileSdkMinor").contains(" 1 "), "{screen}");
 }
 
 #[test]

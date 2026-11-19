@@ -24,6 +24,11 @@ class LvmBuildValues internal constructor(values: LvmValues) {
 /** Build-wide values of `lvm { android { } }`. */
 class AndroidValues internal constructor(values: LvmValues) {
     val compileSdk: Provider<Int> = values.int(LvmKeys.ANDROID_COMPILE_SDK, LvmDefaults.ANDROID_COMPILE_SDK)
+
+    /** Minor level of [compileSdk], such as 1 for 37.1. Absent unless set, so modules compile against [compileSdk] itself. */
+    val compileSdkMinor: Provider<Int> = values.raw(LvmKeys.ANDROID_COMPILE_SDK_MINOR)
+        .map { LvmValueParsing.int(LvmKeys.ANDROID_COMPILE_SDK_MINOR, it) }
+
     val minSdk: Provider<Int> = values.int(LvmKeys.ANDROID_MIN_SDK, LvmDefaults.ANDROID_MIN_SDK)
 
     /** Target SDK level of applications and test modules, and of the instrumented tests and lint of Android libraries. */

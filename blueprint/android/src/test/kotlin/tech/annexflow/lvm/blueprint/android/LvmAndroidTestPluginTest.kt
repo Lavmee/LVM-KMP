@@ -59,6 +59,14 @@ class LvmAndroidTestPluginTest {
     }
 
     @Test
+    fun `the minor level of the compile SDK reaches AGP, which otherwise uses minor level 0`() {
+        val fixture = testModuleFixture(dir, PRINT_COMPILE_SDK)
+
+        assertEquals("android-37.0", compileSdkIn(fixture.build(":benchmark:help").output))
+        assertEquals("android-37.1", compileSdkIn(fixture.build(":benchmark:help", "-Plvm.android.compileSdkMinor=1").output))
+    }
+
+    @Test
     fun `the Java version follows lvm values, and Kotlin follows it`() {
         val fixture = testModuleFixture(dir, "")
 

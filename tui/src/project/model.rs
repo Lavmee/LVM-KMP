@@ -474,21 +474,13 @@ fn module_only(script: &ModuleScript, key: &str, derived: Option<Value>) -> Valu
 }
 
 fn file_value(key: &Key, script: &ModuleScript, plugins: &[String], context: &FileContext) -> ValueRow {
-    let default = default_value(key, script, plugins, context);
-    let settings_values = context.settings.map(|s| s.values.as_slice()).unwrap_or_default();
-    let from_settings = apply_writes(settings_values, &key.key, None).map(|v| key.coerce(v));
-    let from_property = context
-        .properties
-        .get(&format!("lvm.{}", key.key))
-        .map(|raw| key.parse(raw).unwrap_or_else(|_| Value::String(raw.to_owned())));
-    let (build_wide, layer) = match (from_property, from_settings) {
-        (Some(value), _) => (Some(value), Source::Property),
-        (None, Some(value)) => (Some(value), Source::Settings),
-        (None, None) => (default, Source::Default),
-    };
-
+    let (build_wide, layer) = build_wide_value(key, script, plugins, context);
     let module_writes = !key.build_wide_only && script.values.iter().any(|v| v.key == key.key);
     if !module_writes {
+        if key.key == "android.compileSdkMinor" && has_own_compile_sdk(script, plugins, context) {
+            // A minor level belongs to one SDK level, so a module with its own compileSdk doesn't take the build-wide one.
+            return ValueRow { key: key.key.clone(), value: None, source: Source::Module, origin: Origin::Files };
+        }
         return ValueRow { key: key.key.clone(), value: build_wide, source: layer, origin: Origin::Files };
     }
     let value = match key.module {
@@ -500,6 +492,34 @@ fn file_value(key: &Key, script: &ModuleScript, plugins: &[String], context: &Fi
     }
     .map(|v| key.coerce(v));
     ValueRow { key: key.key.clone(), value, source: Source::Module, origin: Origin::Files }
+}
+
+/// The value of [key] without the module's own `lvm { }`, and where it comes from.
+fn build_wide_value(
+    key: &Key,
+    script: &ModuleScript,
+    plugins: &[String],
+    context: &FileContext,
+) -> (Option<Value>, Source) {
+    let default = default_value(key, script, plugins, context);
+    let settings_values = context.settings.map(|s| s.values.as_slice()).unwrap_or_default();
+    let from_settings = apply_writes(settings_values, &key.key, None).map(|v| key.coerce(v));
+    let from_property = context
+        .properties
+        .get(&format!("lvm.{}", key.key))
+        .map(|raw| key.parse(raw).unwrap_or_else(|_| Value::String(raw.to_owned())));
+    match (from_property, from_settings) {
+        (Some(value), _) => (Some(value), Source::Property),
+        (None, Some(value)) => (Some(value), Source::Settings),
+        (None, None) => (default, Source::Default),
+    }
+}
+
+/// Whether the module's own `lvm { }` sets a compileSdk other than the build-wide one, as blueprint compares them.
+fn has_own_compile_sdk(script: &ModuleScript, plugins: &[String], context: &FileContext) -> bool {
+    let Some(key) = keys::find("android.compileSdk") else { return false };
+    let own = file_value(key, script, plugins, context);
+    own.source == Source::Module && own.value != build_wide_value(key, script, plugins, context).0
 }
 
 /// The default that blueprint uses for [key], including the ones it derives from other values.
@@ -685,6 +705,28 @@ kotlin { sourceSets.commonMain.dependencies { implementation(projects.coreData) 
         assert_eq!(row(shared, "android.namespace").value, Some("com.example.shared".into()));
         assert_eq!(row(shared, "quality.source").value.as_ref().and_then(|v| v.as_array()).map(Vec::len), Some(8));
         assert!(shared.values.iter().all(|row| !row.key.starts_with("ios.")));
+    }
+
+    #[test]
+    fn a_module_with_its_own_compile_sdk_takes_no_build_wide_minor_level() {
+        let dir = consumer();
+        let root = dir.path();
+        write(root, "gradle.properties", "lvm.android.compileSdk=37\nlvm.android.compileSdkMinor=1\n");
+        let shared = |project: &Project| project.module(":shared").unwrap().clone();
+
+        let build_wide = shared(&Project::load(root));
+        assert_eq!(row(&build_wide, "android.compileSdkMinor").value, Some(1.into()));
+        assert_eq!(row(&build_wide, "android.compileSdkMinor").source, Source::Property);
+
+        let script = fs::read_to_string(root.join("shared/build.gradle.kts")).unwrap();
+        write(
+            root,
+            "shared/build.gradle.kts",
+            &script.replace("android { minSdk = 28 }", "android { minSdk = 28; compileSdk = 36 }"),
+        );
+        let own = shared(&Project::load(root));
+        assert_eq!(row(&own, "android.compileSdkMinor").value, None);
+        assert_eq!(row(&own, "android.compileSdkMinor").source, Source::Module);
     }
 
     #[test]

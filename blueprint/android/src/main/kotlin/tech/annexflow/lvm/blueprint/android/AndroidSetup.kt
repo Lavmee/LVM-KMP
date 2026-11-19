@@ -1,6 +1,7 @@
 package tech.annexflow.lvm.blueprint.android
 
 import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.dsl.CompileSdkSpec
 import com.android.build.api.variant.AndroidComponentsExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
@@ -37,10 +38,21 @@ internal fun Project.reportAndroidModule(pluginId: String, android: AndroidSecti
 
 /** Fills in the compile and minimum SDK levels and the namespace where the build script left them unset. */
 internal fun CommonExtension.fillSdkAndNamespace(android: AndroidSection) {
-    if (compileSdk == null && compileSdkPreview == null) compileSdk = android.compileSdk.get()
+    compileSdk { fillCompileSdk(android) }
     // With a preview level, AGP reports an API level for minSdk, so it isn't null either.
     if (defaultConfig.minSdk == null) defaultConfig.minSdk = android.minSdk.get()
     if (namespace == null) namespace = android.namespace.get()
+}
+
+/**
+ * Sets the compile SDK level of [android], with its minor level when there is one. The spec starts with the version the
+ * build script set, so a level, a minor level, a preview or an add-on set there stays.
+ */
+private fun CompileSdkSpec.fillCompileSdk(android: AndroidSection) {
+    if (version != null) return
+    val level = android.compileSdk.get()
+    val minor = android.compileSdkMinor.orNull
+    version = if (minor == null) release(level) else release(level) { minorApiLevel = minor }
 }
 
 internal fun CommonExtension.fillTestInstrumentationRunner(android: AndroidSection) {

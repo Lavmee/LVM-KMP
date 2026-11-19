@@ -1,5 +1,6 @@
 package tech.annexflow.lvm.blueprint.multiplatform
 
+import com.android.build.api.dsl.CompileSdkSpec
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import com.android.build.api.variant.Component
 import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension
@@ -52,10 +53,21 @@ internal fun Project.configureAndroidTarget(
     // The Kotlin DSL accessor kotlin { android { ... } } exists only when the module also lists
     // com.android.kotlin.multiplatform.library in plugins { }; the apply above then does nothing.
     androidComponents.finalizeDsl { android ->
-        if (android.compileSdk == null && android.compileSdkPreview == null) android.compileSdk = section.compileSdk.get()
+        android.compileSdk { fillCompileSdk(section) }
         if (android.minSdk == null && android.minSdkPreview == null) android.minSdk = section.minSdk.get()
         if (android.namespace == null) android.namespace = section.namespace.get()
     }
+}
+
+/**
+ * Sets the compile SDK level of [section], with its minor level when there is one. The spec starts with the version the
+ * build script set, so a level, a minor level, a preview or an add-on set there stays.
+ */
+private fun CompileSdkSpec.fillCompileSdk(section: AndroidSection) {
+    if (version != null) return
+    val level = section.compileSdk.get()
+    val minor = section.compileSdkMinor.orNull
+    version = if (minor == null) release(level) else release(level) { minorApiLevel = minor }
 }
 
 /**

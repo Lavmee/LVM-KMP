@@ -8,7 +8,8 @@ use ratatui::widgets::{Block, Cell, List, ListItem, Paragraph, Row, Table};
 
 use super::{format_value, origin_label, short_plugin, source_style};
 use crate::app::{App, Focus, GraphPane};
-use crate::project::model::Module;
+use crate::project::model::{Module, ValueRow};
+use serde_json::Value;
 
 pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     let [list, detail] = Layout::horizontal([Constraint::Length(list_width(app)), Constraint::Fill(1)]).areas(area);
@@ -87,13 +88,14 @@ fn draw_info(frame: &mut Frame, module: &Module, area: Rect) {
 }
 
 fn draw_values(frame: &mut Frame, app: &mut App, area: Rect) {
+    let module = app.selected_module();
     let rows: Vec<Row> = app
         .visible_values()
         .into_iter()
         .map(|row| {
             Row::new(vec![
                 Cell::from(row.key.clone()),
-                Cell::from(format_value(row.value.as_ref())),
+                Cell::from(value_text(row, module)),
                 Cell::from(Span::styled(row.source.label(), source_style(row.source))),
             ])
         })
@@ -113,6 +115,21 @@ fn draw_values(frame: &mut Frame, app: &mut App, area: Rect) {
         .block(focused_block(title, focused))
         .row_highlight_style(Style::new().reversed());
     frame.render_stateful_widget(table, area, &mut app.modules.values);
+}
+
+/// The text of [row]'s value. The compile SDK comes with the module's minor level, as AGP names it: 37.1.
+fn value_text(row: &ValueRow, module: Option<&Module>) -> String {
+    let text = format_value(row.value.as_ref());
+    if row.key != "android.compileSdk" || row.value.is_none() {
+        return text;
+    }
+    let minor = module
+        .and_then(|module| module.values.iter().find(|row| row.key == "android.compileSdkMinor"))
+        .and_then(|row| row.value.as_ref());
+    match minor {
+        Some(minor @ Value::Number(_)) => format!("{text}.{minor}"),
+        _ => text,
+    }
 }
 
 fn draw_graph(frame: &mut Frame, app: &App, module: &Module, area: Rect) {
