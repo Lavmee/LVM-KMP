@@ -1,6 +1,6 @@
 {
   "name": "lvm",
-  "version": "0.6.0",
+  "version": "0.7.0-SNAPSHOT",
   "description": "Reads, checks, upgrades and creates Gradle builds that use LVM's convention plugins, with the lvm command",
   "author": {
     "name": "Samuel Gagarin",
