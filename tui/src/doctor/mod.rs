@@ -184,6 +184,7 @@ impl Finding {
 const EXTERNAL_PLUGINS: &[(&str, &str)] = &[
     ("kotlin.multiplatform", "org.jetbrains.kotlin.multiplatform"),
     ("kotlin.jvm", "org.jetbrains.kotlin.jvm"),
+    ("kotlin.serialization", "org.jetbrains.kotlin.plugin.serialization"),
     ("android.application", "com.android.application"),
     ("android.library", "com.android.library"),
     ("android.kmp.library", "com.android.kotlin.multiplatform.library"),
@@ -257,19 +258,26 @@ fn root_line(project: &Project, alias: &str) -> Option<String> {
 /// The aliases that the root build script declares, from `alias(...)`, `id(...)` and `kotlin(...)`.
 fn declared_root_plugins(project: &Project) -> BTreeSet<String> {
     let Some(script) = &project.root_script else { return BTreeSet::new() };
-    script
-        .plugins
-        .iter()
-        .filter_map(|plugin| {
-            let (kind, name) = plugin.notation.split_once(':')?;
-            match kind {
-                "alias" => name.split_once(".plugins.").map(|(_, alias)| alias.to_owned()),
-                "id" => id_to_alias(name),
-                "kotlin" => id_to_alias(&format!("org.jetbrains.kotlin.{name}")),
-                _ => None,
+    script.plugins.iter().filter_map(|plugin| id_to_alias(&plugin_id(project, &plugin.notation)?)).collect()
+}
+
+/// The ID of the plugin that a `plugins { }` entry names, where lvm-tui can tell. `alias(libs.plugins.compose)` looks
+/// `compose` up in the build's own catalog `libs`, and in the aliases of `lvm-versions` when that catalog has no such
+/// entry.
+fn plugin_id(project: &Project, notation: &str) -> Option<String> {
+    let (kind, name) = notation.split_once(':')?;
+    match kind {
+        "alias" => {
+            let (catalog, alias) = name.split_once(".plugins.")?;
+            match project.catalog_plugins.get(catalog).and_then(|plugins| plugins.get(alias)) {
+                Some(id) => Some(id.clone()),
+                None => alias_to_id(alias).map(str::to_owned),
             }
-        })
-        .collect()
+        }
+        "id" => Some(name.to_owned()),
+        "kotlin" => Some(format!("org.jetbrains.kotlin.{name}")),
+        _ => None,
+    }
 }
 
 fn id_to_alias(id: &str) -> Option<String> {
@@ -572,12 +580,27 @@ fn test_runner(project: &Project, module: &Module, findings: &mut Vec<Finding>) 
             "{} has instrumented tests but no androidx.test:runner or Espresso, which the test runner needs",
             module.path
         );
-        let mut f = finding("test-runner", Severity::Warning, message).in_module(module);
+        // lvm-tui can't see what a convention plugin adds, so with one the dependencies may well be there.
+        let severity = if applies_unknown_plugins(project, module) { Severity::Info } else { Severity::Warning };
+        let mut f = finding("test-runner", severity, message).in_module(module);
         if let Some(file) = build_file(project, module) {
             f = f.at(file, None);
         }
         findings.push(f);
     }
+}
+
+/// Whether [module] applies a plugin that is neither LVM's, Kotlin's nor one that LVM's plugins need, such as a
+/// convention plugin of the build's own build logic, which can add dependencies that the module's script doesn't show.
+fn applies_unknown_plugins(project: &Project, module: &Module) -> bool {
+    let Some(script) = &module.script else { return false };
+    script.plugins.iter().filter(|plugin| plugin.applied).any(|plugin| {
+        plugin_id(project, &plugin.notation).is_none_or(|id| {
+            !id.starts_with("tech.annexflow.lvm.")
+                && !id.starts_with("org.jetbrains.kotlin.")
+                && id_to_alias(&id).is_none()
+        })
+    })
 }
 
 fn toolchain(project: &Project, findings: &mut Vec<Finding>) {

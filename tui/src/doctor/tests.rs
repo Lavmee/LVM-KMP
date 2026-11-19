@@ -114,6 +114,88 @@ fn finds_and_fixes_mistakes_in_the_build_scripts() {
 }
 
 #[test]
+fn takes_root_plugins_that_the_build_names_in_its_own_catalog_and_leaves_them_alone() {
+    let dir = consumer();
+    let root = dir.path();
+    fs::write(
+        root.join("build.gradle.kts"),
+        "plugins {\n    alias(libs.plugins.android.app) apply false\n    alias(libs.plugins.android.kmp) apply false\n    alias(libs.plugins.kmp) apply false\n    alias(libs.plugins.compose) apply false\n    alias(libs.plugins.jetbrains.compose) apply false\n    alias(libs.plugins.detekt) apply false\n    alias(libs.plugins.lvm.multiplatform) apply false\n    alias(libs.plugins.lvm.compose) apply false\n    alias(libs.plugins.lvm.android.application) apply false\n    alias(libs.plugins.lvm.quality) apply false\n}\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("gradle/libs.versions.toml"),
+        r#"[versions]
+lvm = "0.5.0"
+
+[plugins]
+android-app = { id = "com.android.application", version = "9.5.1" }
+android_kmp = { id = "com.android.kotlin.multiplatform.library", version = "9.5.1" }
+kmp = "org.jetbrains.kotlin.multiplatform:2.4.21"
+compose = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.4.21" }
+jetbrains-compose = { id = "org.jetbrains.compose", version = "1.12.2" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
+lvm-multiplatform = { id = "tech.annexflow.lvm.multiplatform", version.ref = "lvm" }
+lvm-compose = { id = "tech.annexflow.lvm.compose", version.ref = "lvm" }
+lvm-android-application = { id = "tech.annexflow.lvm.android.application", version.ref = "lvm" }
+"lvm.quality" = { id = "tech.annexflow.lvm.quality", version.ref = "lvm" }
+"#,
+    )
+    .unwrap();
+    let project = Project::load(root);
+
+    let findings = diagnose(&project, &healthy(root));
+
+    assert_eq!(rules(&findings), [("flat-layout", Severity::Error)]);
+    let changes = fix_all(&project, &findings);
+    assert!(!changes.files.contains_key(Path::new("build.gradle.kts")));
+}
+
+#[test]
+fn takes_a_catalog_entry_for_its_plugin_id_not_its_name() {
+    let dir = consumer();
+    let root = dir.path();
+    replace(root, "build.gradle.kts", "alias(lvmLibs.plugins.detekt)", "alias(libs.plugins.detekt)");
+    fs::write(
+        root.join("gradle/libs.versions.toml"),
+        "[plugins]\ndetekt = { id = \"dev.detekt\", version = \"2.0.0\" }\n",
+    )
+    .unwrap();
+    let project = Project::load(root);
+
+    let findings = diagnose(&project, &healthy(root));
+
+    let missing = findings.iter().find(|f| f.rule == "root-plugins").expect("a root-plugins finding");
+    assert_eq!(missing.severity, Severity::Warning);
+    assert!(missing.message.contains("io.gitlab.arturbosch.detekt"), "{}", missing.message);
+    assert_eq!(
+        missing.fix,
+        Some(Fix::DeclareRootPlugins { lines: vec!["alias(lvmLibs.plugins.detekt) apply false".into()] })
+    );
+}
+
+#[test]
+fn only_notes_a_missing_test_runner_when_a_plugin_that_lvm_doesnt_know_may_add_it() {
+    let dir = consumer();
+    let root = dir.path();
+    fs::create_dir_all(root.join("app/androidTest")).unwrap();
+    fs::write(root.join("app/androidTest/AppTest.kt"), "class AppTest\n").unwrap();
+    replace(
+        root,
+        "app/build.gradle.kts",
+        "    alias(lvmLibs.plugins.blueprint.compose)\n",
+        "    alias(lvmLibs.plugins.blueprint.compose)\n    alias(lvmLibs.plugins.kotlin.serialization)\n",
+    );
+    let test_runner = |root: &Path| {
+        let findings = diagnose(&Project::load(root), &healthy(root));
+        findings.iter().find(|f| f.rule == "test-runner").map(|f| f.severity)
+    };
+
+    assert_eq!(test_runner(root), Some(Severity::Warning));
+    replace(root, "app/build.gradle.kts", "plugins {\n", "plugins {\n    id(\"com.example.android.convention\")\n");
+    assert_eq!(test_runner(root), Some(Severity::Info));
+}
+
+#[test]
 fn checks_the_machine_against_the_build() {
     let dir = consumer();
     let project = Project::load(dir.path());
