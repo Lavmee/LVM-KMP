@@ -317,3 +317,24 @@ fn finds_secrets_in_the_build_and_incomplete_poms() {
     assert!(pom.message.contains("lvm.publish.description"), "{}", pom.message);
     assert!(!pom.message.contains("lvm.publish.url"), "{}", pom.message);
 }
+
+#[test]
+fn finds_files_outside_the_directory_of_their_package_unless_the_module_turns_the_check_off() {
+    let dir = consumer();
+    let root = dir.path();
+    fs::remove_dir_all(root.join("core")).unwrap();
+    replace(root, "settings.gradle.kts", "include(\":core:data\")\n", "");
+    replace(root, "shared/build.gradle.kts", "        api(projects.core.data)\n", "");
+    fs::create_dir_all(root.join("shared/src/ui")).unwrap();
+    fs::write(root.join("shared/src/ui/Model.kt"), "// Model\npackage com.example.shared.data\n").unwrap();
+
+    let findings = diagnose(&Project::load(root), &healthy(root));
+
+    assert_eq!(rules(&findings), [("source-layout", Severity::Error)]);
+    assert_eq!(findings[0].file.as_deref(), Some(Path::new("shared/src/ui/Model.kt")));
+    assert_eq!(findings[0].line, Some(2));
+    assert!(findings[0].message.contains("com.example.shared.ui"), "{}", findings[0].message);
+
+    replace(root, "shared/build.gradle.kts", "lvm {\n", "lvm {\n    kotlin { checkSourceLayout = false }\n");
+    assert!(diagnose(&Project::load(root), &healthy(root)).is_empty());
+}

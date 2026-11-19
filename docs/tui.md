@@ -86,7 +86,7 @@ Run lists the Android apps, the iOS apps of an Xcode project in the build, the i
 
 ### Doctor
 
-Doctor checks the build for what would fail LVM's plugins, such as plugins missing from the root project, unknown keys and values that don't parse, missing namespaces, sources outside the flat layout, and Gradle, Kotlin or AGP versions that LVM doesn't support. It also checks the machine and the repository: the Android SDK, Xcode, the JDK, a `local.properties` that git tracks, and publishing secrets in the build's `gradle.properties`. `f` fixes the selected finding where a fix exists, `F` fixes them all, and `o` opens the file.
+Doctor checks the build for what would fail LVM's plugins, such as plugins missing from the root project, unknown keys and values that don't parse, missing namespaces, sources outside the flat layout, files of the flat layout outside the directory of their package, and Gradle, Kotlin or AGP versions that LVM doesn't support. It also checks the machine and the repository: the Android SDK, Xcode, the JDK, a `local.properties` that git tracks, and publishing secrets in the build's `gradle.properties`. `f` fixes the selected finding where a fix exists, `F` fixes them all, and `o` opens the file.
 
 ### Updates
 

@@ -39,7 +39,7 @@ class SourceLayoutTest {
 
     @Test
     fun `settings can switch every module to the flat layout`() {
-        val fixture = flatFixture(settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        val fixture = flatFixture(settingsLvm = FLAT_SETTINGS)
 
         fixture.build(":lib:compileTestKotlinJvm")
 
@@ -51,6 +51,7 @@ class SourceLayoutTest {
     @Test
     fun `a module can turn the flat layout on after declaring its targets`() {
         val fixture = flatFixture(
+            settingsLvm = "catalog = false\nkotlin { checkSourceLayout = false }",
             module = """
                 plugins { id("tech.annexflow.lvm.multiplatform") }
                 lvm {
@@ -155,6 +156,25 @@ class SourceLayoutTest {
     }
 
     @Test
+    fun `the package check spans the code roots of every source set and runs before each compilation`() {
+        val fixture = kmpFixture(dir, JVM_MODULE, settingsLvm = "catalog = false\nkotlin { flatLayout = true }").apply {
+            dir.resolve("lib/src/commonMain").deleteRecursively()
+            file("lib/src/Hello.kt", "package com.example.lib\n\nclass Hello")
+            // Only with the files of src/ is com.example.lib the root package, so jvm/ stands for com.example.lib.jvm.
+            file("lib/src@jvm/jvm/JvmHello.kt", "package com.example.lib.jvm\n\nfun jvmHello() = com.example.lib.Hello()")
+            file("lib/test/HelloTest.kt", "package com.example.lib\n\nclass HelloTest")
+            file("lib/test@jvm/jvm/JvmHelloTest.kt", "package com.example.lib.jvm\n\nclass JvmHelloTest")
+        }
+        fixture.build(":lib:compileTestKotlinJvm")
+        dir.resolve("lib/test@jvm/jvm").deleteRecursively()
+        fixture.file("lib/test@jvm/JvmHelloTest.kt", "package com.example.lib.jvm\n\nclass JvmHelloTest")
+
+        val output = fixture.buildAndFail(":lib:compileKotlinJvm").output
+
+        assertContains(output, "test@jvm/JvmHelloTest.kt")
+    }
+
+    @Test
     fun `flat directories are named after their source sets`() {
         assertEquals("src", flatSourceDirectory("commonMain"))
         assertEquals("test", flatSourceDirectory("commonTest"))
@@ -165,7 +185,8 @@ class SourceLayoutTest {
     }
 
     private companion object {
-        const val FLAT_SETTINGS = "catalog = false\nkotlin { flatLayout = true }"
+        /** The flat layout without lvmCheckSourceLayout, which rejects the fixture's files: they declare no package. */
+        const val FLAT_SETTINGS = "catalog = false\nkotlin {\n    flatLayout = true\n    checkSourceLayout = false\n}"
 
         const val NATIVE_MARKDOWN =
             "public class NativeMarkdown { public static String render(String text) { return \"<h1>\" + text + \"</h1>\"; } }"

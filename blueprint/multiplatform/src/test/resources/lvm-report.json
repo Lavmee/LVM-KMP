@@ -43,6 +43,10 @@
       "value": 17,
       "source": "settings"
     },
+    "kotlin.checkSourceLayout": {
+      "value": true,
+      "source": "default"
+    },
     "kotlin.explicitApi": {
       "value": true,
       "source": "property"

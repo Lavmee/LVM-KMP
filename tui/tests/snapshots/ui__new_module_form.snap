@@ -1,6 +1,5 @@
 ---
 source: tests/ui.rs
-assertion_line: 415
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -12,7 +11,7 @@ expression: render(&mut app)
 "│                ││From      build files                                                                               │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values (22) ───────────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values (23) ───────────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                │┌ New module ──────────────────────────────────────────────────────────────────────┐        default  │"
 "│                ││Path            :feature:chat_                                                    │        settings │"

@@ -3,6 +3,8 @@ package tech.annexflow.lvm.blueprint.android
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
+import tech.annexflow.lvm.blueprint.common.KotlinSection
+import tech.annexflow.lvm.blueprint.common.registerSourceLayoutCheck
 
 /** Roots of the flat layout besides `src`, longest first, so `testFixturesDebug` isn't read as `test` + `FixturesDebug`. */
 private val TEST_ROOTS = listOf("androidTest", "testFixtures", "test")
@@ -45,4 +47,13 @@ internal fun Project.configureSourceLayout(extension: CommonExtension, flatLayou
         kotlin.directories.add(directory)
         java.directories.add(directory)
     }
+}
+
+/**
+ * Registers the check of the packages in the flat layout's directories of [extension]'s source sets. `preBuild`, which
+ * every variant's tasks wait for, waits for it.
+ */
+internal fun Project.configureSourceLayoutCheck(extension: CommonExtension, section: KotlinSection) {
+    val check = registerSourceLayoutCheck(section, provider { extension.sourceSets.names.map(::flatSourceDirectory) })
+    tasks.named { it == "preBuild" }.configureEach { dependsOn(check) }
 }

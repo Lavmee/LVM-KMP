@@ -213,6 +213,7 @@ Your own convention plugins can read the build-wide values and configure the `lv
 | `kotlin.explicitApi` | `false` | Strict explicit API mode for the main code of libraries and Kotlin/JVM modules; tests keep default visibility |
 | `kotlin.testDependencies` | `true` | Adds `kotlin-test` to tests: to `commonTest` in Kotlin Multiplatform modules, and to the unit tests of Android and Kotlin/JVM modules |
 | `kotlin.flatLayout` | `false` | The flat source layout; see [Source layout](#source-layout) |
+| `kotlin.checkSourceLayout` | `true` | With the flat layout, fails the build while a Kotlin or Java file sits outside the directory of its package; see [Packages in the flat layout](#packages-in-the-flat-layout) |
 | `kotlin.jvmDefault` | unset | How Kotlin compiles interface functions with a body for JVM and Android, as its `-jvm-default`: `enable`, `no-compatibility` or `disable`. While it is unset, Kotlin's own default applies |
 
 ### Source layout
@@ -231,6 +232,20 @@ Java files go next to the Kotlin files of a JVM target: `src@jvm/NativeMarkdown.
 With the flat layout, the quality plugin analyzes all of these directories, turns off detekt's `InvalidPackageDeclaration` and treats `test@<name>/` and `androidTest@<name>/` as test code; the build's own detekt config files can override both. A module can't mix the two layouts: blueprint fails if it still has `src/<sourceSet>/kotlin`. Resources, Android `res` and the manifest keep their conventional directories, and a build-wide `lvm.quality.source` replaces the flat default entirely.
 
 An Android application or an Android library follows the same switch for its Kotlin sources: `src/` for `main`, `test/` for unit tests, `androidTest/` for instrumented tests and `testFixtures/` for test fixtures, each followed by `@<name>` for a build type, a flavor or a variant, as in `src@debug/`, `src@paid/`, `test@debug/` or `androidTest@freeDebug/`. Java sources go in the same directories as the Kotlin sources, so `src/NativeMarkdown.java` compiles into `main` next to `src/Markdown.kt`. With the flat layout, an application or a library fails while it still has `src/<sourceSet>/kotlin` or `src/<sourceSet>/java`.
+
+#### Packages in the flat layout
+
+The flat layout leaves the module's root package out of the directories. The root package is the longest package that all Kotlin and Java files of the module share, across all its source sets, and a file in `<directory>/a/b/` declares `<root package>.a.b`. In a module whose root package is `com.example.chat`:
+
+| File | Package |
+|---|---|
+| `src/Chat.kt` | `com.example.chat` |
+| `src/ui/Screen.kt` | `com.example.chat.ui` |
+| `test@jvm/data/CacheTest.kt` | `com.example.chat.data` |
+
+The task `lvmCheckSourceLayout` reads the package declaration of every file in the flat layout's directories and fails while a file sits in the directory of another package, repeats the root package in its path, as in `src/com/example/chat/ui/`, or declares no package. The error names each of these files with the package it declares and the one its directory expects, and lists the module's packages. A file that an IDE template created often shows up there: the template derives the package from the directory alone, so `src/ui/` gets `ui` instead of `com.example.chat.ui`. The check takes the place of detekt's `InvalidPackageDeclaration`, which the quality plugin turns off for the flat layout.
+
+Every Kotlin compilation of the module runs the check first, and so does `preBuild` in Android applications, libraries and test modules. It reads only the flat layout's directories, so sources that plugins such as KSP generate into `build/` are not checked, and Gradle skips it while the files are unchanged. `lvm { kotlin { checkSourceLayout = false } }` turns it off in a module, and `lvm.kotlin.checkSourceLayout=false` or `kotlin { checkSourceLayout = false }` in the `lvm { }` block of `settings.gradle.kts` in the whole build. The [`lvm` command](docs/tui.md) finds the same files without running Gradle.
 
 ### Settings plugin options
 

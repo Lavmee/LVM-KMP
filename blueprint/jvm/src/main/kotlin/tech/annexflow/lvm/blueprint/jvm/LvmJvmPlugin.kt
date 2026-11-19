@@ -42,6 +42,6 @@ class LvmJvmPlugin : Plugin<Project> {
         project.configureJavaVersion(jvm, kotlin)
         configureCompilerOptions(kotlin, kotlinSection, project.lvmValues.kotlin)
         project.configureTestDependencies(kotlinSection)
-        project.configureSourceLayout(kotlin, kotlinSection.flatLayout)
+        project.configureSourceLayout(kotlin, kotlinSection)
     }
 }

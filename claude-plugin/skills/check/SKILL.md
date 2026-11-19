@@ -1,6 +1,6 @@
 ---
 name: check
-description: Checks a Gradle build that uses LVM's plugins with lvm check, which finds without running Gradle what would fail LVM's plugins or the build - plugins missing from the root project, unknown or malformed lvm.* keys, missing namespaces, sources outside the flat layout, unsupported Gradle, Kotlin or AGP versions, a missing Android SDK, Xcode or JDK, a local.properties that git tracks and secrets in gradle.properties - and fixes what it can. Use after changing an LVM build's scripts, properties or layout, or when its Gradle build fails in LVM's plugins.
+description: Checks a Gradle build that uses LVM's plugins with lvm check, which finds without running Gradle what would fail LVM's plugins or the build - plugins missing from the root project, unknown or malformed lvm.* keys, missing namespaces, sources outside the flat layout or outside the directory of their package, unsupported Gradle, Kotlin or AGP versions, a missing Android SDK, Xcode or JDK, a local.properties that git tracks and secrets in gradle.properties - and fixes what it can. Use after changing an LVM build's scripts, properties or layout, or when its Gradle build fails in LVM's plugins.
 argument-hint: "[build directory]"
 allowed-tools:
   - Bash(lvm --version)

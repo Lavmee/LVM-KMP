@@ -44,6 +44,7 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     section.explicitApi.convention(values.explicitApi)
     section.testDependencies.convention(values.testDependencies)
     section.flatLayout.convention(values.flatLayout)
+    section.checkSourceLayout.convention(values.checkSourceLayout)
     section.jvmDefault.convention(values.jvmDefault)
 
     val layers = LvmValues(this)
@@ -58,6 +59,7 @@ fun Project.lvmKotlin(): KotlinSection = lvm.section<KotlinSection>("kotlin") { 
     layers.report(LvmKeys.KOTLIN_EXPLICIT_API, section.explicitApi, values.explicitApi)
     layers.report(LvmKeys.KOTLIN_TEST_DEPENDENCIES, section.testDependencies, values.testDependencies)
     layers.report(LvmKeys.KOTLIN_FLAT_LAYOUT, section.flatLayout, values.flatLayout)
+    layers.report(LvmKeys.KOTLIN_CHECK_SOURCE_LAYOUT, section.checkSourceLayout, values.checkSourceLayout)
     layers.report(LvmKeys.KOTLIN_JVM_DEFAULT, section.jvmDefault, values.jvmDefault)
 }
 

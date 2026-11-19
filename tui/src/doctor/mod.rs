@@ -1,6 +1,7 @@
 //! Checks a build for what makes LVM's plugins fail or misbehave, before Gradle runs, and fixes what it can.
 
 pub mod env;
+mod source_layout;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -144,6 +145,7 @@ pub fn diagnose(project: &Project, env: &Environment) -> Vec<Finding> {
     for module in project.modules.iter().filter(|m| m.is_lvm()) {
         namespace(project, module, &mut findings);
         flat_layout(project, module, &mut findings);
+        packages(project, module, &mut findings);
         main_context(project, module, &mut findings);
         storage_serialization(module, &mut findings);
         test_runner(project, module, &mut findings);
@@ -446,6 +448,61 @@ fn flat_layout(project: &Project, module: &Module, findings: &mut Vec<Finding>) 
         f = f.at(file, None);
     }
     findings.push(f.with_fix(Fix::MigrateFlatLayout { module: module.path.clone() }));
+}
+
+/// Files of the flat layout outside the directory of their package, which fail `lvmCheckSourceLayout` before the
+/// module compiles.
+fn packages(project: &Project, module: &Module, findings: &mut Vec<Finding>) {
+    let checked = ["multiplatform", "jvm", "android.application", "android.library", "android.test"]
+        .iter()
+        .any(|plugin| module.has_plugin(plugin));
+    if !checked
+        || module.layout != Layout::Flat
+        || value(module, "kotlin.flatLayout") != Some(&Value::Bool(true))
+        || value(module, "kotlin.checkSourceLayout") == Some(&Value::Bool(false))
+    {
+        return;
+    }
+    let layout = source_layout::SourceLayout::read(&project.root.join(&module.dir));
+    let root = layout.root_package();
+    let because = if root.is_empty() {
+        "as the module's files share no root package".to_owned()
+    } else {
+        format!("as the module's root package is {root}")
+    };
+    let at = |file: &source_layout::SourceFile| Path::new(&module.dir).join(file.path());
+    for wrong in layout.misplaced() {
+        let path = wrong.file.path();
+        let message = match (&wrong.file.package, wrong.repeats_root) {
+            (Some((declared, _)), true) => {
+                let mut directory = vec![wrong.file.root.as_str()];
+                directory.extend(wrong.file.directories[layout.root.len()..].iter().map(String::as_str));
+                format!(
+                    "{path} declares {declared}, but its directories repeat the root package {root}, which fails the build: move it to {}/",
+                    directory.join("/")
+                )
+            }
+            (Some((declared, _)), false) => format!(
+                "{path} declares {declared}, but its directory expects {}, {because}, which fails the build: move the file or change its package",
+                if wrong.expected.is_empty() { "no package" } else { &wrong.expected }
+            ),
+            (None, _) if wrong.expected.is_empty() => {
+                format!("{path} declares no package, which fails the build: add a package declaration")
+            }
+            (None, _) => format!("{path} declares no package, which fails the build: add package {}", wrong.expected),
+        };
+        let line = wrong.file.package.as_ref().map(|(_, line)| *line);
+        findings.push(finding("source-layout", Severity::Error, message).at(at(wrong.file), line).in_module(module));
+    }
+    for file in layout.without_root_package() {
+        let declared = file.package.as_ref().map_or("", |(name, _)| name.as_str());
+        let message = format!(
+            "{} declares {declared}, the package of its directory alone, as IDE templates do: the module's files then share no root package, so the others look misplaced. Add the root package to it",
+            file.path()
+        );
+        let line = file.package.as_ref().map(|(_, line)| *line);
+        findings.push(finding("source-layout", Severity::Warning, message).at(at(file), line).in_module(module));
+    }
 }
 
 fn tool<'a>(project: &'a Project, name: &str) -> Option<&'a crate::project::model::Tool> {

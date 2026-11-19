@@ -80,6 +80,7 @@ class LvmAndroidApplicationPlugin : Plugin<Project> {
         project.configureKotlin(kotlin, project.lvmValues.kotlin)
         project.addKotlinTestToUnitTests(kotlin)
         project.addDesugaringDependency(application.desugaring)
+        project.configureSourceLayoutCheck(project.extensions.getByType(ApplicationExtension::class.java), kotlin)
     }
 
     private fun Project.configureApplication(
