@@ -14,3 +14,7 @@ public final class tech/annexflow/lvm/storage/JsonSerializerKt {
 	public static synthetic fun jsonSerializer$default (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/json/Json;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Landroidx/datastore/core/okio/OkioSerializer;
 }
 
+public final class tech/annexflow/lvm/storage/OkioSerializerKt {
+	public static final fun okioSerializer (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;)Landroidx/datastore/core/okio/OkioSerializer;
+}
+
