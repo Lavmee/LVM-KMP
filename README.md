@@ -517,8 +517,8 @@ The compiler plugin works only with the Kotlin version it was built for, or a ve
 `lvm-decompose` marks its navigation functions with `@MainContext`. In a module that applies `tech.annexflow.lvm.main-context`, a call to one of them from a coroutine runs on the main thread, with no `withContext(Dispatchers.Main)` around it:
 
 - `DecomposeNavigationHandler.invoke`, which implementations inherit
-- on `StackNavigator`: `push`, `pushNew`, `pushNewWithPop`, `pushToFront`, `bringToFront`, `pop`, `popWhile`, `popTo`, `replaceCurrent` and `replaceAll`
-- on `SlotNavigator`: `activate(configuration)` and `dismiss`, and `activate()` on a `SlotNavigator<Unit>`, such as one for a single dialog
+- on `StackNavigator`: `push`, `pushNew`, `pushNewWithPop`, `pushToFront`, `bringToFront`, `pop`, `popWhile`, `popTo`, `popToFirst`, `replaceCurrent`, `replaceAll` and `navigate(transformer)`
+- on `SlotNavigator`: `activate(configuration)`, `dismiss` and `navigate(transformer)`, and `activate()` on a `SlotNavigator<Unit>`, such as one for a single dialog
 
 ```kotlin
 import tech.annexflow.lvm.decompose.pushNew
@@ -529,7 +529,7 @@ suspend fun open(id: Id) {
 }
 ```
 
-Apart from `pushNewWithPop` and `activate()`, these functions have the names and parameters of Decompose's and change the stack or slot as Decompose's do. `push` needs an opt-in to `DelicateDecomposeApi`, as Decompose's does. Import LVM's function instead of Decompose's. A file that imports both, by name or with `*` for both packages, doesn't compile, because each call matches two functions. An import by name wins over an import with `*`, so `import com.arkivanov.decompose.router.stack.*` can stay next to `import tech.annexflow.lvm.decompose.pop`. The import `tech.annexflow.lvm.decompose.activate` brings in both `activate` functions, so it replaces Decompose's `activate` import.
+Apart from `pushNewWithPop` and `activate()`, these functions have the names and parameters of Decompose's and change the stack or slot as Decompose's do. `push` needs an opt-in to `DelicateDecomposeApi`, as Decompose's does. Import LVM's function instead of Decompose's. A file that imports both, by name or with `*` for both packages, doesn't compile, because each call matches two functions. An import by name wins over an import with `*`, so `import com.arkivanov.decompose.router.stack.*` can stay next to `import tech.annexflow.lvm.decompose.pop`. An import of LVM's function brings in every function of that name, so `tech.annexflow.lvm.decompose.activate` covers both `activate` functions, and `tech.annexflow.lvm.decompose.navigate` replaces Decompose's `navigate` imports for stacks and for slots. The member `navigate(transformer, onComplete)` of Decompose's navigators is not a `@MainContext` function and runs where it is called.
 
 `pushNewWithPop(configuration, n = 1)` replaces the top `n` configurations of the stack with `configuration`, unless `configuration` is already on top. A screen then replaces another without the same screen twice on the stack, even after a double click.
 

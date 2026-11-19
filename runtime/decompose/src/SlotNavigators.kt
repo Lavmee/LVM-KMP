@@ -41,3 +41,18 @@ public inline fun <C : Any> SlotNavigator<C>.activate(configuration: C, crossinl
 public inline fun SlotNavigator<*>.dismiss(crossinline onComplete: (isSuccess: Boolean) -> Unit = {}) {
     navigate(transformer = { null }, onComplete = { _, oldConfiguration -> onComplete(oldConfiguration != null) })
 }
+
+/**
+ * Activates the configuration that [transformer] returns for the active one, `null` for none, and dismisses the active
+ * child if the configuration changes.
+ *
+ * Decompose has a function with the same name and parameters. This one is a `@MainContext` function: in a module that
+ * applies the `tech.annexflow.lvm.main-context` Gradle plugin, a call from a coroutine runs on the main thread. Import
+ * `tech.annexflow.lvm.decompose.navigate` instead of Decompose's: in a file that imports both, a call is ambiguous and
+ * doesn't compile. The import also brings in LVM's `navigate` for `StackNavigator`. The member
+ * `SlotNavigator.navigate(transformer, onComplete)` is not a `@MainContext` function.
+ */
+@MainContext
+public fun <C : Any> SlotNavigator<C>.navigate(transformer: (configuration: C?) -> C?) {
+    navigate(transformer = transformer, onComplete = { _, _ -> })
+}

@@ -12,9 +12,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import com.arkivanov.decompose.router.slot.activate as decomposeActivate
 import com.arkivanov.decompose.router.slot.dismiss as decomposeDismiss
+import com.arkivanov.decompose.router.slot.navigate as decomposeSlotNavigate
 import com.arkivanov.decompose.router.stack.bringToFront as decomposeBringToFront
+import com.arkivanov.decompose.router.stack.navigate as decomposeStackNavigate
 import com.arkivanov.decompose.router.stack.pop as decomposePop
 import com.arkivanov.decompose.router.stack.popTo as decomposePopTo
+import com.arkivanov.decompose.router.stack.popToFirst as decomposePopToFirst
 import com.arkivanov.decompose.router.stack.popWhile as decomposePopWhile
 import com.arkivanov.decompose.router.stack.push as decomposePush
 import com.arkivanov.decompose.router.stack.pushNew as decomposePushNew
@@ -114,6 +117,17 @@ class NavigatorsTest {
     }
 
     @Test
+    fun `popToFirst changes the stack as Decompose's does`() {
+        for (stack in STACKS) {
+            assertSameStack(
+                stack,
+                lvm = { done -> popToFirst(done) },
+                decompose = { done -> decomposePopToFirst(done) },
+            )
+        }
+    }
+
+    @Test
     fun `replaceCurrent changes the stack as Decompose's does`() {
         forEachStackAndConfiguration { stack, configuration ->
             assertSameStack(
@@ -132,6 +146,20 @@ class NavigatorsTest {
                     stack,
                     lvm = { done -> replaceAll(*configurations.toTypedArray()) { done(Unit) } },
                     decompose = { done -> decomposeReplaceAll(*configurations.toTypedArray()) { done(Unit) } },
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `navigate changes the stack as Decompose's does`() {
+        val transformers = listOf<(List<Any>) -> List<Any>>({ it + "details" }, { it.take(1) }, { it.reversed() })
+        for (stack in STACKS) {
+            for (transformer in transformers) {
+                assertSameStack(
+                    stack,
+                    lvm = { navigate(transformer) },
+                    decompose = { decomposeStackNavigate(transformer) },
                 )
             }
         }
@@ -198,6 +226,20 @@ class NavigatorsTest {
     fun `dismiss changes the slot as Decompose's does`() {
         for (active in listOf(null, "dialog")) {
             assertSameSlot(active, lvm = { done -> dismiss(done) }, decompose = { done -> decomposeDismiss(done) })
+        }
+    }
+
+    @Test
+    fun `navigate changes the slot as Decompose's does`() {
+        val transformers = listOf<(Any?) -> Any?>({ "sheet" }, { null }, { it })
+        for (active in listOf(null, "dialog")) {
+            for (transformer in transformers) {
+                assertSameSlot(
+                    active,
+                    lvm = { navigate(transformer) },
+                    decompose = { decomposeSlotNavigate(transformer) },
+                )
+            }
         }
     }
 

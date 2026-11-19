@@ -180,6 +180,19 @@ public inline fun <C : Any> StackNavigator<C>.popTo(
 }
 
 /**
+ * Removes every configuration but the first from the stack, and calls [onComplete] with `true` if any was removed.
+ *
+ * Decompose has a function with the same name and parameters. This one is a `@MainContext` function: in a module that
+ * applies the `tech.annexflow.lvm.main-context` Gradle plugin, a call from a coroutine runs on the main thread. Import
+ * `tech.annexflow.lvm.decompose.popToFirst` instead of Decompose's: in a file that imports both, a call is ambiguous
+ * and doesn't compile.
+ */
+@MainContext
+public inline fun StackNavigator<*>.popToFirst(crossinline onComplete: (isSuccess: Boolean) -> Unit = {}) {
+    popTo(index = 0, onComplete = onComplete)
+}
+
+/**
  * Replaces the top configuration of the stack with [configuration] and calls [onComplete] when done.
  *
  * Decompose has a function with the same name and parameters. This one is a `@MainContext` function: in a module that
@@ -209,4 +222,19 @@ public inline fun <C : Any> StackNavigator<C>.replaceAll(
     crossinline onComplete: () -> Unit = {},
 ) {
     navigate(transformer = { configurations.toList() }, onComplete = { _, _ -> onComplete() })
+}
+
+/**
+ * Replaces the stack with the one that [transformer] returns for it, the last configuration on top. [transformer] must
+ * not return an empty list.
+ *
+ * Decompose has a function with the same name and parameters. This one is a `@MainContext` function: in a module that
+ * applies the `tech.annexflow.lvm.main-context` Gradle plugin, a call from a coroutine runs on the main thread. Import
+ * `tech.annexflow.lvm.decompose.navigate` instead of Decompose's: in a file that imports both, a call is ambiguous and
+ * doesn't compile. The import also brings in LVM's `navigate` for `SlotNavigator`. The member
+ * `StackNavigator.navigate(transformer, onComplete)` is not a `@MainContext` function.
+ */
+@MainContext
+public fun <C : Any> StackNavigator<C>.navigate(transformer: (stack: List<C>) -> List<C>) {
+    navigate(transformer = transformer, onComplete = { _, _ -> })
 }

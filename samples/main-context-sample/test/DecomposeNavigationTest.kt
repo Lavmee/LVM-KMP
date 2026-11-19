@@ -21,8 +21,10 @@ import tech.annexflow.lvm.decompose.DecomposeNavigationHandler
 import tech.annexflow.lvm.decompose.activate
 import tech.annexflow.lvm.decompose.bringToFront
 import tech.annexflow.lvm.decompose.dismiss
+import tech.annexflow.lvm.decompose.navigate
 import tech.annexflow.lvm.decompose.pop
 import tech.annexflow.lvm.decompose.popTo
+import tech.annexflow.lvm.decompose.popToFirst
 import tech.annexflow.lvm.decompose.popWhile
 import tech.annexflow.lvm.decompose.push
 import tech.annexflow.lvm.decompose.pushNew
@@ -77,11 +79,13 @@ class DecomposeNavigationTest {
             stack.popWhile { it != "home" }
             stack.popWhile(predicate = { it != "home" }, onComplete = {})
             stack.popTo(0)
+            stack.popToFirst()
             stack.replaceCurrent("home")
             stack.replaceAll("home")
+            stack.navigate { listOf("home") }
         }
 
-        assertEquals(List(11) { mainThread }, navigatedOn)
+        assertEquals(List(13) { mainThread }, navigatedOn)
     }
 
     @Test
@@ -96,8 +100,9 @@ class DecomposeNavigationTest {
             dialog.activate()
             details.activate("details")
             details.dismiss()
+            details.navigate { "details" }
         }
 
-        assertEquals(List(3) { mainThread }, navigatedOn)
+        assertEquals(List(4) { mainThread }, navigatedOn)
     }
 }
