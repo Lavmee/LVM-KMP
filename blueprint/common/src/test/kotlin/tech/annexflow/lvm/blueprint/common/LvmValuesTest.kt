@@ -3,6 +3,7 @@ package tech.annexflow.lvm.blueprint.common
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.gradle.testfixtures.ProjectBuilder
 
@@ -40,5 +41,20 @@ class LvmValuesTest {
         assertEquals(37, project.lvmAndroid().compileSdk.get())
         project.lvmJvm().target.set(21)
         assertEquals(21, project.lvmJvm().target.get())
+    }
+
+    @Test
+    fun `the build-wide minor level of the compile SDK goes only with the build-wide compile SDK`() {
+        val project = ProjectBuilder.builder().build()
+        project.extensions.extraProperties["lvm.android.compileSdk"] = "37"
+        project.extensions.extraProperties["lvm.android.compileSdkMinor"] = "1"
+        val android = project.lvmAndroid()
+        assertEquals(1, android.compileSdkMinor.get())
+
+        android.compileSdk.set(36)
+        assertFalse(android.compileSdkMinor.isPresent)
+
+        android.compileSdkMinor.set(1)
+        assertEquals(1, android.compileSdkMinor.get())
     }
 }

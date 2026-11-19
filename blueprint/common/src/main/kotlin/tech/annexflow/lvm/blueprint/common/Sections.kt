@@ -7,6 +7,14 @@ import org.gradle.api.provider.Property
 /** `lvm { android { } }` */
 abstract class AndroidSection {
     abstract val compileSdk: Property<Int>
+
+    /**
+     * Minor level of [compileSdk]: 1 with a compileSdk of 37 compiles against 37.1. Unset by default, so the module
+     * compiles against [compileSdk] itself. A minor level belongs to one SDK level, so a module whose [compileSdk]
+     * differs from the build-wide one doesn't take the build-wide minor level.
+     */
+    abstract val compileSdkMinor: Property<Int>
+
     abstract val minSdk: Property<Int>
 
     /** Target SDK level of an application or a test module, and of the instrumented tests and lint of an Android library. */

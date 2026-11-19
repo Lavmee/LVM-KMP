@@ -8,6 +8,8 @@ import org.gradle.api.provider.Provider
 fun Project.lvmAndroid(): AndroidSection = lvm.section<AndroidSection>("android") { section ->
     val values = lvmValues.android
     section.compileSdk.convention(values.compileSdk)
+    val buildWideCompileSdk = section.compileSdk.zip(values.compileSdk) { module, buildWide -> module == buildWide }
+    section.compileSdkMinor.convention(buildWideCompileSdk.flatMap { same -> values.compileSdkMinor.filter { same } })
     section.minSdk.convention(values.minSdk)
     section.targetSdk.convention(values.targetSdk)
     section.testInstrumentationRunner.convention(values.testInstrumentationRunner)
@@ -23,6 +25,7 @@ fun Project.reportAndroidValues(section: AndroidSection) {
     val layers = LvmValues(this)
     val buildWide = lvmValues.android
     layers.report(LvmKeys.ANDROID_COMPILE_SDK, section.compileSdk, buildWide.compileSdk)
+    layers.report(LvmKeys.ANDROID_COMPILE_SDK_MINOR, section.compileSdkMinor, buildWide.compileSdkMinor)
     layers.report(LvmKeys.ANDROID_MIN_SDK, section.minSdk, buildWide.minSdk)
     layers.report(LvmKeys.ANDROID_TARGET_SDK, section.targetSdk, buildWide.targetSdk)
     layers.report(LvmKeys.ANDROID_TEST_INSTRUMENTATION_RUNNER, section.testInstrumentationRunner, buildWide.testInstrumentationRunner)

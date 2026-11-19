@@ -1,6 +1,5 @@
 ---
 source: tests/ui.rs
-assertion_line: 415
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -12,20 +11,20 @@ expression: render(&mut app)
 "│                ││From      build files                                                                               │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values (24) ───────────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values (25) ───────────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                │┌ New module ──────────────────────────────────────────────────────────────────────┐        default  │"
-"│                ││Path            :feature:chat_                                                    │        settings │"
-"│                ││Kind             KMP library  Android app  Android library                        │        module   │"
-"│                ││Targets         [x] android  [x] ios  [x] jvm                                     │        default  │"
+"│                ││Path            :feature:chat_                                                    │        default  │"
+"│                ││Kind             KMP library  Android app  Android library                        │        settings │"
+"│                ││Targets         [x] android  [x] ios  [x] jvm                                     │        module   │"
 "│                ││LVM plugins     [ ] compose  [x] quality  [ ] main-context  [ ] publish           │        default  │"
 "│                ││Group           com.example                                                       │        default  │"
 "│                ││Namespace                                                                         │        default  │"
 "│                ││                                                                                  │        default  │"
 "│                ││a project path such as :feature:chat                                              │        default  │"
-"│                ││enter preview   tab next field   esc cancel                                       │        module   │"
+"│                ││enter preview   tab next field   esc cancel                                       │        default  │"
 "│                ││                                                                                  │        module   │"
-"│                ││                                                                                  │        default  │"
+"│                ││                                                                                  │        module   │"
 "│                ││                                                                                  │        default  │"
 "│                │└──────────────────────────────────────────────────────────────────────────────────┘        default  │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"

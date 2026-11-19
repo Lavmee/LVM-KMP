@@ -93,6 +93,28 @@ class AndroidTargetTest {
     }
 
     @Test
+    fun `the minor level of the compile SDK reaches AGP, which otherwise uses minor level 0`() {
+        val fixture = kmpFixture(dir, module("") + PRINT_COMPILE_SDK, withAgp = true)
+        fixture.writeLocalProperties()
+
+        assertEquals("android-37.0", compileSdkIn(fixture.build(":lib:help").output))
+        assertEquals("android-37.1", compileSdkIn(fixture.build(":lib:help", "-Plvm.android.compileSdkMinor=1").output))
+    }
+
+    @Test
+    fun `a native compile SDK gets no minor level from lvm`() {
+        val fixture = kmpFixture(
+            dir,
+            moduleWithAgpPlugin("kotlin { android { compileSdk = 36 } }\n" + PRINT_COMPILE_SDK),
+            settingsLvm = "catalog = false\nandroid { compileSdk = 37; compileSdkMinor = 1 }",
+            withAgp = true,
+        )
+        fixture.writeLocalProperties()
+
+        assertEquals("android-36", compileSdkIn(fixture.build(":lib:help").output))
+    }
+
+    @Test
     fun `a native preview compile SDK is left alone`() {
         val fixture = kmpFixture(
             dir,
@@ -172,3 +194,17 @@ class AndroidTargetTest {
         kotlin.test.assertFalse(output.contains("testAndroidHostTest"))
     }
 }
+
+/**
+ * Prints the compile SDK by the name of its platform, such as `android-37.1`, prefixed with `lvm-compile-sdk`, after
+ * lvm's finalizeDsl. AGP's DSL has no getter for the name, so the snippet calls the one of AGP's implementation. From
+ * level 37 on, the name has a minor level, which is 0 while none is set: `android-37.0`.
+ */
+private const val PRINT_COMPILE_SDK: String = """
+extensions.getByType<com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension>().finalizeDsl { android ->
+    println("lvm-compile-sdk " + android.javaClass.getMethod("getCompileSdkVersion").invoke(android))
+}
+"""
+
+private fun compileSdkIn(output: String): String =
+    output.lines().single { it.startsWith("lvm-compile-sdk ") }.removePrefix("lvm-compile-sdk ")

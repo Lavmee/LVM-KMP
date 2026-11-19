@@ -2,6 +2,7 @@
   "minimums": { "gradle": "9.6", "kotlin": "2.4.0", "agp": "9.4.0" },
   "keys": [
     { "key": "android.compileSdk", "type": "int", "default": 37 },
+    { "key": "android.compileSdkMinor", "type": "int" },
     { "key": "android.minSdk", "type": "int", "default": 24 },
     { "key": "android.targetSdk", "type": "int", "default": 37 },
     { "key": "android.testInstrumentationRunner", "type": "string", "default": "androidx.test.runner.AndroidJUnitRunner" },

@@ -1,6 +1,5 @@
 ---
 source: tests/ui.rs
-assertion_line: 118
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -12,9 +11,10 @@ expression: render(&mut app)
 "│                ││From      build files                                                                               │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values (24) ───────────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values (25) ───────────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                ││android.compileSdk                   37                                                    default  │"
+"│                ││android.compileSdkMinor              -                                                     default  │"
 "│                ││android.hostTests                    true                                                  default  │"
 "│                ││android.minSdk                       26                                                    settings │"
 "│                ││android.namespace                    com.example.shared                                    default  │"
@@ -27,7 +27,6 @@ expression: render(&mut app)
 "│                ││jvm.target                           21                                                    default  │"
 "│                ││kotlin.checkSourceLayout             true                                                  default  │"
 "│                ││kotlin.excludedOptIns                []                                                    default  │"
-"│                ││kotlin.explicitApi                   false                                                 default  │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
 "│                │┌ Depends on ─────────────────────────────────────┐┌ Used by  (a: affected) ─────────────────────────┐"
 "│                ││:core:data  commonMainApi                        ││:app                                             │"
