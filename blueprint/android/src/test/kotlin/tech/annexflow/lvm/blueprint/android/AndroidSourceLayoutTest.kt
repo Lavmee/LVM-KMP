@@ -42,7 +42,7 @@ class AndroidSourceLayoutTest {
     @Test
     fun `the flat layout compiles sources from src, src@debug and test`() {
         assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
-        val fixture = applicationFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        val fixture = applicationFixture(dir, "", settingsLvm = FLAT_WITHOUT_CHECK)
         dir.resolve("app/src/main/kotlin").deleteRecursively()
         fixture.file("app/src/Main.kt", "class Main")
         fixture.file("app/src@debug/DebugOnly.kt", "class DebugOnly")
@@ -58,7 +58,7 @@ class AndroidSourceLayoutTest {
     @Test
     fun `the flat layout compiles Java sources that Kotlin calls`() {
         assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
-        val fixture = applicationFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        val fixture = applicationFixture(dir, "", settingsLvm = FLAT_WITHOUT_CHECK)
         dir.resolve("app/src/main/kotlin").deleteRecursively()
         fixture.file(
             "app/src/NativeMarkdown.java",
@@ -74,6 +74,23 @@ class AndroidSourceLayoutTest {
         fixture.build(":app:testDebugUnitTest")
 
         assertTrue(dir.resolve("app/build/test-results/testDebugUnitTest/TEST-MarkdownTest.xml").isFile)
+    }
+
+    @Test
+    fun `the package check spans every source set and runs before the variants build`() {
+        assumeTrue(GradleFixture.androidSdkDir() != null, "Android SDK not found")
+        val fixture = applicationFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        dir.resolve("app/src/main/kotlin").deleteRecursively()
+        fixture.file("app/src/Main.kt", "package com.example.app\n\nclass Main")
+        fixture.file("app/src@debug/debug/DebugOnly.kt", "package com.example.app.debug\n\nclass DebugOnly")
+        fixture.file("app/test/MainTest.kt", "package com.example.app\n\nclass MainTest")
+        fixture.build(":app:compileDebugKotlin")
+        fixture.file("app/androidTest@debug/MainScreenTest.kt", "package com.example.app.ui\n\nclass MainScreenTest")
+
+        val output = fixture.buildAndFail(":app:compileDebugKotlin").output
+
+        assertTrue(dir.debugClass("com/example/app/debug/DebugOnly").isFile)
+        assertContains(output, "androidTest@debug/MainScreenTest.kt")
     }
 
     @Test
@@ -100,7 +117,7 @@ class AndroidSourceLayoutTest {
                 }
             }
             """,
-            settingsLvm = "catalog = false\nkotlin { flatLayout = true }",
+            settingsLvm = FLAT_WITHOUT_CHECK,
         )
         dir.resolve("core/ui/src/main/kotlin").deleteRecursively()
         fixture.file("core/ui/src/Main.kt", "class Main")
@@ -127,5 +144,10 @@ class AndroidSourceLayoutTest {
         val output = fixture.buildAndFail(":core:ui:help").output
 
         assertContains(output, "src/main/kotlin")
+    }
+
+    private companion object {
+        /** The flat layout without lvmCheckSourceLayout, which rejects the fixture's files: they declare no package. */
+        const val FLAT_WITHOUT_CHECK = "catalog = false\nkotlin {\n    flatLayout = true\n    checkSourceLayout = false\n}"
     }
 }

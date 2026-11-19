@@ -13,7 +13,7 @@ class JvmSourceLayoutTest {
 
     @Test
     fun `the flat layout compiles Kotlin and Java from src and tests from test, and keeps resources in src main resources`() {
-        val fixture = jvmFixture(dir, settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        val fixture = jvmFixture(dir, settingsLvm = FLAT_WITHOUT_CHECK)
         dir.resolve("lib/src/main/kotlin").deleteRecursively()
         fixture.file(
             "lib/src/Hello.kt",
@@ -39,5 +39,10 @@ class JvmSourceLayoutTest {
         val output = fixture.buildAndFail(":lib:compileKotlin").output
 
         assertContains(output, "src/main/kotlin")
+    }
+
+    private companion object {
+        /** The flat layout without lvmCheckSourceLayout, which rejects the fixture's files: they declare no package. */
+        const val FLAT_WITHOUT_CHECK = "catalog = false\nkotlin {\n    flatLayout = true\n    checkSourceLayout = false\n}"
     }
 }

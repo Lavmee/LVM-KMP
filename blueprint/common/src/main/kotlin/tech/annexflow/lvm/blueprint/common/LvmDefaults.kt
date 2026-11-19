@@ -15,6 +15,7 @@ object LvmDefaults {
     const val KOTLIN_EXPLICIT_API: Boolean = false
     const val KOTLIN_TEST_DEPENDENCIES: Boolean = true
     const val KOTLIN_FLAT_LAYOUT: Boolean = false
+    const val KOTLIN_CHECK_SOURCE_LAYOUT: Boolean = true
     val IOS_ARCHITECTURES: List<String> = listOf("iosArm64", "iosSimulatorArm64")
     val QUALITY_CONFIG: List<String> = emptyList()
     val QUALITY_SOURCE: List<String> = listOf("src")

@@ -18,6 +18,7 @@ object LvmKeys {
     const val KOTLIN_EXPLICIT_API: String = "kotlin.explicitApi"
     const val KOTLIN_TEST_DEPENDENCIES: String = "kotlin.testDependencies"
     const val KOTLIN_FLAT_LAYOUT: String = "kotlin.flatLayout"
+    const val KOTLIN_CHECK_SOURCE_LAYOUT: String = "kotlin.checkSourceLayout"
     const val KOTLIN_JVM_DEFAULT: String = "kotlin.jvmDefault"
     const val IOS_ARCHITECTURES: String = "ios.architectures"
     const val QUALITY_CONFIG: String = "quality.config"

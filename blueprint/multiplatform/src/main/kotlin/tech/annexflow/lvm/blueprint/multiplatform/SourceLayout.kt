@@ -5,9 +5,11 @@ import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.plugins.JavaPluginExtension
-import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import tech.annexflow.lvm.blueprint.common.KotlinSection
+import tech.annexflow.lvm.blueprint.common.registerSourceLayoutCheck
 
 /** How many Java files an error names before it only counts the rest. */
 private const val LISTED_JAVA_FILES = 5
@@ -25,7 +27,8 @@ internal fun flatSourceDirectory(sourceSetName: String): String? = when {
 }
 
 /**
- * Adds the flat layout's directory to every source set while [flatLayout] is on.
+ * Adds the flat layout's directory to every source set while `flatLayout` of [section] is on, and makes every Kotlin
+ * compilation wait for the check of the packages in these directories.
  *
  * The directory is added through a provider, so `flatLayout` can be set anywhere in the build script. It is added next
  * to the conventional one rather than instead of it, so source directories that other plugins register stay. A module
@@ -36,9 +39,13 @@ internal fun flatSourceDirectory(sourceSetName: String): String? = when {
  * compilation compiles Java only after `withJava()`, which [configureAndroidTarget] checks. Java files of every other
  * source set, such as those in `src/`, fail the build, because they would be missing at runtime.
  */
-internal fun Project.configureSourceLayout(multiplatform: KotlinMultiplatformExtension, flatLayout: Provider<Boolean>) {
+internal fun Project.configureSourceLayout(multiplatform: KotlinMultiplatformExtension, section: KotlinSection) {
     val moduleDirectory = layout.projectDirectory
     val modulePath = path
+    val flatLayout = section.flatLayout
+    val codeRoots = provider { multiplatform.sourceSets.names.mapNotNull(::flatSourceDirectory) }
+    val check = registerSourceLayoutCheck(section, codeRoots)
+    tasks.withType(KotlinCompilationTask::class.java).configureEach { dependsOn(check) }
     // Filled while the build script creates targets, and read by the providers below once it is done.
     val sourceSetsWithJava = mutableSetOf<String>()
     multiplatform.targets.matching { it.platformType == KotlinPlatformType.jvm }.configureEach {

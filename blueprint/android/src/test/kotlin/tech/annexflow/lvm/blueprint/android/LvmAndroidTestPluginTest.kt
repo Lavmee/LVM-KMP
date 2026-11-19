@@ -83,7 +83,8 @@ class LvmAndroidTestPluginTest {
 
     @Test
     fun `the flat layout compiles sources from src and src@debug`() {
-        val fixture = testModuleFixture(dir, "", settingsLvm = "catalog = false\nkotlin { flatLayout = true }")
+        // The fixture's files declare no package, which lvmCheckSourceLayout rejects.
+        val fixture = testModuleFixture(dir, "", settingsLvm = "catalog = false\nkotlin {\n    flatLayout = true\n    checkSourceLayout = false\n}")
         dir.resolve("benchmark/src/main/kotlin").deleteRecursively()
         fixture.file("benchmark/src/StartupBenchmark.kt", "class StartupBenchmark")
         fixture.file("benchmark/src@debug/DebugOnly.kt", "class DebugOnly { val benchmark = StartupBenchmark() }")
