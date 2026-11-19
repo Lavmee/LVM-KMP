@@ -29,5 +29,9 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
         }
+        getByName("androidHostTest").dependencies {
+            // Activities that are recreated, with their saved state and retained instances.
+            implementation(libs.robolectric)
+        }
     }
 }
