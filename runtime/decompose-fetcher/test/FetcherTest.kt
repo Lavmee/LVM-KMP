@@ -39,6 +39,13 @@ class FetcherTest {
     }
 
     @Test
+    fun `a response body can be read more than once`() = runTest {
+        val body = Fetcher(HttpClient(engine)).get(URL)
+
+        assertEquals(listOf("rows", "rows"), List(2) { body.body<String>() })
+    }
+
+    @Test
     fun `while offline a stored response is served from the files without the network`() = runTest {
         fetcher().get(URL).body<String>()
         offline = true

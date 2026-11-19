@@ -3,7 +3,13 @@ package tech.annexflow.lvm.decompose.fetcher
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 
-/** The body of a response that a [Fetcher] read. */
+/**
+ * The body of a response that a [Fetcher] read.
+ *
+ * The client keeps the body in memory, so [body] can be called more than once, also by several callers that share
+ * the response. A response whose body the client doesn't keep, such as the one that `HttpStatement.execute` passes to
+ * its block, can be read once.
+ */
 public class ResponseBody(private val response: HttpResponse) {
 
     /**
