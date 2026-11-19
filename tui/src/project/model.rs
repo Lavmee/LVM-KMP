@@ -51,6 +51,9 @@ pub struct Project {
     /// The root project's build script.
     #[serde(skip)]
     pub root_script: Option<ModuleScript>,
+    /// The plugin IDs of the build's own version catalogs, by catalog and accessor, as [catalog::plugins] reads them.
+    #[serde(skip)]
+    pub catalog_plugins: BTreeMap<String, BTreeMap<String, String>>,
 }
 
 /// Which LVM the build uses.
@@ -213,6 +216,7 @@ impl Project {
             settings,
             properties,
             root_script,
+            catalog_plugins: catalog::plugins(root),
         }
     }
 
