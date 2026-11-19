@@ -1,5 +1,6 @@
 ---
 source: tests/ui.rs
+assertion_line: 138
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -11,10 +12,11 @@ expression: render(&mut app)
 "│                ││From      build files                                                                               │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values (9) ────────────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values (10) ───────────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                ││jvm.target                           21                                                    default  │"
 "│                ││kotlin.checkSourceLayout             true                                                  default  │"
+"│                ││kotlin.excludedOptIns                []                                                    default  │"
 "│                ││kotlin.explicitApi                   true                                                  module   │"
 "│                ││kotlin.flatLayout                    true                                                  settings │"
 "│                ││kotlin.freeCompilerArgs              []                                                    default  │"
@@ -22,7 +24,6 @@ expression: render(&mut app)
 "│                ││kotlin.optIns                        kotlin.time.ExperimentalTime                          settings │"
 "│                ││kotlin.testDependencies              true                                                  default  │"
 "│                ││kotlin.warningsAsErrors              true                                                  property │"
-"│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"

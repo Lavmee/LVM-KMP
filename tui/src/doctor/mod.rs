@@ -295,8 +295,13 @@ fn settings_options(project: &Project, findings: &mut Vec<Finding>) {
 }
 
 /// Keys that only a module's `lvm { }` block sets, without a build-wide `lvm.*` property.
-const MODULE_ONLY: &[&str] =
-    &["android.namespace", "publish.name", "compose.metricsDirectory", "compose.reportsDirectory"];
+const MODULE_ONLY: &[&str] = &[
+    "android.namespace",
+    "publish.name",
+    "compose.metricsDirectory",
+    "compose.reportsDirectory",
+    "kotlin.excludedOptIns",
+];
 
 fn unknown_and_invalid_values(project: &Project, findings: &mut Vec<Finding>) {
     for entry in &project.properties.entries {

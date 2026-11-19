@@ -47,6 +47,10 @@
       "value": true,
       "source": "default"
     },
+    "kotlin.excludedOptIns": {
+      "value": [],
+      "source": "default"
+    },
     "kotlin.explicitApi": {
       "value": true,
       "source": "property"

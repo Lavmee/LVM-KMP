@@ -44,6 +44,12 @@ abstract class KotlinSection {
     /** Appended to the build-wide `lvm.kotlin.optIns`. */
     abstract val optIns: ListProperty<String>
 
+    /**
+     * Opt-ins that the module's compilations leave out: build-wide ones from `lvm.kotlin.optIns` and the module's own
+     * [optIns], such as a marker of a library that the module doesn't depend on. Only a module sets it.
+     */
+    abstract val excludedOptIns: ListProperty<String>
+
     /** Appended to the build-wide `lvm.kotlin.freeCompilerArgs`. */
     abstract val freeCompilerArgs: ListProperty<String>
 

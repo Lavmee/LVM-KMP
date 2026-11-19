@@ -1,5 +1,6 @@
 ---
 source: tests/ui.rs
+assertion_line: 118
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -11,7 +12,7 @@ expression: render(&mut app)
 "│                ││From      build files                                                                               │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values (23) ───────────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values (24) ───────────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                ││android.compileSdk                   37                                                    default  │"
 "│                ││android.hostTests                    true                                                  default  │"
@@ -25,8 +26,8 @@ expression: render(&mut app)
 "│                ││ios.architectures                    iosArm64, iosSimulatorArm64                           default  │"
 "│                ││jvm.target                           21                                                    default  │"
 "│                ││kotlin.checkSourceLayout             true                                                  default  │"
+"│                ││kotlin.excludedOptIns                []                                                    default  │"
 "│                ││kotlin.explicitApi                   false                                                 default  │"
-"│                ││kotlin.flatLayout                    true                                                  settings │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
 "│                │┌ Depends on ─────────────────────────────────────┐┌ Used by  (a: affected) ─────────────────────────┐"
 "│                ││:core:data  commonMainApi                        ││:app                                             │"

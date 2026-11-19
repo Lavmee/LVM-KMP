@@ -1,5 +1,6 @@
 ---
 source: tests/ui.rs
+assertion_line: 166
 expression: render(&mut app)
 ---
 " 1 Overview   2 Modules   3 Tasks   4 Run   5 Doctor   6 Updates   7 Compose                                lvm Consumer"
@@ -11,11 +12,12 @@ expression: render(&mut app)
 "│                ││From      lvmReport                                                                                 │"
 "│                ││                                                                                                    │"
 "│                │└────────────────────────────────────────────────────────────────────────────────────────────────────┘"
-"│                │┌ Values (10) ───────────────────────────────────────────────────────────────────────────────────────┐"
+"│                │┌ Values (11) ───────────────────────────────────────────────────────────────────────────────────────┐"
 "│                ││Key                                  Value                                                 Source   │"
 "│                ││ios.architectures                    iosArm64, iosSimulatorArm64                           default  │"
 "│                ││jvm.target                           17                                                    settings │"
 "│                ││kotlin.checkSourceLayout             true                                                  default  │"
+"│                ││kotlin.excludedOptIns                []                                                    default  │"
 "│                ││kotlin.explicitApi                   true                                                  property │"
 "│                ││kotlin.flatLayout                    false                                                 default  │"
 "│                ││kotlin.freeCompilerArgs              []                                                    default  │"
@@ -23,7 +25,6 @@ expression: render(&mut app)
 "│                ││kotlin.optIns                        kotlin.ExperimentalStdlibApi, kotlin.uuid.Experimenta module   │"
 "│                ││kotlin.testDependencies              true                                                  default  │"
 "│                ││kotlin.warningsAsErrors              true                                                  module   │"
-"│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
 "│                ││                                                                                                    │"
